@@ -172,12 +172,14 @@ void MyGame::Draw() {
 	dxCommon_->PostDraw();
 }
 
-GAME_API Framework* CreateGame()
-{
-	return new MyGame();
-}
+extern "C" {
+	GAME_API Framework* CreateGame()
+	{
+		return new MyGame();
+	}
 
-GAME_API void DestroyGame(Framework* game)
-{
-	return delete game;
+	GAME_API void DestroyGame(Framework* game)
+	{
+		delete game;
+	}
 }

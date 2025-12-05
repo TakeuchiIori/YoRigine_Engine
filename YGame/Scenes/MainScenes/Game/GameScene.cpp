@@ -84,7 +84,7 @@ void GameScene::Initialize() {
 	sharedPlayer_->SetFollowCamera(&followCamera_);
 
 	skyBox_ = std::make_unique<SkyBox>();
-	skyBox_->Initialize(sceneCamera_.get(), "Resources/DDS/vz_sinister_land_cubemap_ue.dds");
+	skyBox_->Initialize(sceneCamera_.get(), "Resources/DDS/vz_classic_cubemap_ue.dds");
 	//Resources / DDS / vz_sinister_land_cubemap_ue.dds
 	
 	//------------------------------------------------------------
