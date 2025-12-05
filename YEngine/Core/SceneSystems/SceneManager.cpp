@@ -1,0 +1,162 @@
+#include "SceneManager.h"
+#include "Sprite/SpriteCommon.h"
+#include "OffScreen/PostEffectManager.h"
+#include <assert.h>
+
+std::unique_ptr<SceneManager> SceneManager::instance = nullptr;
+std::once_flag SceneManager::initInstanceFlag;
+
+/// <summary>
+/// シングルトンインスタンス取得
+/// </summary>
+SceneManager* SceneManager::GetInstance() {
+	std::call_once(initInstanceFlag, []() {
+		instance = std::make_unique<SceneManager>();
+		});
+	return instance.get();
+}
+
+/// <summary>
+/// 終了処理
+/// </summary>
+void SceneManager::Finalize() {
+	// 現在のシーンが存在する場合、終了して解放
+	if (scene_) {
+		scene_->Finalize();
+		delete scene_;
+		scene_ = nullptr;
+	}
+}
+
+/// <summary>
+/// 初期化処理
+/// </summary>
+void SceneManager::Initialize() {
+	// トランジションが設定されている場合のみ初期化
+	if (transitionFactory_) {
+		transition_ = transitionFactory_->CreateTransition();
+		transition_->Initialize();
+	}
+}
+
+/// <summary>
+/// 更新処理
+/// </summary>
+void SceneManager::Update() {
+	//------------------------------------------------------------
+	// 現在のシーン更新
+	//------------------------------------------------------------
+	if (scene_) {
+		scene_->Update();
+	}
+
+	//------------------------------------------------------------
+	// トランジション更新と状態管理
+	//------------------------------------------------------------
+	if (transition_) {
+		transition_->Update();
+
+		switch (transitionState_) {
+		case TransitionState::FadeOut:
+			// フェードアウト完了時にシーン切り替え
+			if (transition_->IsFinished()) {
+				// 現在シーンを終了・破棄
+				if (scene_) {
+					scene_->Finalize();
+					delete scene_;
+				}
+
+				// 新しいシーンに切り替え
+				scene_ = nextScene_;
+				nextScene_ = nullptr;
+				scene_->SetSceneManager(this);
+				scene_->Initialize();
+
+				// フェードイン開始
+				transition_->StartTransition();
+				transitionState_ = TransitionState::FadeIn;
+			}
+			break;
+
+		case TransitionState::FadeIn:
+			// フェードイン完了後、通常状態に戻す
+			if (transition_->IsFinished()) {
+				transitionState_ = TransitionState::None;
+			}
+			break;
+
+		case TransitionState::None:
+			// 次のシーン予約があればフェードアウト開始
+			if (nextScene_) {
+				transition_->EndTransition();
+				transitionState_ = TransitionState::FadeOut;
+			}
+			break;
+		}
+	}
+}
+
+/// <summary>
+/// シーン描画（オフスクリーン対象）
+/// </summary>
+void SceneManager::Draw() {
+	if (scene_) {
+		scene_->Draw();
+	}
+}
+
+/// <summary>
+/// シーン描画（オフスクリーン外 / トランジション描画含む）
+/// </summary>
+void SceneManager::DrawNonOffscreen() {
+	//------------------------------------------------------------
+	// 通常シーン描画
+	//------------------------------------------------------------
+	if (scene_) {
+		scene_->DrawNonOffscreen();
+	}
+
+	//------------------------------------------------------------
+	// トランジション描画
+	//------------------------------------------------------------
+	if (transition_ && transitionState_ != TransitionState::None) {
+		transition_->Draw();
+	}
+}
+
+void SceneManager::DrawShadow() {
+	if (scene_) {
+		scene_->DrawShadow();
+	}
+}
+
+/// <summary>
+/// シーン変更要求
+/// </summary>
+void SceneManager::ChangeScene(const std::string& sceneName) {
+	assert(sceneFactory_);
+	PostEffectManager::GetInstance()->Reset(); // ポストエフェクト初期化
+
+	// 既に遷移中、または次シーン予約済みなら無視
+	if (transitionState_ != TransitionState::None || nextScene_) {
+		return;
+	}
+
+	nextScene_ = sceneFactory_->CreateScene(sceneName);
+
+	//------------------------------------------------------------
+	// 初回シーン生成処理（アプリ起動直後）
+	//------------------------------------------------------------
+	if (!scene_) {
+		scene_ = nextScene_;
+		nextScene_ = nullptr;
+		scene_->SetSceneManager(this);
+		scene_->Initialize();
+
+		// 初回のみフェードイン開始
+		if (transition_) {
+			transition_->StartTransition();
+			transitionState_ = TransitionState::FadeIn;
+		}
+	}
+}
