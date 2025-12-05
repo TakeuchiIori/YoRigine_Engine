@@ -2,13 +2,23 @@
 
 #include <windows.h>
 #include <filesystem>
-#include <iostream>
+#include <iostream> // Loggerの定義に必要
 #include <thread>
 #include <chrono>
 
 // ★重要: 具体的なクラス(MyGame.h)はインクルードしない！
 // 代わりに基底クラス(Framework.h)だけを知っていればOK
 #include "Framework/Framework.h"
+
+//-----------------------------------------------------------------------------
+// デバッグ用 Logger 関数
+// OutputDebugStringA で Visual Studio の出力ウィンドウにログを送信します
+// DLL側からも同じ Logger 関数を定義し、利用する必要があります。
+//-----------------------------------------------------------------------------
+void Logger(const char* message) {
+    OutputDebugStringA(message);
+    OutputDebugStringA("\n"); // 改行コードを追加
+}
 
 //-----------------------------------------------------------------------------
 // 設定
@@ -35,10 +45,14 @@ std::filesystem::file_time_type lastWriteTime;
 // DLLのロード・リロード処理
 //-----------------------------------------------------------------------------
 bool LoadGameDLL() {
+    Logger("--- Hot Reload Attempt Start ---");
+
     // 1. もし古いゲームが動いていたら終了させる
     if (gameInstance) {
-        // ★修正点: Finalize() の呼び出しを削除 (DestroyGame内で処理される)
-        // gameInstance->Finalize(); // 終了処理
+        Logger("  Calling DestroyGameFn...");
+
+        // ★修正点：Finalize() の呼び出しを削除 (DestroyGame()の中で処理される)
+        // gameInstance->Finalize(); 
 
         DestroyGameFn(gameInstance); // DestroyGame() の中で Finalize() と delete が呼ばれる
         gameInstance = nullptr;
@@ -46,12 +60,14 @@ bool LoadGameDLL() {
 
     // 2. DLLを解放する
     if (hGameDLL) {
+        Logger("  FreeLibrary...");
         FreeLibrary(hGameDLL);
         hGameDLL = nullptr;
     }
 
     // 3. 原本(YGame.dll)があるか確認
     if (!std::filesystem::exists(DLL_NAME_ORIGIN)) {
+        Logger("Error: YGame.dll not found.");
         return false;
     }
 
@@ -59,9 +75,11 @@ bool LoadGameDLL() {
     lastWriteTime = std::filesystem::last_write_time(DLL_NAME_ORIGIN);
 
     // 5. DLLをコピーする
+    Logger("  Copying DLL (Origin -> Hot)...");
     std::filesystem::copy_file(DLL_NAME_ORIGIN, DLL_NAME_COPY, std::filesystem::copy_options::overwrite_existing);
 
     // 6. コピーしたDLLをロード
+    Logger("  LoadLibraryW (Hot DLL)...");
     hGameDLL = LoadLibraryW(DLL_NAME_COPY.c_str());
     if (!hGameDLL) {
         MessageBoxW(nullptr, L"DLLのロードに失敗しました", L"Error", MB_OK);
@@ -80,9 +98,11 @@ bool LoadGameDLL() {
     }
 
     // 8. 新しいゲームインスタンスを生成して初期化
+    Logger("Step 8: Calling CreateGame().");
     gameInstance = CreateGameFn(); // CreateGame() の中で Initialize() が呼ばれる
     // ★修正点: Initialize() の呼び出しを削除
     // gameInstance->Initialize(); 
+    Logger("Step 8 Success. Game should be initialized.");
 
     return true;
 }
@@ -110,7 +130,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             auto currentWriteTime = std::filesystem::last_write_time(DLL_NAME_ORIGIN);
             if (currentWriteTime != lastWriteTime) {
                 // ファイルが書き込み中かもしれないので少し待つ
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                // ★修正点：待機時間を延長 (800ms)
+                std::this_thread::sleep_for(std::chrono::milliseconds(800));
 
                 LoadGameDLL();
             }

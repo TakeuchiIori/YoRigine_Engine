@@ -125,6 +125,7 @@ void WinApp::Initialize()
 void WinApp::Finalize()
 {
 	CloseWindow(hwnd);
+	UnregisterClass(wc.lpszClassName, wc.hInstance);
 	CoUninitialize();
 
 	delete instance;
