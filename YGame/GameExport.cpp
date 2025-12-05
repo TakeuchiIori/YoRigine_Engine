@@ -1,52 +1,37 @@
-#include "GameExport.h"
+// GameExport.cpp
 
-// あなたのゲームのメインクラスをインクルード
-// パスは実際の構成に合わせて調整してください（例: "Core/MyGame.h" など）
-#include "Core/MyGame.h" 
+#include "GameExport.h"
+#include "Core/MyGame.h" // ★ あなたのゲームのメインクラスをインクルード
 #include <iostream>
 
-// ゲームのインスタンスを保持する変数
-// MyGameはFrameworkを継承しているので、Frameworkのポインタで持ちます
-static Framework* s_GameInstance = nullptr;
+// Framework* インスタンスを生成して返す
+// 初期化処理（Initialize）もこの関数内で行う
+GAME_API Framework* CreateGame() {
+    std::cout << "[DLL] Create Game Instance" << std::endl;
 
-// 初期化
-void GameInit() {
-    std::cout << "[DLL] Game Init" << std::endl;
+    // MyGame インスタンスを生成
+    Framework* gameInstance = new MyGame();
 
-    // インスタンスがなければ生成
-    if (s_GameInstance == nullptr) {
-        s_GameInstance = new MyGame(); // ここであなたの MyGame を生成！
-        s_GameInstance->Initialize();
-    }
+    // ★修正点1: DLL内で Initialize() を実行する！
+    // Singletonの不整合を防ぐため、初期化処理をDLLに閉じ込める
+    gameInstance->Initialize();
+
+    return gameInstance;
 }
 
-// 更新
-void GameUpdate() {
-    if (s_GameInstance) {
-        // あなたの Framework::Update() には引数がないようなので、
-        // deltaTimeは渡さずに呼び出します（必要ならFramework側を改造してください）
-        s_GameInstance->Update();
-    }
+// Framework* インスタンスを破棄する
+// 終了処理（Finalize）もこの関数内で行う
+GAME_API void DestroyGame(Framework* pGame) {
+    // ★ホットリロードの実験用ログ (ここを書き換えてビルドし、ホットリロードを確認)
+    std::cout << "[DLL] Hot Reload Running... (New Code V3.0)" << std::endl;
 
-    // ★ホットリロードの実験用ログ
-    // ここを書き換えてビルドすると、実行中にログが変わるのが確認できます
-    // std::cout << "[DLL] Update Running..." << std::endl;
-}
+    if (pGame) {
+        // ★修正点2: DLL内で Finalize() を実行する！
+        // DLLが確保したリソースを、DLL内で解放する
+        pGame->Finalize();
 
-// 描画
-void GameRender() {
-    if (s_GameInstance) {
-        s_GameInstance->Draw();
-    }
-}
-
-// 終了処理
-void GameShutdown() {
-    std::cout << "[DLL] Game Shutdown" << std::endl;
-
-    if (s_GameInstance) {
-        s_GameInstance->Finalize();
-        delete s_GameInstance;
-        s_GameInstance = nullptr;
+        std::cout << "[DLL] Destroy Game Instance" << std::endl;
+        // Framework* 型のポインタを delete
+        delete pGame;
     }
 }

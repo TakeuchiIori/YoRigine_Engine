@@ -171,15 +171,3 @@ void MyGame::Draw() {
 	// フレーム終了
 	dxCommon_->PostDraw();
 }
-
-extern "C" {
-	GAME_API Framework* CreateGame()
-	{
-		return new MyGame();
-	}
-
-	GAME_API void DestroyGame(Framework* game)
-	{
-		delete game;
-	}
-}

@@ -1,15 +1,23 @@
+// GameExport.h
+
 #pragma once
 
+// DLLエクスポート/インポートの制御
 #ifdef GAME_BUILD_DLL
 #define GAME_API __declspec(dllexport)
 #else
 #define GAME_API __declspec(dllimport)
 #endif
 
+// Frameworkの定義を知るためにインクルード
+#include "Framework/Framework.h" 
+
 extern "C" {
-    // 引数なし、戻り値なしの単純な形に戻す
-    GAME_API void GameInit();
-    GAME_API void GameUpdate();
-    GAME_API void GameRender();
-    GAME_API void GameShutdown();
+    // Framework* インスタンスを生成して返す関数
+    // ★ main.exe が DLLから取得する関数 1
+    GAME_API Framework* CreateGame();
+
+    // Framework* インスタンスを破棄する関数
+    // ★ main.exe が DLLから取得する関数 2
+    GAME_API void DestroyGame(Framework* pGame);
 }

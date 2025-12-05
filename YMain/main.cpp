@@ -1,3 +1,5 @@
+// main.cpp
+
 #include <windows.h>
 #include <filesystem>
 #include <iostream>
@@ -33,52 +35,56 @@ std::filesystem::file_time_type lastWriteTime;
 // DLLのロード・リロード処理
 //-----------------------------------------------------------------------------
 bool LoadGameDLL() {
-	// 1. もし古いゲームが動いていたら終了させる
-	if (gameInstance) {
-		gameInstance->Finalize(); // 終了処理
-		DestroyGameFn(gameInstance);
-		gameInstance = nullptr;
-	}
+    // 1. もし古いゲームが動いていたら終了させる
+    if (gameInstance) {
+        // ★修正点: Finalize() の呼び出しを削除 (DestroyGame内で処理される)
+        // gameInstance->Finalize(); // 終了処理
 
-	// 2. DLLを解放する
-	if (hGameDLL) {
-		FreeLibrary(hGameDLL);
-		hGameDLL = nullptr;
-	}
+        DestroyGameFn(gameInstance); // DestroyGame() の中で Finalize() と delete が呼ばれる
+        gameInstance = nullptr;
+    }
 
-	// 3. 原本(YGame.dll)があるか確認
-	if (!std::filesystem::exists(DLL_NAME_ORIGIN)) {
-		return false;
-	}
+    // 2. DLLを解放する
+    if (hGameDLL) {
+        FreeLibrary(hGameDLL);
+        hGameDLL = nullptr;
+    }
 
-	// 4. 更新日時を記録（次の変更検知のため）
-	lastWriteTime = std::filesystem::last_write_time(DLL_NAME_ORIGIN);
+    // 3. 原本(YGame.dll)があるか確認
+    if (!std::filesystem::exists(DLL_NAME_ORIGIN)) {
+        return false;
+    }
 
-	// 5. DLLをコピーする
-	// ★ここが重要！コピーを使うことで、実行中でも元のYGame.dllをビルド(上書き)できる
-	std::filesystem::copy_file(DLL_NAME_ORIGIN, DLL_NAME_COPY, std::filesystem::copy_options::overwrite_existing);
+    // 4. 更新日時を記録（次の変更検知のため）
+    lastWriteTime = std::filesystem::last_write_time(DLL_NAME_ORIGIN);
 
-	// 6. コピーしたDLLをロード
-	hGameDLL = LoadLibraryW(DLL_NAME_COPY.c_str());
-	if (!hGameDLL) {
-		MessageBoxW(nullptr, L"DLLのロードに失敗しました", L"Error", MB_OK);
-		return false;
-	}
+    // 5. DLLをコピーする
+    std::filesystem::copy_file(DLL_NAME_ORIGIN, DLL_NAME_COPY, std::filesystem::copy_options::overwrite_existing);
 
-	// 7. 関数ポインタを取り出す
-	CreateGameFn = (CreateGameFunc)GetProcAddress(hGameDLL, "CreateGame");
-	DestroyGameFn = (DestroyGameFunc)GetProcAddress(hGameDLL, "DestroyGame");
+    // 6. コピーしたDLLをロード
+    hGameDLL = LoadLibraryW(DLL_NAME_COPY.c_str());
+    if (!hGameDLL) {
+        MessageBoxW(nullptr, L"DLLのロードに失敗しました", L"Error", MB_OK);
+        return false;
+    }
 
-	if (!CreateGameFn || !DestroyGameFn) {
-		MessageBoxW(nullptr, L"DLL内の関数が見つかりません", L"Error", MB_OK);
-		return false;
-	}
+    // 7. 関数ポインタを取り出す
+    CreateGameFn = (CreateGameFunc)GetProcAddress(hGameDLL, "CreateGame");
+    DestroyGameFn = (DestroyGameFunc)GetProcAddress(hGameDLL, "DestroyGame");
 
-	// 8. 新しいゲームインスタンスを生成して初期化
-	gameInstance = CreateGameFn();
-	gameInstance->Initialize(); // Framework::Initialize()
+    if (!CreateGameFn || !DestroyGameFn) {
+        MessageBoxW(nullptr, L"DLL内の関数が見つかりません", L"Error", MB_OK);
+        FreeLibrary(hGameDLL);
+        hGameDLL = nullptr;
+        return false;
+    }
 
-	return true;
+    // 8. 新しいゲームインスタンスを生成して初期化
+    gameInstance = CreateGameFn(); // CreateGame() の中で Initialize() が呼ばれる
+    // ★修正点: Initialize() の呼び出しを削除
+    // gameInstance->Initialize(); 
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -86,54 +92,51 @@ bool LoadGameDLL() {
 //-----------------------------------------------------------------------------
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
-	// メモリリーク検出
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+    // メモリリーク検出
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
-	// 初回のロード
-	if (!LoadGameDLL()) {
-		return -1;
-	}
+    // 初回のロード
+    if (!LoadGameDLL()) {
+        return -1;
+    }
 
-	//------------------------------------------------------------
-	// メインループ
-	// 元々Framework::Run()の中にあったループをここに持ってきた
-	//------------------------------------------------------------
-	while (true) {
+    //------------------------------------------------------------
+    // メインループ
+    //------------------------------------------------------------
+    while (true) {
 
-		// 1. ホットリロードのチェック
-		// DLLファイルの更新日時が変わっているか確認
-		try {
-			auto currentWriteTime = std::filesystem::last_write_time(DLL_NAME_ORIGIN);
-			if (currentWriteTime != lastWriteTime) {
-				// ファイルが書き込み中かもしれないので少し待つ
-				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        // 1. ホットリロードのチェック
+        try {
+            auto currentWriteTime = std::filesystem::last_write_time(DLL_NAME_ORIGIN);
+            if (currentWriteTime != lastWriteTime) {
+                // ファイルが書き込み中かもしれないので少し待つ
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-				// リロード実行！
-				// (現在のウィンドウが一度閉じ、新しいコードで再初期化されます)
-				LoadGameDLL();
-			}
-		}
-		catch (...) {
-			// ファイルアクセス競合などでエラーが出ても落ちないように無視
-		}
+                LoadGameDLL();
+            }
+        }
+        catch (...) {
+            // ファイルアクセス競合などでエラーが出ても落ちないように無視
+        }
 
-		// 2. ゲームの更新と描画
-		if (gameInstance) {
-			// ウィンドウメッセージ処理（×ボタンで終了判定）
-			if (gameInstance->IsEndRequst()) {
-				break;
-			}
+        // 2. ゲームの更新と描画
+        if (gameInstance) {
+            // ウィンドウメッセージ処理（×ボタンで終了判定）
+            if (gameInstance->IsEndRequst()) {
+                break;
+            }
 
-			gameInstance->Update();
-			gameInstance->Draw();
-		}
-	}
+            gameInstance->Update();
+            gameInstance->Draw();
+        }
+    }
 
-	// 終了処理
-	if (gameInstance) {
-		gameInstance->Finalize();
-		DestroyGameFn(gameInstance);
-	}
+    // 終了処理
+    if (gameInstance) {
+        // ★修正点: Finalize() の呼び出しを削除
+        // gameInstance->Finalize();
+        DestroyGameFn(gameInstance);
+    }
 
-	return 0;
+    return 0;
 }

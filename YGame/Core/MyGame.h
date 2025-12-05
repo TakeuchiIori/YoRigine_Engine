@@ -30,9 +30,3 @@ private:
 	OffScreen* offScreen_;
 	std::unique_ptr<AbstractSceneFactory> sceneFactory_;
 };
-
-// DLL側でメモリを確保・解放するための関数
-extern "C" {
-	GAME_API Framework* CreateGame();
-	GAME_API void DestroyGame(Framework* game);
-}
