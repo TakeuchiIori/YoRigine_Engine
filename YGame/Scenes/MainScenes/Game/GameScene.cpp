@@ -265,7 +265,7 @@ void GameScene::DrawShadow()
 	if (subSceneManager_) {
 		subSceneManager_->DrawShadow();
 	}
-	//YoRigine::ModelManipulator::GetInstance()->DrawShadow();
+	YoRigine::ModelManipulator::GetInstance()->DrawShadow();
 }
 
 /// <summary>
