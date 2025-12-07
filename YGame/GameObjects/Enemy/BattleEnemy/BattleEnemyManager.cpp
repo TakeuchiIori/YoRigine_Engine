@@ -918,6 +918,8 @@ void BattleEnemyManager::SaveBattleLog(const std::string& filePath) {
 /// <summary>
 /// デバッグ情報をImGui上に表示
 /// </summary>
+// BattleEnemyManager.cpp の ShowDebugInfo() を以下に更新
+
 void BattleEnemyManager::ShowDebugInfo() {
 #ifdef USE_IMGUI
 	if (ImGui::Button("敵データ読み込み")) {
@@ -993,26 +995,157 @@ void BattleEnemyManager::ShowDebugInfo() {
 
 	ImGui::Separator();
 
+	// ★敵ベースデータ編集（攻撃パターン編集機能追加）★
 	if (ImGui::TreeNode("敵ベースデータ編集 （これを調整するとその敵全部に反映）")) {
+
+		// 使用可能な攻撃パターンのリスト
+		static const char* availablePatterns[] = {
+			"rush", "leap", "spin", "charge", "sidestep", "combo"
+		};
+		static const int patternCount = 6;
+
 		for (auto& pair : enemyDataMap_) {
 			BattleEnemyData& data = pair.second;
 
 			if (ImGui::TreeNode(data.enemyId.c_str())) {
 
-				// HPやAttackなど、個体ごとのコピー元になるデータをここで編集
+				// 基本ステータス
 				ImGui::DragInt("Base HP", &data.hp, 1, 1, 999);
 				ImGui::DragInt("Attack", &data.attack, 1, 1, 500);
 				ImGui::DragInt("Defense", &data.defense, 1, 1, 500);
 
-				// 移動速度なども、ベース値を編集したいならここに含める
+				// 移動パラメータ
 				ImGui::DragFloat("Base Move Speed", &data.moveSpeed, 0.1f, 0.1f, 20.0f);
 				ImGui::DragFloat("Approach Range", &data.approachStateRange, 0.1f, 1.0f, 100.0f);
 				ImGui::DragFloat("Attack Range", &data.attackStateRange, 0.1f, 1.0f, 50.0f);
 
+				// AIタイプ
 				char aiTypeBuffer[64];
 				strncpy_s(aiTypeBuffer, data.aiType.c_str(), sizeof(aiTypeBuffer));
 				if (ImGui::InputText("AI Type", aiTypeBuffer, sizeof(aiTypeBuffer))) {
 					data.aiType = aiTypeBuffer;
+				}
+
+				ImGui::Separator();
+
+				// ★攻撃パターン編集セクション★
+				if (ImGui::TreeNode("攻撃パターン設定")) {
+
+					ImGui::Text("現在の攻撃パターン:");
+
+					// 現在の攻撃パターン一覧表示と削除
+					for (size_t i = 0; i < data.attackPatterns.size(); ++i) {
+						ImGui::PushID(static_cast<int>(i));
+
+						ImGui::BulletText("%s", data.attackPatterns[i].c_str());
+						ImGui::SameLine();
+
+						if (ImGui::SmallButton("削除")) {
+							data.attackPatterns.erase(data.attackPatterns.begin() + i);
+							--i; // インデックス調整
+							ImGui::PopID();
+							continue;
+						}
+
+						// 順序変更ボタン
+						if (i > 0) {
+							ImGui::SameLine();
+							if (ImGui::SmallButton("↑")) {
+								std::swap(data.attackPatterns[i], data.attackPatterns[i - 1]);
+							}
+						}
+						if (i < data.attackPatterns.size() - 1) {
+							ImGui::SameLine();
+							if (ImGui::SmallButton("↓")) {
+								std::swap(data.attackPatterns[i], data.attackPatterns[i + 1]);
+							}
+						}
+
+						ImGui::PopID();
+					}
+
+					if (data.attackPatterns.empty()) {
+						ImGui::TextColored(ImVec4(1, 0, 0, 1), "警告: 攻撃パターンが設定されていません！");
+					}
+
+					ImGui::Separator();
+
+					// 新しい攻撃パターンを追加
+					static int selectedPatternIndex = 0;
+					ImGui::Combo("追加する攻撃", &selectedPatternIndex, availablePatterns, patternCount);
+
+					ImGui::SameLine();
+					if (ImGui::Button("追加")) {
+						std::string newPattern = availablePatterns[selectedPatternIndex];
+
+						// 重複チェック
+						bool alreadyExists = false;
+						for (const auto& pattern : data.attackPatterns) {
+							if (pattern == newPattern) {
+								alreadyExists = true;
+								break;
+							}
+						}
+
+						if (!alreadyExists) {
+							data.attackPatterns.push_back(newPattern);
+							Logger(("[BattleEnemyManager] 攻撃パターン追加: " + data.enemyId + " -> " + newPattern + "\n").c_str());
+						}
+						else {
+							Logger(("[BattleEnemyManager] 警告: " + newPattern + " は既に存在します\n").c_str());
+						}
+					}
+
+					ImGui::SameLine();
+					if (ImGui::Button("全てクリア")) {
+						data.attackPatterns.clear();
+						Logger(("[BattleEnemyManager] 攻撃パターンをクリア: " + data.enemyId + "\n").c_str());
+					}
+
+					ImGui::Separator();
+
+					// プリセットボタン
+					ImGui::Text("クイック設定:");
+
+					if (ImGui::Button("基本型 (rush)")) {
+						data.attackPatterns = { "rush" };
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("アグレッシブ (rush, charge, combo)")) {
+						data.attackPatterns = { "rush", "charge", "combo" };
+					}
+
+					if (ImGui::Button("トリッキー (sidestep, spin)")) {
+						data.attackPatterns = { "sidestep", "spin" };
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("全種類")) {
+						data.attackPatterns = { "rush", "leap", "spin", "charge", "sidestep", "combo" };
+					}
+
+					ImGui::TreePop();
+				}
+
+				ImGui::Separator();
+
+				// 現在の設定を生成中の敵に適用
+				if (ImGui::Button("この設定を生成中の同種敵に適用")) {
+					int appliedCount = 0;
+					for (auto& enemy : battleEnemies_) {
+						if (enemy && enemy->GetEnemyData().enemyId == data.enemyId) {
+							// 生成中の敵のデータを更新
+							BattleEnemyData& enemyData = enemy->GetEnemyData();
+							enemyData.attack = data.attack;
+							enemyData.defense = data.defense;
+							enemyData.moveSpeed = data.moveSpeed;
+							enemyData.approachStateRange = data.approachStateRange;
+							enemyData.attackStateRange = data.attackStateRange;
+							enemyData.aiType = data.aiType;
+							enemyData.attackPatterns = data.attackPatterns;
+							appliedCount++;
+						}
+					}
+					Logger(("[BattleEnemyManager] " + std::to_string(appliedCount) + "体の敵に設定を適用しました\n").c_str());
 				}
 
 				ImGui::TreePop();
@@ -1020,8 +1153,9 @@ void BattleEnemyManager::ShowDebugInfo() {
 		}
 
 		ImGui::Separator();
-		// 調整後のデータをファイルに保存するボタン
-		if (ImGui::Button("Save Enemy Data to JSON")) {
+
+		// データ保存ボタン
+		if (ImGui::Button("全ての変更をJSONに保存")) {
 			if (SaveEnemyData(enemyDataFilePath_)) {
 				Logger("[BattleEnemyManager] 敵ベースデータをJSONファイルに保存しました。\n");
 			}
@@ -1030,36 +1164,50 @@ void BattleEnemyManager::ShowDebugInfo() {
 			}
 		}
 
+		ImGui::SameLine();
+		if (ImGui::Button("JSONから再読み込み")) {
+			LoadEnemyData(enemyDataFilePath_);
+		}
+
 		ImGui::TreePop();
 	}
 
 	ImGui::Separator();
 
+	// アクティブな敵の編集
 	if (ImGui::TreeNode("アクティブな敵")) {
 		for (size_t i = 0; i < battleEnemies_.size(); ++i) {
 			auto& enemy = battleEnemies_[i];
 			if (enemy) {
 				std::string label = "敵 " + std::to_string(i) + " (" + enemy->GetEnemyData().enemyId + ")";
 				if (ImGui::TreeNode(label.c_str())) {
+					// 基本情報
 					ImGui::Text("HP: %d / %d", enemy->GetCurrentHP(), enemy->GetMaxHP());
 					ImGui::Text("生存: %s", enemy->IsAlive() ? "はい" : "いいえ");
 
 					Vector3 pos = enemy->GetTranslate();
 					ImGui::Text("位置: (%.1f, %.1f, %.1f)", pos.x, pos.y, pos.z);
 
-					// 非const参照で受け取り、個体のデータを直接操作する (テスト用)
+					// 個体データ（テスト用に編集可能）
 					BattleEnemyData& enemyData = enemy->GetEnemyData();
 					ImGui::Text("敵ID: %s", enemyData.enemyId.c_str());
 					ImGui::Text("AIタイプ: %s", enemyData.aiType.c_str());
 					ImGui::Text("モデル: %s", enemyData.modelPath.c_str());
-					ImGui::Text("攻撃力: %d (Base:%d)", enemyData.attack, enemyData.attack); // Base値も表示すると分かりやすい
+					ImGui::Text("攻撃力: %d (Base:%d)", enemyData.attack, enemyData.attack);
 					ImGui::Text("防御力: %d (Base:%d)", enemyData.defense, enemyData.defense);
 
-					// 個体の移動速度は、その場でテストするために編集可能にしておく
+					// 個体のパラメータ調整（リアルタイムテスト用）
 					ImGui::DragFloat("移動速度 (Current)", &enemyData.moveSpeed, 0.1f, 0.0f, 20.0f);
 					ImGui::DragFloat("攻撃状態に入る距離 (Current)", &enemyData.attackStateRange, 0.1f, 0.0f, 100.0f);
 					ImGui::DragFloat("追跡状態に入る距離 (Current)", &enemyData.approachStateRange, 0.1f, 0.0f, 100.0f);
 
+					// 攻撃パターン表示
+					ImGui::Text("攻撃パターン:");
+					for (const auto& pattern : enemyData.attackPatterns) {
+						ImGui::BulletText("%s", pattern.c_str());
+					}
+
+					// 敵操作ボタン
 					if (ImGui::Button("ダメージ(25)")) {
 						enemy->TakeDamage(25);
 					}
@@ -1067,17 +1215,20 @@ void BattleEnemyManager::ShowDebugInfo() {
 					if (ImGui::Button("回復(30)")) {
 						enemy->Heal(30);
 					}
+					ImGui::SameLine();
+					if (ImGui::Button("即死")) {
+						enemy->TakeDamage(enemy->GetCurrentHP());
+					}
 
 					ImGui::TreePop();
 				}
 			}
 		}
-		// ★ここにあったSaveボタンのコードは削除しました★
 		ImGui::TreePop();
 	}
 
+	// フォーメーション
 	if (ImGui::TreeNode("フォーメーション")) {
-		// ... (既存のフォーメーション表示コード)
 		for (const auto& pair : formationMap_) {
 			const auto& formation = pair.second;
 			if (ImGui::TreeNode(formation.formationName.c_str())) {
@@ -1085,7 +1236,7 @@ void BattleEnemyManager::ShowDebugInfo() {
 				ImGui::Text("位置数: %zu", formation.positions.size());
 				for (size_t i = 0; i < formation.positions.size(); ++i) {
 					const auto& pos = formation.positions[i];
-					ImGui::Text("  %zu: (%.1f, %.1f, %.1f)", i, pos.x, pos.y, pos.z);
+					ImGui::Text("  %zu: (%.1f, %.1f, %.1f)", i, pos.x, pos.y, pos.z);
 				}
 				if (ImGui::Button("フォーメーション設定")) {
 					SetFormation(formation.formationName);

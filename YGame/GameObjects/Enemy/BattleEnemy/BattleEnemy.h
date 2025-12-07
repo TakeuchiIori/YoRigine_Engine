@@ -37,7 +37,7 @@ struct BattleEnemyData {
 	float attackStateRange = 10.0f;
 	std::string aiType = "aggressive";
 
-	std::vector<std::string> attackPatterns = { "rush" };
+	std::vector<std::string> attackPatterns = { "rush","spin","charge","combo","leap"};
 };
 
 class Player;
