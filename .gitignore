@@ -16,7 +16,6 @@
 # Mono auto generated files
 mono_crash.*
 
-.ini
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -71,7 +70,6 @@ ScaffoldingReadMe.txt
 StyleCopReport.xml
 
 # Files built by Visual Studio
-
 *_i.c
 *_p.c
 *_h.h
@@ -362,7 +360,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# ↓これが `.gitignore` の一番最後の行に来るように
 # assimpのlibフォルダを除外対象から外す
 !externals/assimp/lib/Debug/
 !externals/assimp/lib/Debug/*.lib
@@ -370,4 +367,14 @@ FodyWeavers.xsd
 # Release
 !externals/assimp/lib/Release/
 !externals/assimp/lib/Release/*.lib
+
+# Visual Studio solution and project files
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+# INI configuration files
+*.ini
+
 
