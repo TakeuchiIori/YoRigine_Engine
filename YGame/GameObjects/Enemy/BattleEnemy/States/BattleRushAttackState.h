@@ -4,12 +4,16 @@
 #include <random>
 
 /// <summary>
-/// 接近状態
+/// 攻撃状態
 /// </summary>
 class BattleRushAttackState : public IEnemyState<BattleEnemy> {
 public:
-	void Enter(BattleEnemy& enemy) override { enemy.SetHasTargetPosition(true); }
+	void Enter(BattleEnemy& enemy) override;
 	void Update(BattleEnemy& enemy, float dt) override;
-	void Exit(BattleEnemy& enemy) override { enemy.SetHasTargetPosition(false); }
+	void Exit(BattleEnemy& enemy) override;
+
+private:
+	Vector3 attackDir_{ 0,0,0 };
+	bool dirLocked_ = false;
 };
 

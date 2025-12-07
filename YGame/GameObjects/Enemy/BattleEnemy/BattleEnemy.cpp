@@ -8,7 +8,7 @@
 #include <json.hpp>
 
 #include "States/BattleIdleState.h"
-#include "States/BattleAttackState.h"
+#include "States/BattleRushAttackState.h"
 #include "States/BattleDamageState.h"
 #include "States/BattleDownedState.h"
 #include "States/BattleDeadState.h"
@@ -209,7 +209,7 @@ void BattleEnemy::OnEnterCollision([[maybe_unused]] BaseCollider* self, BaseColl
 	}
 
 	// 盾に当たった時
-	if (dynamic_cast<BattleAttackState*>(GetCurrentState()) != nullptr) {
+	if (dynamic_cast<BattleRushAttackState*>(GetCurrentState()) != nullptr) {
 		if (other->GetTypeID() == static_cast<uint32_t>(CollisionTypeIdDef::kPlayerShield)) {
 			if (player_->GetCombat()->GetGuard()->GetState() == PlayerGuard::State::Active ||
 				player_->GetCombat()->GetGuard()->GetState() == PlayerGuard::State::Recovery) {

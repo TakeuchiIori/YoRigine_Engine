@@ -1,5 +1,5 @@
 #include "BattleDamageState.h"
-#include "BattleAttackState.h"
+#include "BattleRushAttackState.h"
 
 /// <summary>
 /// ダメージ状態開始処理
@@ -19,7 +19,7 @@ void BattleDamageState::Update(BattleEnemy& enemy, float dt) {
 
 	// 一定時間経過で攻撃状態へ
 	if (enemy.GetStateTimer() > 1.0f) {
-		enemy.ChangeState(std::make_unique<BattleAttackState>());
+		enemy.ChangeState(std::make_unique<BattleRushAttackState>());
 	}
 }
 
