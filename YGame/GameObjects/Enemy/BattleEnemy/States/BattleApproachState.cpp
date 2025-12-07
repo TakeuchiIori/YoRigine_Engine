@@ -25,7 +25,7 @@ void BattleApproachState::Update(BattleEnemy& enemy, float dt) {
 	}
 
 	// 一定距離以内で攻撃状態へ
-	if (dist < 8.0f) {
+	if (dist < enemy.GetEnemyData().approachRange) {
 		enemy.ChangeState(std::make_unique<BattleAttackState>());
 	}
 }

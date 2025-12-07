@@ -18,11 +18,20 @@ enum class BattleEnemyState {
 struct BattleEnemyData {
 	std::string enemyId;
 	std::string modelPath;
+
+	int currentHp_;
+	int maxHp_;
+
 	int level = 1;
 	int hp = 100;
 	int attack = 15;
 	int defense = 10;
 	float moveSpeed = 5.0f;
+
+	// 接近状態に入る距離
+	float approachStateRange = 15.0f;
+	// 攻撃状態に入る距離
+	float attackStateRange = 10.0f;
 	std::string aiType = "aggressive";
 
 	// JSONファイルから敵データを読み込む
@@ -107,6 +116,9 @@ public:
 	// ターゲット位置を持つか取得
 	bool HasTargetPosition() const { return hasTargetPosition_; }
 
+	// 位置を加算
+	void AddTranslate(const Vector3& delta) { wt_.translate_ += delta; }
+
 	///************************* 見た目制御 *************************///
 
 	// 敵の色を設定
@@ -116,13 +128,11 @@ public:
 
 	// 現在の論理状態を取得
 	BattleEnemyState GetState() const { return logicalState_; }
-
 	// 現在の状態クラスを取得
 	IEnemyState<BattleEnemy>* GetCurrentState() const { return currentState_.get(); }
-
 	// 敵データを取得
 	const BattleEnemyData& GetEnemyData() const { return enemyData_; }
-
+	BattleEnemyData& GetEnemyData() { return enemyData_; }
 	// 生存フラグ参照
 	bool& IsAlive() { return isAlive_; }
 
@@ -133,10 +143,10 @@ public:
 	bool& IsInvincible() { return isInvincible_; }
 
 	// 現在HPを取得
-	int GetCurrentHP() const { return currentHp_; }
+	int GetCurrentHP() const { return enemyData_.currentHp_; }
 
 	// 最大HPを取得
-	int GetMaxHP() const { return maxHp_; }
+	int GetMaxHP() const { return enemyData_.maxHp_; }
 
 	// ターゲット位置を取得
 	Vector3 GetTargetPosition() const { return targetPosition_; }
@@ -162,14 +172,10 @@ public:
 	// 有効なターゲットがあるか
 	bool HasValidTarget() const { return hasValidTarget_; }
 
-	// 現在位置を取得
+	// 位置を取得
 	Vector3 GetTranslate() const { return wt_.translate_; }
-
-	// 位置を設定
 	void SetTranslate(const Vector3& pos) { wt_.translate_ = pos; }
 
-	// 位置を加算
-	void AddTranslate(const Vector3& delta) { wt_.translate_ += delta; }
 
 	// Y軸回転を設定
 	void SetRotationY(float y) { wt_.rotate_.y = y; }
@@ -222,8 +228,6 @@ private:
 
 	// 戦闘データ
 	BattleEnemyData enemyData_;
-	int currentHp_;
-	int maxHp_;
 
 	// プレイヤーターゲット情報
 	Player* player_ = nullptr;

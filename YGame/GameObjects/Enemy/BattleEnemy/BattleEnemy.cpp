@@ -46,8 +46,8 @@ void BattleEnemy::InitializeBattleData(const BattleEnemyData& data, Vector3 posi
 {
 	// データ適用
 	enemyData_ = data;
-	maxHp_ = data.hp;
-	currentHp_ = maxHp_;
+	enemyData_.maxHp_ = data.hp;
+	enemyData_.currentHp_ = enemyData_.maxHp_;
 
 	// モデル設定
 	if (obj_) {
@@ -93,7 +93,7 @@ void BattleEnemy::Update() {
 	}
 
 	// 死亡チェック
-	if (currentHp_ == 0) {
+	if (enemyData_.currentHp_ == 0) {
 		ChangeState(std::make_unique<BattleDeadState>());
 		PlayDeathEffect();
 	}
@@ -150,8 +150,8 @@ void BattleEnemy::PlayDeathEffect() {
 /// <param name="damage">与えられたダメージ量</param>
 void BattleEnemy::TakeDamage(int damage) {
 	if (isInvincible_ || !IsAlive()) return;
-	currentHp_ -= damage;
-	if (currentHp_ < 0) currentHp_ = 0;
+	enemyData_.currentHp_ -= damage;
+	if (enemyData_.currentHp_ < 0) enemyData_.currentHp_ = 0;
 }
 
 /// <summary>
@@ -161,8 +161,8 @@ void BattleEnemy::TakeDamage(int damage) {
 void BattleEnemy::Heal(int amount)
 {
 	if (!IsAlive()) return;
-	currentHp_ += amount;
-	if (currentHp_ > maxHp_) currentHp_ = maxHp_;
+	enemyData_.currentHp_ += amount;
+	if (enemyData_.currentHp_ > enemyData_.maxHp_) enemyData_.currentHp_ = enemyData_.maxHp_;
 }
 
 /// <summary>

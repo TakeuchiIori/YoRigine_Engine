@@ -886,10 +886,7 @@ void BattleEnemyManager::ShowDebugInfo() {
 
 	ImGui::Text("=== 戦闘統計 ===");
 	ImGui::Text("撃破数: %d", battleStats_.enemiesDefeated);
-	ImGui::Text("獲得経験値: %d", battleStats_.totalExpGained);
-	ImGui::Text("獲得ゴールド: %d", battleStats_.totalGaldGained);
 	ImGui::Text("戦闘時間: %.1f秒", battleStats_.battleDuration);
-	ImGui::Text("ドロップアイテム: %zu個", battleStats_.droppedItems.size());
 
 	ImGui::Separator();
 
@@ -957,6 +954,17 @@ void BattleEnemyManager::ShowDebugInfo() {
 
 					Vector3 pos = enemy->GetTranslate();
 					ImGui::Text("位置: (%.1f, %.1f, %.1f)", pos.x, pos.y, pos.z);
+
+					// 非const参照で受け取り、元のデータを直接操作する
+					BattleEnemyData& enemyData = enemy->GetEnemyData();
+					ImGui::Text("敵ID: %s", enemyData.enemyId.c_str());
+					ImGui::Text("AIタイプ: %s", enemyData.aiType.c_str());
+					ImGui::Text("モデル: %s", enemyData.modelPath.c_str());
+					ImGui::Text("攻撃力: %d", enemyData.attack);
+					ImGui::Text("防御力: %d", enemyData.defense);
+					ImGui::DragFloat("移動速度", &enemyData.moveSpeed, 0.1f, 0.0f, 20.0f);
+					ImGui::DragFloat("攻撃状態に入る距離", &enemyData.attackStateRange, 0.1f, 0.0f, 100.0f);
+					ImGui::DragFloat("追跡状態に入る距離", &enemyData.approachStateRange, 0.1f, 0.0f, 100.0f);
 
 					if (ImGui::Button("ダメージ(25)")) {
 						enemy->TakeDamage(25);

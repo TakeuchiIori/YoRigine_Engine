@@ -49,7 +49,7 @@ void BattleIdleState::Update(BattleEnemy& enemy, float dt)
 	// プレイヤーが近づいたら接近状態へ
 	if (enemy.GetPlayer()) {
 		float dToPlayer = Length(enemy.GetPlayerPosition() - pos);
-		if (dToPlayer < 15.0f) {
+		if (dToPlayer < enemy.GetEnemyData().approachStateRange) {
 			enemy.ChangeState(std::make_unique<BattleApproachState>());
 		}
 	}
