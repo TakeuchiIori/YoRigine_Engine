@@ -38,8 +38,6 @@ struct BattleEnemyData {
 	std::string aiType = "aggressive";
 
 	std::vector<std::string> attackPatterns = { "rush" };
-	// JSONファイルから敵データを読み込む
-	static BattleEnemyData LoadFromJson(const std::string& enemyId);
 };
 
 class Player;

@@ -50,17 +50,10 @@ void BattleEnemyManager::Initialize(Camera* camera) {
 
 	// 統計リセット
 	ResetBattleStats();
-
 	// デフォルトフォーメーション設定
 	LoadDefaultFormations();
-
 	// 敵データの読み込み
-	LoadEnemyData("Resources/Json/BattleEnemies/enemy_data.json");
-
-	// エンカウントデータの読み込み
-	//LoadEncounterData("Resources/Json/Encounters/encounter_data.json");
-
-	Logger("[BattleEnemyManager] 初期化完了\n");
+	LoadEnemyData(enemyDataFilePath_);
 }
 
 /// <summary>
@@ -349,34 +342,38 @@ void BattleEnemyManager::ForceBattleEnd() {
 /// <param name="position">生成位置</param>
 void BattleEnemyManager::SpawnBattleEnemy(const std::string& enemyId, const Vector3& position) {
 	if (!camera_) {
-		Logger("[BattleEnemyManager] エラー: カメラが設定されていません\n");
+		ThrowError("[BattleEnemyManager] エラー: カメラが設定されていません\n");
 		return;
 	}
 
-	BattleEnemyData enemyData;
+	// enemyDataMap_ に敵IDが存在するかチェックする
 	auto it = enemyDataMap_.find(enemyId);
-	if (it != enemyDataMap_.end()) {
-		enemyData = it->second;
-		Logger("[BattleEnemyManager] キャッシュから敵データ取得: " + enemyId + "\n");
-	} else {
-		Logger("[BattleEnemyManager] JSONから敵データ読み込み: " + enemyId + "\n");
-		enemyData = BattleEnemyData::LoadFromJson(enemyId);
-		enemyDataMap_[enemyId] = enemyData;
+	if (it == enemyDataMap_.end()) {
+		// データが事前ロードされていない場合はエラーとし、生成を中断する
+		ThrowError(("[BattleEnemyManager] エラー: 敵データID \"" + enemyId + "\" がキャッシュにありません。LoadEnemyData()を事前に実行してください。\n").c_str());
+		return;
 	}
 
+	// キャッシュからデータを取得する
+	const BattleEnemyData& enemyData = it->second;
+	Logger(("[BattleEnemyManager] キャッシュから敵データ取得: " + enemyId + "\n").c_str());
+
+	// 敵オブジェクトの生成と初期化
 	auto newEnemy = std::make_unique<BattleEnemy>();
 	newEnemy->Initialize(camera_);
 	newEnemy->SetPlayer(player_);
+
+	// キャッシュから取得したデータと位置情報で初期化
 	newEnemy->InitializeBattleData(enemyData, position);
+
 	// エリアマネージャーに登録
-	AreaManager::GetInstance()->RegisterObject(&newEnemy->GetWT(), "Enemy_" + enemyId);
+	AreaManager::GetInstance()->RegisterObject(&newEnemy->GetWT(), ("Enemy_" + enemyId).c_str());
 	battleEnemies_.push_back(std::move(newEnemy));
 
-	Logger("[BattleEnemyManager] 敵を生成: " + enemyId + " 位置: (" +
+	Logger(("[BattleEnemyManager] 敵を生成: " + enemyId + " 位置: (" +
 		std::to_string(position.x) + ", " + std::to_string(position.y) + ", " +
-		std::to_string(position.z) + ") 合計: " + std::to_string(battleEnemies_.size()) + "体\n");
+		std::to_string(position.z) + ") 合計: " + std::to_string(battleEnemies_.size()) + "体\n").c_str());
 }
-
 /// <summary>
 /// 敵グループを生成
 /// </summary>
@@ -675,14 +672,6 @@ Vector3 BattleEnemyManager::GetDefaultFormationPosition(size_t index, size_t tot
 }
 
 /// <summary>
-/// エンカウンターデータを外部ファイルから読み込む
-/// </summary>
-/// <param name="filePath">ファイルパス</param>
-void BattleEnemyManager::LoadEncounterData([[maybe_unused]] const std::string& filePath) {
-	Logger("[BattleEnemyManager] エンカウンターデータ読み込み: " + filePath + "\n");
-}
-
-/// <summary>
 /// 指定名のエンカウンターデータを取得
 /// </summary>
 /// <param name="encounterName">エンカウント名</param>
@@ -713,61 +702,115 @@ void BattleEnemyManager::CalculateBattleRewards() {
 		" ゴールド: " + std::to_string(battleStats_.totalGaldGained) + "\n");
 }
 
-/// <summary>
-/// 敵データを読み込む
-/// </summary>
-/// <param name="filePath">JSONファイルパス</param>
-void BattleEnemyManager::LoadEnemyData([[maybe_unused]] const std::string& filePath) {
+bool BattleEnemyManager::SaveEnemyData(const std::string& filePath) const {
+	json j = json::object();
+	json enemyArray = json::array();
 
+	// enemyDataMap_ のデータをJSON配列に変換
+	for (const auto& pair : enemyDataMap_) {
+		const BattleEnemyData& data = pair.second;
 
+		json enemyJson = {
+			{"enemyId", data.enemyId},
+			{"modelPath", data.modelPath},
+			{"level", data.level},
+			{"hp", data.hp}, // ベースHPを保存
+			{"attack", data.attack},
+			{"defense", data.defense},
+			{"moveSpeed", data.moveSpeed},
+			{"approachStateRange", data.approachStateRange},
+			{"attackStateRange", data.attackStateRange},
+			{"aiType", data.aiType},
+			{"attackPatterns", data.attackPatterns}
+			// currentHp_ と maxHp_ は実行時データのため保存しません
+		};
+		enemyArray.push_back(enemyJson);
+	}
 
-	///
-	///
-	///		使っていない
-	///
-	/// 
-	/// 
+	j["battleEnemies"] = enemyArray;
+
+	// ファイルに書き出し
+	std::ofstream ofs(filePath);
+	if (!ofs.is_open()) {
+		ThrowError(("敵データ保存用のファイルを開けませんでした: " + filePath + "\n").c_str());
+		return false;
+	}
+
 	try {
-		Logger("[BattleEnemyManager] 敵データ読み込み開始\n");
-
-		// TODO: JSON対応予定、暫定ハードコード
-		BattleEnemyData alienData;
-		alienData.enemyId = "alien";
-		alienData.modelPath = "Alien.obj";
-		alienData.hp = 80;
-		alienData.attack = 25;
-		alienData.defense = 15;
-		alienData.moveSpeed = 4.0f;
-		alienData.aiType = "aggressive";
-		alienData.attackPatterns = { "rush", "leap","spin","charge","combo"};
-		enemyDataMap_["alien"] = alienData;
-
-		BattleEnemyData blobData;
-		blobData.enemyId = "green_blob";
-		blobData.modelPath = "GreenSpikyBlob.obj";
-		blobData.hp = 120;
-		blobData.attack = 30;
-		blobData.defense = 20;
-		blobData.moveSpeed = 3.5f;
-		blobData.aiType = "defensive";
-		blobData.attackPatterns = { "rush", "leap","spin","charge","combo" };
-		enemyDataMap_["green_blob"] = blobData;
-
-		BattleEnemyData mushroomData;
-		mushroomData.enemyId = "mushnub";
-		mushroomData.modelPath = "Mushnub_Evolved.obj";
-		mushroomData.hp = 100;
-		mushroomData.attack = 35;
-		mushroomData.defense = 25;
-		mushroomData.moveSpeed = 2.5f;
-		mushroomData.aiType = "support";
-		mushroomData.attackPatterns = { "rush", "leap","spin","charge","combo" };
-		enemyDataMap_["mushnub"] = mushroomData;
-
-		Logger("[BattleEnemyManager] 敵データ読み込み完了: " + std::to_string(enemyDataMap_.size()) + "種類\n");
+		// インデント4で整形して保存
+		ofs << std::setw(4) << j;
+		ofs.close();
+		Logger((std::to_string(enemyDataMap_.size()) + "件の敵データを正常に保存しました。\n").c_str());
+		return true;
 	}
 	catch (const std::exception& e) {
-		Logger("[BattleEnemyManager] エラー: 敵データ読み込み失敗: " + std::string(e.what()) + "\n");
+		Logger(("敵データの保存中にエラーが発生しました: " + std::string(e.what()) + "\n").c_str());
+		return false;
+	}
+}
+/// <summary>
+/// 全ての敵のベースデータをJSONファイルから読み込み、キャッシュする
+/// </summary>
+bool BattleEnemyManager::LoadEnemyData(const std::string& filePath) {
+	std::ifstream ifs(filePath);
+	if (!ifs.is_open()) {
+		ThrowError(("敵データファイルを開けませんでした: " + filePath + "\n").c_str());
+		return false;
+	}
+
+	try {
+		json j = json::parse(ifs);
+
+		if (!j.contains("battleEnemies") || !j["battleEnemies"].is_array()) {
+			ThrowError(("敵データファイルの形式が無効です: 'battleEnemies'配列が見つかりません。\n"));
+			return false;
+		}
+
+		// 既存のデータをクリア
+		enemyDataMap_.clear();
+
+		for (const auto& enemyJson : j["battleEnemies"]) {
+			if (!enemyJson.contains("enemyId")) {
+				ThrowError("敵データエントリに'enemyId'がありません。スキップします。\n");
+				continue;
+			}
+
+			BattleEnemyData data{};
+			data.enemyId = enemyJson["enemyId"].get<std::string>();
+
+			// JSONの値を取得。存在しない場合はデフォルト値を適用
+			data.modelPath = enemyJson.value("modelPath", "default_enemy.obj");
+			data.level = enemyJson.value("level", 1);
+			data.hp = enemyJson.value("hp", 100);
+			data.attack = enemyJson.value("attack", 15);
+			data.defense = enemyJson.value("defense", 10);
+			data.moveSpeed = enemyJson.value("moveSpeed", 5.0f);
+			data.approachStateRange = enemyJson.value("approachStateRange", 15.0f);
+			data.attackStateRange = enemyJson.value("attackStateRange", 10.0f);
+			data.aiType = enemyJson.value("aiType", "aggressive");
+
+			// 攻撃パターンを読み込み
+			data.attackPatterns.clear();
+			if (enemyJson.contains("attackPatterns") && enemyJson["attackPatterns"].is_array()) {
+				for (const auto& pattern : enemyJson["attackPatterns"]) {
+					data.attackPatterns.push_back(pattern.get<std::string>());
+				}
+			}
+
+			// マップにデータを格納
+			enemyDataMap_[data.enemyId] = data;
+		}
+		Logger((std::to_string(enemyDataMap_.size()) + "件の敵データを正常に読み込み、キャッシュしました。\n").c_str());
+		return true;
+
+	}
+	catch (const json::parse_error& e) {
+		ThrowError(("敵データファイル内でJSON解析エラーが発生しました: " + std::string(e.what()) + "\n").c_str());
+		return false;
+	}
+	catch (const std::exception& e) {
+		ThrowError(("敵データの読み込み中にエラーが発生しました: " + std::string(e.what()) + "\n").c_str());
+		return false;
 	}
 }
 
@@ -877,6 +920,9 @@ void BattleEnemyManager::SaveBattleLog(const std::string& filePath) {
 /// </summary>
 void BattleEnemyManager::ShowDebugInfo() {
 #ifdef USE_IMGUI
+	if (ImGui::Button("敵データ読み込み")) {
+		LoadEnemyData(enemyDataFilePath_);
+	}
 	ImGui::Text("戦闘中: %s", isBattleActive_ ? "はい" : "いいえ");
 	ImGui::Text("一時停止: %s", isBattlePaused_ ? "はい" : "いいえ");
 	ImGui::Text("アクティブな敵: %zu", GetActiveEnemyCount());
@@ -947,6 +993,51 @@ void BattleEnemyManager::ShowDebugInfo() {
 
 	ImGui::Separator();
 
+	// ★★★ 敵ベースデータの調整セクション (Map Cache) ★★★
+	if (ImGui::TreeNode("★★★ 敵ベースデータ編集 (Map Cache) ★★★")) {
+		// enemyDataMap_ に格納されている全てのベースデータを表示・編集可能にする
+		for (auto& pair : enemyDataMap_) {
+			BattleEnemyData& data = pair.second;
+
+			if (ImGui::TreeNode(data.enemyId.c_str())) {
+
+				// HPやAttackなど、個体ごとのコピー元になるデータをここで編集
+				ImGui::DragInt("Base HP", &data.hp, 1, 1, 999);
+				ImGui::DragInt("Attack", &data.attack, 1, 1, 500);
+				ImGui::DragInt("Defense", &data.defense, 1, 1, 500);
+
+				// 移動速度なども、ベース値を編集したいならここに含める
+				ImGui::DragFloat("Base Move Speed", &data.moveSpeed, 0.1f, 0.1f, 20.0f);
+				ImGui::DragFloat("Approach Range", &data.approachStateRange, 0.1f, 1.0f, 100.0f);
+				ImGui::DragFloat("Attack Range", &data.attackStateRange, 0.1f, 1.0f, 50.0f);
+
+				char aiTypeBuffer[64];
+				strncpy_s(aiTypeBuffer, data.aiType.c_str(), sizeof(aiTypeBuffer));
+				if (ImGui::InputText("AI Type", aiTypeBuffer, sizeof(aiTypeBuffer))) {
+					data.aiType = aiTypeBuffer;
+				}
+
+				ImGui::TreePop();
+			}
+		}
+
+		ImGui::Separator();
+		// 調整後のデータをファイルに保存するボタン
+		if (ImGui::Button("Save Enemy Data to JSON")) {
+			if (SaveEnemyData(enemyDataFilePath_)) {
+				Logger("[BattleEnemyManager] 敵ベースデータをJSONファイルに保存しました。\n");
+			}
+			else {
+				ThrowError("[BattleEnemyManager] 敵ベースデータの保存に失敗しました。\n");
+			}
+		}
+
+		ImGui::TreePop();
+	}
+	// ★★★ ----------------------------------------------- ★★★
+
+	ImGui::Separator();
+
 	if (ImGui::TreeNode("アクティブな敵")) {
 		for (size_t i = 0; i < battleEnemies_.size(); ++i) {
 			auto& enemy = battleEnemies_[i];
@@ -959,16 +1050,18 @@ void BattleEnemyManager::ShowDebugInfo() {
 					Vector3 pos = enemy->GetTranslate();
 					ImGui::Text("位置: (%.1f, %.1f, %.1f)", pos.x, pos.y, pos.z);
 
-					// 非const参照で受け取り、元のデータを直接操作する
+					// 非const参照で受け取り、個体のデータを直接操作する (テスト用)
 					BattleEnemyData& enemyData = enemy->GetEnemyData();
 					ImGui::Text("敵ID: %s", enemyData.enemyId.c_str());
 					ImGui::Text("AIタイプ: %s", enemyData.aiType.c_str());
 					ImGui::Text("モデル: %s", enemyData.modelPath.c_str());
-					ImGui::Text("攻撃力: %d", enemyData.attack);
-					ImGui::Text("防御力: %d", enemyData.defense);
-					ImGui::DragFloat("移動速度", &enemyData.moveSpeed, 0.1f, 0.0f, 20.0f);
-					ImGui::DragFloat("攻撃状態に入る距離", &enemyData.attackStateRange, 0.1f, 0.0f, 100.0f);
-					ImGui::DragFloat("追跡状態に入る距離", &enemyData.approachStateRange, 0.1f, 0.0f, 100.0f);
+					ImGui::Text("攻撃力: %d (Base:%d)", enemyData.attack, enemyData.attack); // Base値も表示すると分かりやすい
+					ImGui::Text("防御力: %d (Base:%d)", enemyData.defense, enemyData.defense);
+
+					// 個体の移動速度は、その場でテストするために編集可能にしておく
+					ImGui::DragFloat("移動速度 (Current)", &enemyData.moveSpeed, 0.1f, 0.0f, 20.0f);
+					ImGui::DragFloat("攻撃状態に入る距離 (Current)", &enemyData.attackStateRange, 0.1f, 0.0f, 100.0f);
+					ImGui::DragFloat("追跡状態に入る距離 (Current)", &enemyData.approachStateRange, 0.1f, 0.0f, 100.0f);
 
 					if (ImGui::Button("ダメージ(25)")) {
 						enemy->TakeDamage(25);
@@ -982,10 +1075,12 @@ void BattleEnemyManager::ShowDebugInfo() {
 				}
 			}
 		}
+		// ★ここにあったSaveボタンのコードは削除しました★
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNode("フォーメーション")) {
+		// ... (既存のフォーメーション表示コード)
 		for (const auto& pair : formationMap_) {
 			const auto& formation = pair.second;
 			if (ImGui::TreeNode(formation.formationName.c_str())) {
@@ -993,7 +1088,7 @@ void BattleEnemyManager::ShowDebugInfo() {
 				ImGui::Text("位置数: %zu", formation.positions.size());
 				for (size_t i = 0; i < formation.positions.size(); ++i) {
 					const auto& pos = formation.positions[i];
-					ImGui::Text("  %zu: (%.1f, %.1f, %.1f)", i, pos.x, pos.y, pos.z);
+					ImGui::Text("  %zu: (%.1f, %.1f, %.1f)", i, pos.x, pos.y, pos.z);
 				}
 				if (ImGui::Button("フォーメーション設定")) {
 					SetFormation(formation.formationName);

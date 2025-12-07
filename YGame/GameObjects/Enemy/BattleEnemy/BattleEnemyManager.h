@@ -162,8 +162,9 @@ public:
 
 	///************************* データ管理 *************************///
 
-	// エンカウントデータを読み込み
-	void LoadEncounterData(const std::string& filePath);
+	// 敵データの保存・読み込み
+	bool SaveEnemyData(const std::string& filePath) const;
+	bool LoadEnemyData(const std::string& filePath);
 
 	// 指定エンカウントデータを取得
 	EnemyEncounterData GetEncounterData(const std::string& encounterName) const;
@@ -232,9 +233,6 @@ private:
 	// 戦闘報酬を計算
 	void CalculateBattleRewards();
 
-	// 敵データを読み込み
-	void LoadEnemyData(const std::string& filePath);
-
 	// 戦闘ログを保存
 	void SaveBattleLog(const std::string& filePath);
 
@@ -255,6 +253,7 @@ private:
 	// 敵管理
 	std::vector<std::unique_ptr<BattleEnemy>> battleEnemies_;
 	std::unordered_map<std::string, BattleEnemyData> enemyDataMap_;
+	const std::string enemyDataFilePath_ = "Resources/Json/BattleEnemies/enemy_data.json";
 
 	// 戦闘状態
 	bool isBattleActive_ = false;
