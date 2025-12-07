@@ -97,6 +97,7 @@ group "Externals"
         filename "DirectXTex_Desktop_2022_Win10"
         kind "StaticLib"
         language "C++"
+        toolset "v143"
 
 --------------------------------------------------------------------------------
 -- グループ: Engine (エンジン・コア)
