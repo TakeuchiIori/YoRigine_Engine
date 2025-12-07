@@ -22,6 +22,9 @@ workspace "YoRigine"
     staticruntime "On"
     warnings "Extra"
     flags { "MultiProcessorCompile" }
+
+    -- PlatformToolset
+    toolset "v143"
     
     buildoptions { "/utf-8", "/permissive-" }
     defines { "NOMINMAX", "_WINDOWS" }
