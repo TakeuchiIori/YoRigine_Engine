@@ -41,6 +41,7 @@ namespace YoRigine {
 		void Initialize(const std::string& sceneName);
 		void Update();
 		void Draw();
+		void DrawShadow();
 		void DrawImGui();
 		void DrawGizmo();
 		void Finalize();

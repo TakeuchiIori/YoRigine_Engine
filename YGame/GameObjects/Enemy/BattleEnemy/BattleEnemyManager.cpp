@@ -993,9 +993,7 @@ void BattleEnemyManager::ShowDebugInfo() {
 
 	ImGui::Separator();
 
-	// ★★★ 敵ベースデータの調整セクション (Map Cache) ★★★
-	if (ImGui::TreeNode("★★★ 敵ベースデータ編集 (Map Cache) ★★★")) {
-		// enemyDataMap_ に格納されている全てのベースデータを表示・編集可能にする
+	if (ImGui::TreeNode("敵ベースデータ編集 （これを調整するとその敵全部に反映）")) {
 		for (auto& pair : enemyDataMap_) {
 			BattleEnemyData& data = pair.second;
 
@@ -1034,7 +1032,6 @@ void BattleEnemyManager::ShowDebugInfo() {
 
 		ImGui::TreePop();
 	}
-	// ★★★ ----------------------------------------------- ★★★
 
 	ImGui::Separator();
 

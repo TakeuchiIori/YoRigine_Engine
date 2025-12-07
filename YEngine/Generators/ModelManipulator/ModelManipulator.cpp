@@ -67,6 +67,18 @@ namespace YoRigine {
 		}
 	}
 
+	void ModelManipulator::DrawShadow()
+	{
+		if (!isInitialized_) return;
+		// 全アクティブオブジェクトを描画
+		auto objects = objectManager_->GetAllActiveObjects();
+		for (auto* obj : objects) {
+			if (obj && obj->object && obj->worldTransform) {
+				obj->object->DrawShadow(*obj->worldTransform);
+			}
+		}
+	}
+
 	void ModelManipulator::DrawImGui()
 	{
 #ifdef USE_IMGUI

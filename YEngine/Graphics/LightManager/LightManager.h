@@ -26,8 +26,8 @@ namespace YoRigine {
 	public:
 		struct ShadowmapSettings {
 			float shadowDistance = 1.0f;
-			float orthoWidth = 30.0f;
-			float orthoHeight = 30.0f;
+			float orthoWidth = 100.0f;
+			float orthoHeight = 100.0f;
 			float nearZ = 1.0f;
 			float farZ = 150.0f;
 		};
