@@ -1,5 +1,3 @@
-// GameExport.h
-
 #pragma once
 
 // DLLエクスポート/インポートの制御
@@ -14,10 +12,8 @@
 
 extern "C" {
     // Framework* インスタンスを生成して返す関数
-    // ★ main.exe が DLLから取得する関数 1
     GAME_API Framework* CreateGame();
 
     // Framework* インスタンスを破棄する関数
-    // ★ main.exe が DLLから取得する関数 2
     GAME_API void DestroyGame(Framework* pGame);
 }

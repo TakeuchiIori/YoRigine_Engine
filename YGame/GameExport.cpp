@@ -1,7 +1,5 @@
-// GameExport.cpp
-
 #include "GameExport.h"
-#include "Core/MyGame.h" // ★ あなたのゲームのメインクラスをインクルード
+#include "Core/MyGame.h"
 #include <iostream>
 #include <Debugger/Logger.h>
 
@@ -13,7 +11,6 @@ GAME_API Framework* CreateGame() {
     // MyGame インスタンスを生成
     Framework* gameInstance = new MyGame();
 
-    // ★修正点1: DLL内で Initialize() を実行する！
     // Singletonの不整合を防ぐため、初期化処理をDLLに閉じ込める
     gameInstance->Initialize();
 
@@ -27,7 +24,6 @@ GAME_API void DestroyGame(Framework* pGame) {
     Logger("[DLL] Hot Reload Running... (New Code V3.0)");
 
     if (pGame) {
-        // ★修正点2: DLL内で Finalize() を実行する！
         // DLLが確保したリソースを、DLL内で解放する
         pGame->Finalize();
 
