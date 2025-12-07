@@ -1,11 +1,11 @@
-#include "BattleApproachState.h"
+#include "BattleRushAttackState.h"
 #include "BattleIdleState.h"
 #include "BattleAttackState.h"
 
 /// <summary>
 /// 接近状態更新処理
 /// </summary>
-void BattleApproachState::Update(BattleEnemy& enemy, float dt) {
+void BattleRushAttackState::Update(BattleEnemy& enemy, float dt) {
 	// プレイヤーがいない場合は待機状態へ
 	if (!enemy.GetPlayer()) {
 		enemy.ChangeState(std::make_unique<BattleIdleState>());

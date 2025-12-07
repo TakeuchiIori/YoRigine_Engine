@@ -6,7 +6,7 @@
 /// <summary>
 /// 接近状態
 /// </summary>
-class BattleApproachState : public IEnemyState<BattleEnemy> {
+class BattleRushAttackState : public IEnemyState<BattleEnemy> {
 public:
 	void Enter(BattleEnemy& enemy) override { enemy.SetHasTargetPosition(true); }
 	void Update(BattleEnemy& enemy, float dt) override;

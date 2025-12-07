@@ -1,5 +1,5 @@
 #include "BattleIdleState.h"
-#include "BattleApproachState.h"
+#include "BattleRushAttackState.h"
 
 /// <summary>
 /// ランダムなオフセット位置を生成
@@ -50,7 +50,7 @@ void BattleIdleState::Update(BattleEnemy& enemy, float dt)
 	if (enemy.GetPlayer()) {
 		float dToPlayer = Length(enemy.GetPlayerPosition() - pos);
 		if (dToPlayer < enemy.GetEnemyData().approachStateRange) {
-			enemy.ChangeState(std::make_unique<BattleApproachState>());
+			enemy.ChangeState(std::make_unique<BattleRushAttackState>());
 		}
 	}
 }

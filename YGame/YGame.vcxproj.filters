@@ -135,9 +135,6 @@
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\BattleEnemyManager.h">
       <Filter>YGame\GameObjects\Enemy\BattleEnemy</Filter>
     </ClInclude>
-    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\BattleApproachState.h">
-      <Filter>YGame\GameObjects\Enemy\BattleEnemy\States</Filter>
-    </ClInclude>
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\BattleAttackState.h">
       <Filter>YGame\GameObjects\Enemy\BattleEnemy\States</Filter>
     </ClInclude>
@@ -300,6 +297,7 @@
     <ClInclude Include="UI\TitleUI.h">
       <Filter>YGame\UI</Filter>
     </ClInclude>
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\BattleRushAttackState.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\MyGame.cpp">
@@ -313,9 +311,6 @@
     </ClCompile>
     <ClCompile Include="GameObjects\Enemy\BattleEnemy\BattleEnemyManager.cpp">
       <Filter>YGame\GameObjects\Enemy\BattleEnemy</Filter>
-    </ClCompile>
-    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\BattleApproachState.cpp">
-      <Filter>YGame\GameObjects\Enemy\BattleEnemy\States</Filter>
     </ClCompile>
     <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\BattleAttackState.cpp">
       <Filter>YGame\GameObjects\Enemy\BattleEnemy\States</Filter>
@@ -458,5 +453,6 @@
     <ClCompile Include="UI\TitleUI.cpp">
       <Filter>YGame\UI</Filter>
     </ClCompile>
+    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\BattleRushAttackState.cpp" />
   </ItemGroup>
 </Project>
