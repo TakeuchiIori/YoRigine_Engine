@@ -488,35 +488,37 @@ const char* PlayerCombo::GetStateString(ComboState state) const {
 /// </summary>
 void PlayerCombo::InitializeAttacks()
 {
-	// ① JSON ファイルパス
+	// JSON ファイルパス
 	const std::string path = "Resources/Json/Combo/AttackData.json";
 
-	// ② AttackDatabase（グローバル）からロード
+	// AttackDatabase（グローバル）からロード
 	if (!AttackDatabase::LoadFromFile(path))
 	{
 		OutputDebugStringA("[PlayerCombo] AttackData.json load failed!\n");
 		return;
 	}
 
-	// ③ 現行の attackDatabase_ を初期化
+	// 現行の attackDatabase_ を初期化
 	attackDatabase_.clear();
 
 	auto& list = AttackDatabase::Get();
 
-	// ④ AttackType ごとに仕分け
+	// AttackType ごとに仕分け
 	for (auto& atk : list)
 	{
 		attackDatabase_[atk.type].push_back(atk);
 	}
 
-	// ⑤ 状態の初期化
+	// 状態の初期化
 	currentAttack_ = nullptr;
 	comboChain_.clear();
 	currentState_ = ComboState::Idle;
 	previousState_ = ComboState::Idle;
+
+	// 初期状態のステータスやタイマー
 	stateTimer_ = 0.0f;
 	comboTimer_ = 0.0f;
-
+	currentCC_ = ccConfig_.maxCC;
 	OutputDebugStringA("[PlayerCombo] AttackData loaded and grouped by AttackType.\n");
 }
 
