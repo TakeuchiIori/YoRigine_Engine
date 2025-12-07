@@ -739,6 +739,7 @@ void BattleEnemyManager::LoadEnemyData([[maybe_unused]] const std::string& fileP
 		alienData.defense = 15;
 		alienData.moveSpeed = 4.0f;
 		alienData.aiType = "aggressive";
+		alienData.attackPatterns = { "rush", "leap","spin","charge","combo"};
 		enemyDataMap_["alien"] = alienData;
 
 		BattleEnemyData blobData;
@@ -749,6 +750,7 @@ void BattleEnemyManager::LoadEnemyData([[maybe_unused]] const std::string& fileP
 		blobData.defense = 20;
 		blobData.moveSpeed = 3.5f;
 		blobData.aiType = "defensive";
+		blobData.attackPatterns = { "rush", "leap","spin","charge","combo" };
 		enemyDataMap_["green_blob"] = blobData;
 
 		BattleEnemyData mushroomData;
@@ -759,6 +761,7 @@ void BattleEnemyManager::LoadEnemyData([[maybe_unused]] const std::string& fileP
 		mushroomData.defense = 25;
 		mushroomData.moveSpeed = 2.5f;
 		mushroomData.aiType = "support";
+		mushroomData.attackPatterns = { "rush", "leap","spin","charge","combo" };
 		enemyDataMap_["mushnub"] = mushroomData;
 
 		Logger("[BattleEnemyManager] 敵データ読み込み完了: " + std::to_string(enemyDataMap_.size()) + "種類\n");

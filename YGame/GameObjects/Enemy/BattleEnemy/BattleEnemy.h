@@ -1,9 +1,12 @@
 #pragma once
 #include "../Generators/Object3D/BaseObject.h"
 #include "../IEnemyState.h"
+
 #include <string>
 #include <vector>
 #include <memory>
+#include <cmath>
+#include <random>
 
 ///************************* 状態定義 *************************///
 enum class BattleEnemyState {
@@ -34,6 +37,7 @@ struct BattleEnemyData {
 	float attackStateRange = 10.0f;
 	std::string aiType = "aggressive";
 
+	std::vector<std::string> attackPatterns = { "rush" };
 	// JSONファイルから敵データを読み込む
 	static BattleEnemyData LoadFromJson(const std::string& enemyId);
 };

@@ -8,7 +8,7 @@
 #include <json.hpp>
 
 #include "States/BattleIdleState.h"
-#include "States/BattleRushAttackState.h"
+#include "States/Attack/BattleRushAttackState.h"
 #include "States/BattleDamageState.h"
 #include "States/BattleDownedState.h"
 #include "States/BattleDeadState.h"
@@ -372,6 +372,13 @@ BattleEnemyData BattleEnemyData::LoadFromJson(const std::string& enemyId) {
 				data.defense = enemyJson.value("defense", 10);
 				data.moveSpeed = enemyJson.value("moveSpeed", 5.0f);
 				data.aiType = enemyJson.value("aiType", "aggressive");
+
+				if (enemyJson.contains("attackPatterns") && enemyJson["attackPatterns"].is_array()) {
+					data.attackPatterns.clear();
+					for (const auto& pattern : enemyJson["attackPatterns"]) {
+						data.attackPatterns.push_back(pattern.get<std::string>());
+					}
+				}
 
 				found = true;
 				OutputDebugStringA(("[BattleEnemyData] Loaded from JSON: " + enemyId + ", HP=" + std::to_string(data.hp) + "\n").c_str());

@@ -135,7 +135,7 @@
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\BattleEnemyManager.h">
       <Filter>YGame\GameObjects\Enemy\BattleEnemy</Filter>
     </ClInclude>
-    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\BattleRushAttackState.h">
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleRushAttackState.h">
       <Filter>YGame\GameObjects\Enemy\BattleEnemy\States</Filter>
     </ClInclude>
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\BattleDamageState.h">
@@ -298,6 +298,11 @@
       <Filter>YGame\UI</Filter>
     </ClInclude>
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\BattleApproachState.h" />
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleLeapAttackState.h" />
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleSpinAttackState.h" />
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleChargeAttackState.h" />
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\AttackSelector.h" />
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleComboAttackState.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\MyGame.cpp">
@@ -312,7 +317,7 @@
     <ClCompile Include="GameObjects\Enemy\BattleEnemy\BattleEnemyManager.cpp">
       <Filter>YGame\GameObjects\Enemy\BattleEnemy</Filter>
     </ClCompile>
-    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\BattleRushAttackState.cpp">
+    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleRushAttackState.cpp">
       <Filter>YGame\GameObjects\Enemy\BattleEnemy\States</Filter>
     </ClCompile>
     <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\BattleDamageState.cpp">
@@ -454,5 +459,9 @@
       <Filter>YGame\UI</Filter>
     </ClCompile>
     <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\BattleApproachState.cpp" />
+    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleLeapAttackState.cpp" />
+    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleSpinAttackState.cpp" />
+    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleChargeAttackState.cpp" />
+    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleComboAttackState.cpp" />
   </ItemGroup>
 </Project>

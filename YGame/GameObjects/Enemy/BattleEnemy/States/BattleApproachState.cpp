@@ -1,7 +1,8 @@
 #include "BattleApproachState.h"
 #include "BattleIdleState.h"
-#include "BattleRushAttackState.h"
+#include "Attack/BattleRushAttackState.h"
 
+#include "Attack/AttackSelector.h"
 /// <summary>
 /// 接近状態更新処理
 /// </summary>
@@ -26,6 +27,6 @@ void BattleApproachState::Update(BattleEnemy& enemy, float dt) {
 
 	// 一定距離以内で攻撃状態へ
 	if (dist < enemy.GetEnemyData().attackStateRange) {
-		enemy.ChangeState(std::make_unique<BattleRushAttackState>());
+		enemy.ChangeState(AttackSelector::SelectRandomAttack(enemy));
 	}
 }

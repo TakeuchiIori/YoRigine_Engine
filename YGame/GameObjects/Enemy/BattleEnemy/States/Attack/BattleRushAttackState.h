@@ -1,7 +1,6 @@
 #pragma once
-#include "../../IEnemyState.h"
-#include "../BattleEnemy.h"
-#include <random>
+#include "../../../IEnemyState.h"
+#include "../../BattleEnemy.h"
 
 /// <summary>
 /// 攻撃状態

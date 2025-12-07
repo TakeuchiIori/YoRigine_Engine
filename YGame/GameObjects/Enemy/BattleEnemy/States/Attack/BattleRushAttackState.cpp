@@ -1,5 +1,5 @@
 #include "BattleRushAttackState.h"
-#include "BattleIdleState.h"
+#include "../BattleIdleState.h"
 #include <cmath>
 
 /// <summary>
