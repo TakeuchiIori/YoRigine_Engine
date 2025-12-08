@@ -19,6 +19,9 @@
     <Filter Include="YGame\GameObjects\Enemy\BattleEnemy\States">
       <UniqueIdentifier>{04C07588-F027-3C56-5993-506C451A5342}</UniqueIdentifier>
     </Filter>
+    <Filter Include="YGame\GameObjects\Enemy\BattleEnemy\States\Attack">
+      <UniqueIdentifier>{0BEC89A5-77B2-E6C1-C00D-75242C135526}</UniqueIdentifier>
+    </Filter>
     <Filter Include="YGame\GameObjects\Enemy\FieldEnemy">
       <UniqueIdentifier>{698E75F3-55CA-785D-BEDC-9054AA372178}</UniqueIdentifier>
     </Filter>
@@ -135,7 +138,25 @@
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\BattleEnemyManager.h">
       <Filter>YGame\GameObjects\Enemy\BattleEnemy</Filter>
     </ClInclude>
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\AttackSelector.h">
+      <Filter>YGame\GameObjects\Enemy\BattleEnemy\States\Attack</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleChargeAttackState.h">
+      <Filter>YGame\GameObjects\Enemy\BattleEnemy\States\Attack</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleComboAttackState.h">
+      <Filter>YGame\GameObjects\Enemy\BattleEnemy\States\Attack</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleLeapAttackState.h">
+      <Filter>YGame\GameObjects\Enemy\BattleEnemy\States\Attack</Filter>
+    </ClInclude>
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleRushAttackState.h">
+      <Filter>YGame\GameObjects\Enemy\BattleEnemy\States\Attack</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleSpinAttackState.h">
+      <Filter>YGame\GameObjects\Enemy\BattleEnemy\States\Attack</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\BattleApproachState.h">
       <Filter>YGame\GameObjects\Enemy\BattleEnemy\States</Filter>
     </ClInclude>
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\BattleDamageState.h">
@@ -297,12 +318,6 @@
     <ClInclude Include="UI\TitleUI.h">
       <Filter>YGame\UI</Filter>
     </ClInclude>
-    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\BattleApproachState.h" />
-    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleLeapAttackState.h" />
-    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleSpinAttackState.h" />
-    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleChargeAttackState.h" />
-    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\AttackSelector.h" />
-    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleComboAttackState.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\MyGame.cpp">
@@ -317,7 +332,22 @@
     <ClCompile Include="GameObjects\Enemy\BattleEnemy\BattleEnemyManager.cpp">
       <Filter>YGame\GameObjects\Enemy\BattleEnemy</Filter>
     </ClCompile>
+    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleChargeAttackState.cpp">
+      <Filter>YGame\GameObjects\Enemy\BattleEnemy\States\Attack</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleComboAttackState.cpp">
+      <Filter>YGame\GameObjects\Enemy\BattleEnemy\States\Attack</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleLeapAttackState.cpp">
+      <Filter>YGame\GameObjects\Enemy\BattleEnemy\States\Attack</Filter>
+    </ClCompile>
     <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleRushAttackState.cpp">
+      <Filter>YGame\GameObjects\Enemy\BattleEnemy\States\Attack</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleSpinAttackState.cpp">
+      <Filter>YGame\GameObjects\Enemy\BattleEnemy\States\Attack</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\BattleApproachState.cpp">
       <Filter>YGame\GameObjects\Enemy\BattleEnemy\States</Filter>
     </ClCompile>
     <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\BattleDamageState.cpp">
@@ -458,10 +488,5 @@
     <ClCompile Include="UI\TitleUI.cpp">
       <Filter>YGame\UI</Filter>
     </ClCompile>
-    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\BattleApproachState.cpp" />
-    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleLeapAttackState.cpp" />
-    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleSpinAttackState.cpp" />
-    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleChargeAttackState.cpp" />
-    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleComboAttackState.cpp" />
   </ItemGroup>
 </Project>

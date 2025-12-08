@@ -111,18 +111,18 @@
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleComboAttackState.h" />
-    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\AttackSelector.h" />
-    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleChargeAttackState.h" />
-    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleSpinAttackState.h" />
-    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleLeapAttackState.h" />
     <ClInclude Include="Core\MyGame.h" />
     <ClInclude Include="GameAPI.h" />
     <ClInclude Include="GameExport.h" />
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\BattleEnemy.h" />
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\BattleEnemyManager.h" />
-    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\BattleApproachState.h" />
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\AttackSelector.h" />
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleChargeAttackState.h" />
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleComboAttackState.h" />
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleLeapAttackState.h" />
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleRushAttackState.h" />
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleSpinAttackState.h" />
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\BattleApproachState.h" />
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\BattleDamageState.h" />
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\BattleDeadState.h" />
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\BattleDownedState.h" />
@@ -178,16 +178,16 @@
     <ClInclude Include="UI\TitleUI.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleComboAttackState.cpp" />
-    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleChargeAttackState.cpp" />
-    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleSpinAttackState.cpp" />
-    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleLeapAttackState.cpp" />
     <ClCompile Include="Core\MyGame.cpp" />
     <ClCompile Include="GameExport.cpp" />
     <ClCompile Include="GameObjects\Enemy\BattleEnemy\BattleEnemy.cpp" />
     <ClCompile Include="GameObjects\Enemy\BattleEnemy\BattleEnemyManager.cpp" />
-    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\BattleApproachState.cpp" />
+    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleChargeAttackState.cpp" />
+    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleComboAttackState.cpp" />
+    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleLeapAttackState.cpp" />
     <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleRushAttackState.cpp" />
+    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleSpinAttackState.cpp" />
+    <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\BattleApproachState.cpp" />
     <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\BattleDamageState.cpp" />
     <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\BattleDeadState.cpp" />
     <ClCompile Include="GameObjects\Enemy\BattleEnemy\States\BattleDownedState.cpp" />
