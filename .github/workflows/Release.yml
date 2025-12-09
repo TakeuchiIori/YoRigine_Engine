@@ -1,8 +1,8 @@
-name: Release
+name: ReleaseBuild
 on:
   push:
     branches:
-      -'**' 
+      - '**' 
 env:
   SOLUTION_FILE_PATH: YoRigine.sln
   CONFIGURATION: Release
@@ -19,7 +19,7 @@ jobs:
       - name: Run Premake to Generate Solution
         run: |
           # リポジトリにあるバッチファイルを実行
-          .\premake.bat 
+          .premake.bat 
       # -----------------------------------
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
