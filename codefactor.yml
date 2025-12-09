@@ -1,5 +1,2 @@
-exclude:
-  - "Externals/DirectTex/**"
-  - "Externals/assimp/**"
-  - "Externals/ImGui/**"
-  - "Externals/nlohmann/**"
+exclude_patterns:
+  - "Externals/**"
