@@ -1,44 +1,13 @@
 #pragma once
 #include "../Generators/Object3D/BaseObject.h"
 #include "../IEnemyState.h"
+#include "BattleEnemyData.h"
 
 #include <string>
 #include <vector>
 #include <memory>
 #include <cmath>
 #include <random>
-
-///************************* 状態定義 *************************///
-enum class BattleEnemyState {
-	Idle,       // 待機
-	Approach,   // 接近
-	Attack,     // 攻撃
-	Damaged,    // 被弾
-	Dead        // 撃破
-};
-
-///************************* 敵データ構造体 *************************///
-struct BattleEnemyData {
-	std::string enemyId;
-	std::string modelPath;
-
-	int currentHp_;
-	int maxHp_;
-
-	int level = 1;
-	int hp = 100;
-	int attack = 15;
-	int defense = 10;
-	float moveSpeed = 5.0f;
-
-	// 接近状態に入る距離
-	float approachStateRange = 15.0f;
-	// 攻撃状態に入る距離
-	float attackStateRange = 10.0f;
-	std::string aiType = "aggressive";
-
-	std::vector<std::string> attackPatterns = { "rush","spin","charge","combo","leap"};
-};
 
 class Player;
 
@@ -137,62 +106,52 @@ public:
 	BattleEnemyData& GetEnemyData() { return enemyData_; }
 	// 生存フラグ参照
 	bool& IsAlive() { return isAlive_; }
-
 	// ダメージ点滅中か参照
 	bool& IsDamageBlinking() { return isDamageBlinking_; }
-
 	// 無敵状態か参照
 	bool& IsInvincible() { return isInvincible_; }
-
 	// 現在HPを取得
 	int GetCurrentHP() const { return enemyData_.currentHp_; }
-
 	// 最大HPを取得
 	int GetMaxHP() const { return enemyData_.maxHp_; }
 
+
 	// ターゲット位置を取得
 	Vector3 GetTargetPosition() const { return targetPosition_; }
-
 	// ターゲット位置を設定
 	void SetTargetPosition(const Vector3& pos) { targetPosition_ = pos; hasTargetPosition_ = true; }
 
+
 	// プレイヤーを設定
 	void SetPlayer(Player* player) { player_ = player; }
-
 	// プレイヤーを取得
 	Player* GetPlayer() const { return player_; }
-
 	// プレイヤーの位置を取得
 	Vector3 GetPlayerPosition() const;
-
 	// 最後に確認したプレイヤー位置を設定
 	void SetLastKnownPlayerPosition(const Vector3& pos) { lastKnownPlayerPosition_ = pos; hasValidTarget_ = true; }
-
 	// 最後に確認したプレイヤー位置を取得
 	Vector3 GetLastKnownPlayerPosition() const { return lastKnownPlayerPosition_; }
 
+
 	// 有効なターゲットがあるか
 	bool HasValidTarget() const { return hasValidTarget_; }
-
 	// 位置を取得
 	Vector3 GetTranslate() const { return wt_.translate_; }
 	void SetTranslate(const Vector3& pos) { wt_.translate_ = pos; }
-
-
 	// Y軸回転を設定
 	void SetRotationY(float y) { wt_.rotate_.y = y; }
-
 	// Y軸回転を取得
 	float GetRotationY() const { return wt_.rotate_.y; }
-
 	// X軸回転を取得（参照）
 	float& GetRotationX() { return wt_.rotate_.x; }
-
 	// Z軸回転を取得（参照）
 	float& GetRotationZ() { return wt_.rotate_.z; }
-
 	// 移動到達閾値を取得
 	float GetArrivalThreshold() const { return arrivalThreshold_; }
+
+	// ノックバックデータを取得
+	const KnockbackData& GetKnockbackData() { return knockbackData_; }
 
 	///************************* 攻撃・エフェクト処理 *************************///
 
@@ -205,8 +164,11 @@ public:
 	// ダメージ点滅更新
 	void UpdateBlinking(float dt);
 
-	// くらくら状態更新
-	void UpdateDizziness(float dt);
+
+	// ノックバック開始
+	void StartKnockback(const Vector3& direction, float power, float duration);
+	// ノックバック更新
+	void UpdateKnockback(float dt);
 
 	///************************* デバッグ用 *************************///
 
@@ -249,4 +211,7 @@ private:
 	// ダメージ点滅管理
 	float blinkTimer_ = 0.0f;
 	bool isDamageBlinking_ = false;
+
+	//	ノックバックデータ
+	KnockbackData knockbackData_;
 };

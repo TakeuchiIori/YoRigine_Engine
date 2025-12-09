@@ -38,6 +38,7 @@ struct AttackData {
 	// ダメージ・効果
 	float baseDamage;               // 基本ダメージ
 	float knockback;                // ノックバック力
+	float knockbackDuaration;       // ノックバック持続時間
 	Vector3 attackRange;            // 攻撃範囲（x:幅, y:高さ, z:奥行）
 
 	// CC（コンバットコスト）システム
@@ -61,12 +62,12 @@ struct AttackData {
 
 	// 全項目指定コンストラクタ
 	AttackData(const std::string& n, const std::string& anim, AttackType t,
-		float dur, float rec, float window, float dmg, float kb,
+		float dur, float rec, float window, float dmg, float kb, float kbd,
 		const Vector3& range, int cc, int ccHit, bool cancel, bool chain,
 		const std::vector<AttackType>& preferred, bool launch, bool wall, bool ground,
 		const std::string& fx, float animSpeed = 1.0f)
 		: name(n), animationName(anim), type(t), duration(dur), recovery(rec),
-		continueWindow(window), baseDamage(dmg), knockback(kb), attackRange(range),
+		continueWindow(window), baseDamage(dmg), knockback(kb), knockbackDuaration(kbd), attackRange(range),
 		ccCost(cc), ccOnHit(ccHit), canCancel(cancel), canChainToAny(chain),
 		preferredNext(preferred), launches(launch), wallBounce(wall),
 		groundBounce(ground), effect(fx), motionSpeed(animSpeed) {
@@ -115,6 +116,7 @@ SERIALIZE_FIELD(AttackData, recovery)
 SERIALIZE_FIELD(AttackData, continueWindow)
 SERIALIZE_FIELD(AttackData, baseDamage)
 SERIALIZE_FIELD(AttackData, knockback)
+SERIALIZE_FIELD(AttackData, knockbackDuaration)
 SERIALIZE_FIELD(AttackData, attackRange)
 SERIALIZE_FIELD(AttackData, ccCost)
 SERIALIZE_FIELD(AttackData, ccOnHit)

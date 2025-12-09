@@ -271,8 +271,9 @@ void AttackDataEditor::DrawAttackDetail()
 	if (ImGui::CollapsingHeader("ダメージ & 効果", ImGuiTreeNodeFlags_None))
 	{
 		changed |= ImGui::InputFloat("基本ダメージ", &attack.baseDamage, 1.0f, 10.0f, "%.1f");
-		//changed |= ImGui::InputFloat("ノックバック", &attack.knockback, 0.1f, 1.0f, "%.1f");
-		//changed |= ImGui::InputFloat3("攻撃範囲", &attack.attackRange.x);
+		changed |= ImGui::InputFloat("ノックバック", &attack.knockback, 0.1f, 1.0f, "%.1f");
+		changed |= ImGui::InputFloat("ノックバック持続時間", &attack.knockbackDuaration, 0.1f, 1.0f, "%.2f");
+		changed |= ImGui::InputFloat3("攻撃範囲", &attack.attackRange.x);
 
 		char effectBuffer[256];
 		std::snprintf(effectBuffer, sizeof(effectBuffer), "%s", attack.effect.c_str());
@@ -373,7 +374,8 @@ void AttackDataEditor::NewAttack()
 	data.recovery = 0.2f;
 	data.continueWindow = 0.3f;
 	data.baseDamage = 30.0f;
-	data.knockback = 3.0f;
+	data.knockback = 5.0f;
+	data.knockbackDuaration = 0.5f;
 	data.attackRange = { 2.0f, 1.0f, 1.5f };
 	data.ccCost = 1;
 	data.ccOnHit = 0;

@@ -101,7 +101,7 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>$(SolutionDir)..\generated\outputs\Release\YMath.lib;$(SolutionDir)..\generated\outputs\Release\YoRigine.lib;DirectXTex.lib;d3d12.lib;dxgi.lib;dxguid.lib;dxcompiler.lib;dinput8.lib;xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)..\generated\outputs\Release\YMath.lib;$(SolutionDir)..\generated\outputs\Release\YEngine.lib;DirectXTex.lib;d3d12.lib;dxgi.lib;dxguid.lib;dxcompiler.lib;dinput8.lib;xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)..\generated\outputs\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ImportLibrary>$(SolutionDir)..\generated\outputs\Release\YGame.lib</ImportLibrary>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
@@ -115,6 +115,7 @@
     <ClInclude Include="GameAPI.h" />
     <ClInclude Include="GameExport.h" />
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\BattleEnemy.h" />
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\BattleEnemyData.h" />
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\BattleEnemyManager.h" />
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\AttackSelector.h" />
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleChargeAttackState.h" />
@@ -239,8 +240,8 @@
     <ProjectReference Include="..\YMath\YMath.vcxproj">
       <Project>{286A750E-947E-9DBF-5D00-411FC9D399F0}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\YEngine\YoRigine.vcxproj">
-      <Project>{ABFC03C6-97C9-5ED1-C0E2-4C79AC0E945F}</Project>
+    <ProjectReference Include="..\YEngine\YEngine.vcxproj">
+      <Project>{947FB36F-005F-320B-0977-BDE175D5986C}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Externals\ImGui\ImGui.vcxproj">
       <Project>{C0FF640D-2C14-8DBE-F595-301E616989EF}</Project>

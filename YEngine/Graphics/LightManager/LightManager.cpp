@@ -1,6 +1,8 @@
 #include "LightManager.h"
 // C++
 #include <algorithm>
+#include <vector>
+#include <limits>
 
 // Engine
 #include "DirectXCommon.h"
@@ -17,10 +19,7 @@
 namespace YoRigine {
 	//=====================================================================
 	// シングルトン取得
-	//=====================================================================
-	/// <summary>
-	/// LightManager のシングルトンインスタンスを取得
-	/// </summary>
+	//=====================================================================>
 	LightManager* LightManager::GetInstance()
 	{
 		static LightManager instance;
@@ -30,9 +29,6 @@ namespace YoRigine {
 	//=====================================================================
 	// 初期化
 	//=====================================================================
-	/// <summary>
-	/// ライト関連のGPUリソースを作成し、デフォルト値を設定
-	/// </summary>
 	void LightManager::Initialize()
 	{
 		// Object3d 共通処理取得
@@ -51,9 +47,6 @@ namespace YoRigine {
 	//=====================================================================
 	// コマンドリストへ CBV 設定
 	//=====================================================================
-	/// <summary>
-	/// 各ライト定数バッファをパイプラインにセット
-	/// </summary>
 	void LightManager::SetCommandList()
 	{
 		// カメラ位置を毎フレーム更新（Specular 用）
@@ -66,9 +59,6 @@ namespace YoRigine {
 	//=====================================================================
 	// 平行光源リソース作成
 	//=====================================================================
-	/// <summary>
-	/// 平行光源用の定数バッファを作成し、初期値を設定
-	/// </summary>
 	void LightManager::CreateDirectionalLightResource()
 	{
 		directionalLightResource_ = object3dCommon_->GetDxCommon()->CreateBufferResource(sizeof(DirectionalLight));
@@ -83,9 +73,6 @@ namespace YoRigine {
 	//=====================================================================
 	// ポイントライトリソース作成
 	//=====================================================================
-	/// <summary>
-	/// ポイントライト用の定数バッファを作成し、初期値を設定
-	/// </summary>
 	void LightManager::CreatePointLightResource()
 	{
 		pointLightResource_ = object3dCommon_->GetDxCommon()->CreateBufferResource(sizeof(PointLight));
@@ -122,6 +109,9 @@ namespace YoRigine {
 		spotLight_->enableSpotLight = false;
 	}
 
+	/*==========================================================================
+	影のリソース作成
+	//========================================================================*/
 	void LightManager::CreateShadowResource()
 	{
 		shadowResource_ = object3dCommon_->GetDxCommon()->CreateBufferResource(sizeof(ShadowMatrix));
@@ -131,43 +121,68 @@ namespace YoRigine {
 		shadow_->lightViewProjection = MakeIdentity4x4();
 	}
 
+
+	/*==========================================================================
+	影の計算処理（現状平行光源のみ）
+	//========================================================================*/
 	void LightManager::UpdateShadowMatrix(Camera* camera)
 	{
 		camera_ = camera;
 
-		// 1. ライト方向は必ず正規化して使う
+		// ライト方向は必ず正規化して使う
 		Vector3 lightDir = Normalize(directionalLight_->direction);
 
-		// 2. カメラ位置を中心にライトをオフセット
+		// ライト用ビュー行列の計算に必要なターゲットとライト位置を計算 (View行列の基準点)
 		Vector3 target = camera_->transform_.translate;
-		float   distance = shadowmapSettings_.shadowDistance;
-		Vector3 lightPos = target - lightDir * distance;
+		// shadowDistance は、ライトビュー行列の基準点オフセットにのみ使用されます
+		Vector3 lightPos = target - lightDir * shadowmapSettings_.shadowDistance;
 
-		// 3. ライト用ビュー行列（up は世界の Y 軸）shas
+		// ライト用ビュー行列（up は世界の Y 軸）
 		Matrix4x4 lightView =
 			MatrixLookAtLH(lightPos, target, Vector3(0.0f, 1.0f, 0.0f));
+		Matrix4x4 cameraInverseVP = Inverse(camera_->viewProjectionMatrix_);
 
-		// 4. near / far の関係が崩れないように補正（最悪でも far > near にする）
-		float nearZ = shadowmapSettings_.nearZ;
-		float farZ = shadowmapSettings_.farZ;
-		if (farZ <= nearZ + 0.01f) {
-			farZ = nearZ + 0.01f;
+		// NDC空間の8つの角をワールド座標、さらにライト空間に変換し、AABBを計算
+		std::vector<Vector3> frustumCornersNDC = {
+			// Near Plane (Z=0.0f or -1.0f, depending on API. Assuming DirectX Z=[0, 1] based on context.)
+			{ -1.0f, -1.0f, 0.0f }, { -1.0f,  1.0f, 0.0f },
+			{  1.0f,  1.0f, 0.0f }, {  1.0f, -1.0f, 0.0f },
+			// Far Plane (Z=1.0f)
+			{ -1.0f, -1.0f, 1.0f }, { -1.0f,  1.0f, 1.0f },
+			{  1.0f,  1.0f, 1.0f }, {  1.0f, -1.0f, 1.0f },
+		};
+
+		float minX = std::numeric_limits<float>::max();
+		float minY = std::numeric_limits<float>::max();
+		// Z軸は拡張するため、初期値にはカメラ視錐台の最も遠い点(maxZ)を基準として使う
+		float minZ = std::numeric_limits<float>::max();
+		float maxX = std::numeric_limits<float>::min();
+		float maxY = std::numeric_limits<float>::min();
+		float maxZ = std::numeric_limits<float>::min();
+
+		for (const auto& cornerNDC : frustumCornersNDC) {
+			Vector3 cornerWorld = Transform(cornerNDC, cameraInverseVP);
+			Vector3 cornerLight = Transform(cornerWorld, lightView);
+
+			// AABB（軸並行バウンディングボックス）を更新
+			minX = std::min(minX, cornerLight.x);
+			maxX = std::max(maxX, cornerLight.x);
+			minY = std::min(minY, cornerLight.y);
+			maxY = std::max(maxY, cornerLight.y);
+			minZ = std::min(minZ, cornerLight.z); // カメラ視錐台の最も手前と奥のZを記録
+			maxZ = std::max(maxZ, cornerLight.z);
 		}
 
-		// 5. 正射影行列
-		float w = shadowmapSettings_.orthoWidth;
-		float h = shadowmapSettings_.orthoHeight;
+		float lightFrustumFarZ = maxZ;
+		float lightFrustumNearZ = lightFrustumFarZ - shadowmapSettings_.farZ;
+		Matrix4x4 lightProj = MakeOrthographicMatrix(minX, maxY, maxX, minY, lightFrustumNearZ, lightFrustumFarZ);
 
-		Matrix4x4 lightProj =
-			MakeOrthographicMatrix(-w, h, w, -h, nearZ, farZ);
-
-		// 6. 最終的なライトビュー射影行列
+		// 最終的なライトビュー射影行列
 		shadow_->lightViewProjection = lightView * lightProj;
 	}
-
-	//=====================================================================
-	// setter 関数群（summary 省略版）
-	//=====================================================================
+	/*==========================================================================
+	平行光源のセット
+	//========================================================================*/
 	void LightManager::SetDirectionalLight(const Vector4& color, const Vector3& direction, float intensity, bool enable)
 	{
 		directionalLight_->color = color;
@@ -175,7 +190,9 @@ namespace YoRigine {
 		directionalLight_->intensity = intensity;
 		directionalLight_->enableDirectionalLight = enable;
 	}
-
+	/*==========================================================================
+	ポイントライトのセット
+	//========================================================================*/
 	void LightManager::SetPointLight(const Vector4& color, const Vector3& position, float intensity, float radius, float decay, bool enable)
 	{
 		pointLight_->color = color;
@@ -189,9 +206,6 @@ namespace YoRigine {
 	//=====================================================================
 	// ImGui ライティング編集ウィンドウ
 	//=====================================================================
-	/// <summary>
-	/// ImGui 上でライトを操作できるエディタ
-	/// </summary>
 	void LightManager::ShowLightingEditor()
 	{
 #ifdef USE_IMGUI
@@ -307,22 +321,6 @@ namespace YoRigine {
 		if (ImGui::SliderFloat("Spot Falloff Start", &spotLightCosFalloffStart, 0.0f, 1.0f, "%.2f")) {
 			spotLight_->cosFalloffStart = spotLightCosFalloffStart;
 		}
-
-		//------------------------------------------------------------
-		// 鏡面反射（Specular）
-		//------------------------------------------------------------
-		ImGui::Separator();
-		ImGui::Text("Specular Reflection");
-
-		//bool specularEnabled = IsSpecularEnabled();
-		//if (ImGui::Checkbox("Enable Specular", &specularEnabled)) {
-		//	SetSpecularEnabled(specularEnabled);
-		//}
-
-		//bool isHalfVector = IsHalfVectorUsed();
-		//if (ImGui::Checkbox("Use Half Vector", &isHalfVector)) {
-		//	SetHalfVectorUsed(isHalfVector);
-		//}
 
 		//------------------------------------------------------------
 		// シャドウマップ	
