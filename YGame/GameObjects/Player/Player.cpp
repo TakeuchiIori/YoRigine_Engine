@@ -374,7 +374,9 @@ void Player::OnExitCollision([[maybe_unused]] BaseCollider* self, BaseCollider* 
 /// </summary>
 void Player::OnDirectionCollision([[maybe_unused]] BaseCollider* self, BaseCollider* other, [[maybe_unused]] HitDirection dir) {
 	if (other->GetTypeID() == static_cast<uint32_t>(CollisionTypeIdDef::kBattleEnemy)) {
-		// TODO: 方向別の衝突処理を追加
+		// 方向ヒット状態へ遷移
+		combat_->SetHitDirection(dir);
+		combat_->ChangeState(CombatState::Hit);
 	}
 }
 

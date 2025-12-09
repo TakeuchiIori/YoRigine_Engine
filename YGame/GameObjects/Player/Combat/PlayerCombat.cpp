@@ -10,7 +10,7 @@
 #include "../DodgingCombat/DodgingCombatState.h"
 #include "../StunnedCombat/StunnedCombatState.h"
 #include "../DeadCombat/DeadCombatState.h"
-
+#include "../HitCombat/HitCombatState.h"
 #ifdef USE_IMGUI
 #include "imgui.h"
 #endif
@@ -48,7 +48,7 @@ void PlayerCombat::InitializeStateMachine() {
 	stateMachine_.RegisterState<DodgingCombatState>(CombatState::Dodging, this);
 	stateMachine_.RegisterState<StunnedCombatState>(CombatState::Stunned, this);
 	stateMachine_.RegisterState<DeadCombatState>(CombatState::Dead, this);
-
+	stateMachine_.RegisterState<HitCombatState>(CombatState::Hit, this);
 	// 初期状態を設定
 	stateMachine_.SetInitialState(CombatState::Idle);
 
@@ -215,6 +215,24 @@ bool PlayerCombat::CanAct() const {
 }
 
 /// <summary>
+/// ガード中か判定
+/// </summary>
+/// <returns></returns>
+bool PlayerCombat::IsGuarding() const
+{
+	return GetCurrentState() == CombatState::Guarding;
+}
+
+/// <summary>
+/// ヒット中か判定
+/// </summary>
+/// <returns></returns>
+bool PlayerCombat::IsHit() const
+{
+	return GetCurrentState() == CombatState::Hit;
+}
+
+/// <summary>
 /// デバッグ表示（ImGui）
 /// デバッグ情報・コンボ状態・操作ボタンの確認用
 /// </summary>
@@ -226,7 +244,7 @@ void PlayerCombat::ShowDebugImGui() {
 		// 現在のステート情報
 		//---------------------------------------------------------------------------------------------
 		ImGui::Text("=== 戦闘状態 (StateMachine) ===");
-		const char* stateNames[] = { "Idle", "Attacking", "Guarding", "Dodging", "Stunned" };
+		const char* stateNames[] = { "Idle", "Attacking", "Guarding", "Dodging", "Stunned","Dead","Hit"};
 		ImGui::Text("Current State: %s", stateNames[static_cast<int>(GetCurrentState())]);
 		ImGui::Text("Previous State: %s", stateNames[static_cast<int>(GetPreviousState())]);
 		ImGui::Text("State Changed: %s", StateChanged() ? "Yes" : "No");
