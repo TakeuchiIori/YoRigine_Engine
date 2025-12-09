@@ -61,6 +61,10 @@ public:
 	// 方向付き衝突（前・後など）
 	void OnDirectionCollision(BaseCollider* self, BaseCollider* other, HitDirection dir) override;
 
+	// 方向付き衝突開始時
+	void OnEnterDirectionCollision([[maybe_unused]] BaseCollider* self, BaseCollider* other, [[maybe_unused]] HitDirection dir);
+
+
 	///************************* 状態管理 *************************///
 
 	// 状態を変更

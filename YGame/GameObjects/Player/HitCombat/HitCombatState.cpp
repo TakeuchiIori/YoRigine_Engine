@@ -18,7 +18,7 @@ void HitCombatState::OnEnter()
 	movement->SetCanRotate(false);
 	movement->ForceStop();
 
-    std::string motionName = "Impact3"; // デフォルト
+    std::string motionName = "Impact2"; // デフォルト
 
 	// 衝突方向に応じたモーション選択
     switch (combat_->GetHitDirection())
@@ -26,7 +26,7 @@ void HitCombatState::OnEnter()
     case HitDirection::Front:
         break;
     case HitDirection::Back:
-        motionName = "Impact2";
+        motionName = "Impact3";
         break;
     case HitDirection::Left:
         break;

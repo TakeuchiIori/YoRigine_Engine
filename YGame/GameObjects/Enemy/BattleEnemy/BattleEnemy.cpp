@@ -270,6 +270,10 @@ void BattleEnemy::OnExitCollision([[maybe_unused]] BaseCollider* self, [[maybe_u
 //========================================================================*/
 void BattleEnemy::OnDirectionCollision([[maybe_unused]] BaseCollider* self, [[maybe_unused]] BaseCollider* other, [[maybe_unused]] HitDirection dir) {}
 
+void BattleEnemy::OnEnterDirectionCollision([[maybe_unused]] BaseCollider* self, [[maybe_unused]] BaseCollider* other, [[maybe_unused]] HitDirection dir)
+{
+}
+
 /*==========================================================================
 描画
 //========================================================================*/

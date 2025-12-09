@@ -253,6 +253,10 @@ void DemoPlayer::OnDirectionCollision([[maybe_unused]] BaseCollider* self, BaseC
 	}
 }
 
+void DemoPlayer::OnEnterDirectionCollision([[maybe_unused]] BaseCollider* self, [[maybe_unused]] BaseCollider* other, [[maybe_unused]] HitDirection dir)
+{
+}
+
 /// <summary>
 /// ダメージ処理
 /// </summary>

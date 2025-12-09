@@ -235,6 +235,10 @@ void PlayerSword::OnExitCollision([[maybe_unused]] BaseCollider* self, [[maybe_u
 /// </summary>
 void PlayerSword::OnDirectionCollision([[maybe_unused]] BaseCollider* self, [[maybe_unused]] BaseCollider* other, [[maybe_unused]] HitDirection dir) {}
 
+void PlayerSword::OnEnterDirectionCollision([[maybe_unused]] BaseCollider* self, [[maybe_unused]] BaseCollider* other, [[maybe_unused]] HitDirection dir)
+{
+}
+
 /// <summary>
 /// コライダー初期化
 /// </summary>

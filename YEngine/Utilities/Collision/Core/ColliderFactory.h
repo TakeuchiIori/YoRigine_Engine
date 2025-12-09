@@ -58,7 +58,11 @@ public:
 				owner->OnDirectionCollision(self, other, dir);
 			}
 			});
-
+		collider->SetOnEnterDirectionCollision([owner](BaseCollider* self, BaseCollider* other, HitDirection dir) {
+			if (owner) {
+				owner->OnEnterDirectionCollision(self, other, dir);
+			}
+			});
 		return collider;
 	}
 };

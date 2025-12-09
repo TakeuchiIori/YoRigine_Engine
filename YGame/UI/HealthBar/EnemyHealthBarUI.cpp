@@ -29,19 +29,11 @@ void EnemyHealthBarUI::Update()
 	float ratio = (float)targetEnemy_->GetCurrentHP() / (float)targetEnemy_->GetMaxHP();
 	ratio = std::clamp(ratio, 0.0f, 1.0f);
 	currentRatio_ = ratio;
-
-	// 背景サイズ
 	bgHP_->SetSize(size_);
 
-	// ゲージサイズは横だけ縮める
 	barHP_->SetSize({ size_.x * ratio, size_.y });
-
-	// ワールド座標（頭の位置）
-	Vector3 head = targetEnemy_->GetTranslate() + offset_;
-	// スクリーンオフセットを加算
-	Vector3 screenOffset = targetEnemy_->GetTranslate() + screenOffset_;
-
-	// ★どちらも同じ座標（ズラさない！）
+	Vector3 head =  offset_;
+	Vector3 screenOffset =  screenOffset_;
 	bgHP_->SetTranslate(head);
 	barHP_->SetTranslate(screenOffset);
 

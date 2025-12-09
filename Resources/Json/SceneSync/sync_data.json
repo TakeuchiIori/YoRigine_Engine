@@ -1,10 +1,10 @@
 {
     "currentSceneState": {
         "customData": {
-            "currentEnemyGroup": "Mushnub_Evolved",
+            "currentEnemyGroup": "GreenSpikyBlob",
             "playerHpRatio": 1.0,
             "stats": {
-                "battleDuration": 16.097980499267578,
+                "battleDuration": 15.163281440734863,
                 "droppedItems": [],
                 "enemiesDefeated": 1,
                 "expGained": 0,
@@ -12,6 +12,6 @@
             }
         },
         "sceneName": "Battle",
-        "timestamp": 1765301359
+        "timestamp": 1765314742
     }
 }

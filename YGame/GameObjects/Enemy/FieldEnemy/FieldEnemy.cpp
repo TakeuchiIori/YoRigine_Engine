@@ -213,6 +213,10 @@ void FieldEnemy::OnDirectionCollision([[maybe_unused]] BaseCollider* self, BaseC
 	}
 }
 
+void FieldEnemy::OnEnterDirectionCollision([[maybe_unused]] BaseCollider* self, [[maybe_unused]] BaseCollider* other, [[maybe_unused]] HitDirection dir)
+{
+}
+
 /// <summary>
 /// バトルへのエンカウントを発生させる
 /// </summary>

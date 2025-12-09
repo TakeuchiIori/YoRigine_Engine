@@ -195,6 +195,10 @@ void PlayerShield::OnExitCollision([[maybe_unused]] BaseCollider* self, [[maybe_
 /// </summary>
 void PlayerShield::OnDirectionCollision([[maybe_unused]] BaseCollider* self, [[maybe_unused]] BaseCollider* other, [[maybe_unused]] HitDirection dir) {}
 
+void PlayerShield::OnEnterDirectionCollision([[maybe_unused]] BaseCollider* self, [[maybe_unused]] BaseCollider* other, [[maybe_unused]] HitDirection dir)
+{
+}
+
 /// <summary>
 /// コライダー初期化
 /// </summary>
