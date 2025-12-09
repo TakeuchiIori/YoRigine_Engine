@@ -5,7 +5,6 @@
 #include <chrono>
 #include "Framework/Framework.h"
 
-
 //-----------------------------------------------------------------------------
 // デバッグ用 Logger 関数
 // OutputDebugStringA で Visual Studio の出力ウィンドウにログを送信します
