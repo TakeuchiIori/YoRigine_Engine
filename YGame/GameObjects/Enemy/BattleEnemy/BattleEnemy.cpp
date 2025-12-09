@@ -15,19 +15,18 @@
 
 #include "Debugger/Logger.h"
 
-/// <summary>
-/// デストラクタ（OBBコライダーの破棄）
-/// </summary>
+/*==========================================================================
+デストラクタ
+//========================================================================*/
 BattleEnemy::~BattleEnemy() {
 	if (obbCollider_) {
 		obbCollider_->~OBBCollider();
 	}
 }
 
-/// <summary>
-/// 敵オブジェクトの初期化処理
-/// </summary>
-/// <param name="camera">描画カメラ</param>
+/*==========================================================================
+メイン初期化
+//========================================================================*/
 void BattleEnemy::Initialize(Camera* camera) {
 	camera_ = camera;
 	obj_ = std::make_unique<Object3d>();
@@ -37,11 +36,9 @@ void BattleEnemy::Initialize(Camera* camera) {
 	InitCollision();
 }
 
-/// <summary>
-/// 戦闘用データを適用して初期化
-/// </summary>
-/// <param name="data">敵データ構造体</param>
-/// <param name="position">初期位置</param>
+/*==========================================================================
+戦闘用データを使用して初期化
+//========================================================================*/
 void BattleEnemy::InitializeBattleData(const BattleEnemyData& data, Vector3 position)
 {
 	// データ適用
@@ -63,26 +60,26 @@ void BattleEnemy::InitializeBattleData(const BattleEnemyData& data, Vector3 posi
 	Logger(("[BattleEnemy] Initialized from JSON: ID=" + data.enemyId + ", HP=" + std::to_string(data.hp) + "\n").c_str());
 }
 
-/// <summary>
-/// コリジョン（当たり判定）初期化処理
-/// </summary>
+/*==========================================================================
+コリジョンの初期化
+//========================================================================*/
 void BattleEnemy::InitCollision() {
 	// OBBコライダー生成
 	obbCollider_ = ColliderFactory::Create<OBBCollider>(
 		this, &wt_, camera_, static_cast<uint32_t>(CollisionTypeIdDef::kBattleEnemy));
 }
 
-/// <summary>
-/// Jsonマネージャの初期化
-/// </summary>
+/*==========================================================================
+Jsonの初期化
+//========================================================================*/
 void BattleEnemy::InitJson() {
 	jsonManager_ = std::make_unique<YoRigine::JsonManager>("BattleEnemy", "Resources/Json/Objects/BattleEnemies");
 	jsonManager_->SetCategory("BattleEnemies");
 }
 
-/// <summary>
-/// 毎フレーム更新処理
-/// </summary>
+/*==========================================================================
+更新処理
+//========================================================================*/
 void BattleEnemy::Update() {
 	float dt = YoRigine::GameTime::GetDeltaTime();
 	stateTimer_ += dt;
@@ -91,6 +88,9 @@ void BattleEnemy::Update() {
 	if (currentState_) {
 		currentState_->Update(*this, dt);
 	}
+
+	// ノックバック更新
+	UpdateKnockback(dt);
 
 	// 死亡チェック
 	if (enemyData_.currentHp_ == 0) {
@@ -103,10 +103,9 @@ void BattleEnemy::Update() {
 	if (obbCollider_) obbCollider_->Update();
 }
 
-/// <summary>
-/// ステートを切り替える
-/// </summary>
-/// <param name="newState">新しい状態オブジェクト</param>
+/*==========================================================================
+状態の切り替え
+//========================================================================*/
 void BattleEnemy::ChangeState(std::unique_ptr<IEnemyState<BattleEnemy>> newState) {
 	if (currentState_) currentState_->Exit(*this);
 	currentState_ = std::move(newState);
@@ -114,10 +113,9 @@ void BattleEnemy::ChangeState(std::unique_ptr<IEnemyState<BattleEnemy>> newState
 	stateTimer_ = 0.0f;
 }
 
-/// <summary>
-/// プレイヤーの現在位置を取得
-/// </summary>
-/// <returns>プレイヤーのワールド座標（存在しない場合は(0,0,0)）</returns>
+/*==========================================================================
+プレイヤーの現在位置の取得
+//========================================================================*/
 Vector3 BattleEnemy::GetPlayerPosition() const {
 	if (player_) {
 		return player_->GetWorldPosition();
@@ -125,39 +123,34 @@ Vector3 BattleEnemy::GetPlayerPosition() const {
 	return Vector3(0.0f, 0.0f, 0.0f);
 }
 
-///************************* 攻撃・エフェクト処理 *************************///
 
-/// <summary>
-/// 通常攻撃を実行（プレイヤーにダメージを与える）
-/// </summary>
+/*==========================================================================
+攻撃の実行
+//========================================================================*/
 void BattleEnemy::PerformBasicAttack() {
 	if (/*!hasValidTarget_ ||*/ !player_) return;
 	player_->TakeDamage(enemyData_.attack);
 }
 
-/// <summary>
-/// 敵死亡時のエフェクトを再生
-/// </summary>
+/*==========================================================================
+死亡時の演出
+//========================================================================*/
 void BattleEnemy::PlayDeathEffect() {
 	if (obj_) obj_->SetMaterialColor({ 0.0f,0.0f,0.0f,1.0f });
 }
 
-///************************* デバッグ用 *************************///
-
-/// <summary>
-/// ダメージを受けてHPを減らす
-/// </summary>
-/// <param name="damage">与えられたダメージ量</param>
+/*==========================================================================
+ダメージを受ける処理
+//========================================================================*/
 void BattleEnemy::TakeDamage(int damage) {
 	if (isInvincible_ || !IsAlive()) return;
 	enemyData_.currentHp_ -= damage;
 	if (enemyData_.currentHp_ < 0) enemyData_.currentHp_ = 0;
 }
 
-/// <summary>
-/// HPを回復する
-/// </summary>
-/// <param name="amount">回復量</param>
+/*==========================================================================
+HPの回復
+//========================================================================*/
 void BattleEnemy::Heal(int amount)
 {
 	if (!IsAlive()) return;
@@ -165,10 +158,9 @@ void BattleEnemy::Heal(int amount)
 	if (enemyData_.currentHp_ > enemyData_.maxHp_) enemyData_.currentHp_ = enemyData_.maxHp_;
 }
 
-/// <summary>
-/// ダメージを受けた際の点滅演出を更新
-/// </summary>
-/// <param name="dt">経過時間</param>
+/*==========================================================================
+ダメージを受けた瞬間の点滅処理
+//========================================================================*/
 void BattleEnemy::UpdateBlinking(float dt) {
 	// ダメージ時の点滅中でなければ処理しない
 	if (!isDamageBlinking_) return;
@@ -185,19 +177,41 @@ void BattleEnemy::UpdateBlinking(float dt) {
 	}
 }
 
-/// <summary>
-/// めまい・スタン時の処理更新
-/// </summary>
-/// <param name="dt">経過時間</param>
-void BattleEnemy::UpdateDizziness([[maybe_unused]] float dt)
+/*==========================================================================
+ノックバック開始の処理
+//========================================================================*/
+void BattleEnemy::StartKnockback(const Vector3& direction, float power, float duration)
 {
+	knockbackData_.isKnockingBack_ = true;
+	knockbackData_.knockbackDirection_ = Vector3::Normalize(direction);
+	knockbackData_.knockbackPower_ = power;
+	knockbackData_.knockbackDuration_ = duration;
+	knockbackData_.knockbackTimer_ = 0.0f;
 }
 
-///************************* 当たり判定 *************************///
+/*==========================================================================
+ノックバック中の処理
+//========================================================================*/
+void BattleEnemy::UpdateKnockback(float dt)
+{
+	// ノックバック中でなければ処理しない
+	if (!knockbackData_.isKnockingBack_) return;
+	knockbackData_.knockbackTimer_ += dt;
 
-/// <summary>
-/// 他コライダーと接触した瞬間の処理
-/// </summary>
+	// 時間経過でパワーを減衰
+	float currentPower = knockbackData_.knockbackPower_ * (1.0f - (knockbackData_.knockbackTimer_ / knockbackData_.knockbackDuration_));
+	Vector3 delta = knockbackData_.knockbackDirection_ * currentPower * dt;
+	AddTranslate(delta);
+
+	if (knockbackData_.knockbackTimer_ >= knockbackData_.knockbackDuration_) {
+		knockbackData_.isKnockingBack_ = false;
+		knockbackData_.knockbackPower_ = 0.0f;
+	}
+}
+
+/*==========================================================================
+ヒットした瞬間
+//========================================================================*/
 void BattleEnemy::OnEnterCollision([[maybe_unused]] BaseCollider* self, BaseCollider* other) {
 
 	// 攻撃を食らった時
@@ -205,6 +219,14 @@ void BattleEnemy::OnEnterCollision([[maybe_unused]] BaseCollider* self, BaseColl
 		if (isAlive_) {
 			TakeDamage(static_cast<int>(player_->GetCombat()->GetCombo()->GetCurrentDamage()));
 			ChangeState(std::make_unique<BattleDamageState>());
+
+			Vector3 knockbackDir = wt_.translate_ - player_->GetWorldPosition();
+			knockbackDir.y = 0.0f;
+			knockbackDir = Vector3::Normalize(knockbackDir);
+
+			float power = player_->GetCombat()->GetCombo()->GetCurrentKnockback();
+			float duaration = player_->GetCombat()->GetCombo()->GetCurrentAttack()->knockbackDuaration;
+			StartKnockback(knockbackDir, power, duaration);
 		}
 	}
 
@@ -226,26 +248,26 @@ void BattleEnemy::OnEnterCollision([[maybe_unused]] BaseCollider* self, BaseColl
 	}
 }
 
-/// <summary>
-/// 他コライダーとの接触中処理
-/// </summary>
+/*==========================================================================
+ヒット中
+//========================================================================*/
 void BattleEnemy::OnCollision([[maybe_unused]] BaseCollider* self, [[maybe_unused]] BaseCollider* other) {
 
 }
 
-/// <summary>
-/// 他コライダーとの離脱時処理
-/// </summary>
+/*==========================================================================
+ヒットから離脱した瞬間
+//========================================================================*/
 void BattleEnemy::OnExitCollision([[maybe_unused]] BaseCollider* self, [[maybe_unused]] BaseCollider* other) {}
 
-/// <summary>
-/// 衝突方向付き当たり判定処理
-/// </summary>
+/*==========================================================================
+ヒット方向別処理
+//========================================================================*/
 void BattleEnemy::OnDirectionCollision([[maybe_unused]] BaseCollider* self, [[maybe_unused]] BaseCollider* other, [[maybe_unused]] HitDirection dir) {}
 
-/// <summary>
-/// 敵モデルの描画処理（死亡時はフェードアウト）
-/// </summary>
+/*==========================================================================
+描画
+//========================================================================*/
 void BattleEnemy::Draw() {
 	// 死亡していたら半透明にする
 	if (player_->GetCombat()->IsDead()) {
@@ -272,14 +294,17 @@ void BattleEnemy::Draw() {
 	if (obj_) obj_->Draw(camera_, wt_);
 }
 
+/*==========================================================================
+影描画
+//========================================================================*/
 void BattleEnemy::DrawShadow()
 {
 	if (obj_) obj_->DrawShadow(wt_);
 }
 
-/// <summary>
-/// コリジョンのデバッグ描画
-/// </summary>
+/*==========================================================================
+コリジョン可視化
+//========================================================================*/
 void BattleEnemy::DrawCollision() {
 	if (obbCollider_) obbCollider_->Draw();
 }

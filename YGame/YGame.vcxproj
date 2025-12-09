@@ -115,6 +115,7 @@
     <ClInclude Include="GameAPI.h" />
     <ClInclude Include="GameExport.h" />
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\BattleEnemy.h" />
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\BattleEnemyData.h" />
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\BattleEnemyManager.h" />
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\AttackSelector.h" />
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\States\Attack\BattleChargeAttackState.h" />

@@ -132,11 +132,27 @@ public:
 
 	///************************* アクセッサ *************************///
 
+	// 現在の攻撃ダメージ値取得
 	float GetCurrentDamage() const {
 		if (currentAttack_) {
 			return currentAttack_->baseDamage * comboDamageMultiplier_;
 		}
-		return 0.0f; // 攻撃中でなければ0
+		return 0.0f;
+	}
+
+	// 現在の攻撃ノックバック値取得
+	float GetCurrentKnockback() const {
+		if (currentAttack_) {
+			return currentAttack_->knockback;
+		}
+		return 0.0f;
+	}
+	// 現在の攻撃範囲取得
+	Vector3 GetCurrentAttackRange() const {
+		if (currentAttack_) {
+			return currentAttack_->attackRange;
+		}
+		return Vector3(0.0f, 0.0f, 0.0f);
 	}
 
 

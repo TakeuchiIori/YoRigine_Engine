@@ -318,6 +318,7 @@
     <ClInclude Include="UI\TitleUI.h">
       <Filter>YGame\UI</Filter>
     </ClInclude>
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\BattleEnemyData.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\MyGame.cpp">

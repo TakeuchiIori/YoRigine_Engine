@@ -17,6 +17,13 @@ void BattleDamageState::Update(BattleEnemy& enemy, float dt) {
 	// 点滅させる
 	enemy.UpdateBlinking(dt);
 
+	// ノックバック中の場合は待機
+	if (enemy.GetKnockbackData().isKnockingBack_) {
+		// ここでノックバックを優先するため、状態タイマーは進めない、またはノックバック終了後にタイマーをリセット
+		enemy.ResetStateTimer();
+		return;
+	}
+
 	// 一定時間経過で攻撃状態へ
 	if (enemy.GetStateTimer() > 1.0f) {
 		enemy.ChangeState(std::make_unique<BattleRushAttackState>());
