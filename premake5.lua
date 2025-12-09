@@ -226,9 +226,10 @@ group "Game"
         fatalwarnings { "All" }
 
         files { "YMain/Main.cpp" }
-        
+        files { "Resources/**.*" }
         vpaths {
-            ["YMain/*"] = "YMain/**"
+            ["YMain/*"] = "YMain/**",
+            ["Resources/*"] = "Resources/**"
         }
 
         includedirs { "." }

@@ -135,6 +135,9 @@
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\BattleEnemy.h">
       <Filter>YGame\GameObjects\Enemy\BattleEnemy</Filter>
     </ClInclude>
+    <ClInclude Include="GameObjects\Enemy\BattleEnemy\BattleEnemyData.h">
+      <Filter>YGame\GameObjects\Enemy\BattleEnemy</Filter>
+    </ClInclude>
     <ClInclude Include="GameObjects\Enemy\BattleEnemy\BattleEnemyManager.h">
       <Filter>YGame\GameObjects\Enemy\BattleEnemy</Filter>
     </ClInclude>
@@ -318,7 +321,6 @@
     <ClInclude Include="UI\TitleUI.h">
       <Filter>YGame\UI</Filter>
     </ClInclude>
-    <ClInclude Include="GameObjects\Enemy\BattleEnemy\BattleEnemyData.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\MyGame.cpp">

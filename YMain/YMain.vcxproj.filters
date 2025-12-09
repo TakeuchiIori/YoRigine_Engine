@@ -1,6 +1,246 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{000BCD17-6C75-818E-B5B3-3234215D5FE3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Binary">
+      <UniqueIdentifier>{5456E246-404F-0199-6981-E61D55D9E0A4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\DDS">
+      <UniqueIdentifier>{2A7B75FD-963B-F133-5F76-3AB1CBF53510}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Data">
+      <UniqueIdentifier>{696025AC-552E-19B2-3EC2-89D82A2FF516}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Effects">
+      <UniqueIdentifier>{AF8A8D02-1BA1-8B98-6418-17BAD06D5C20}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Fonts">
+      <UniqueIdentifier>{3935FD30-A5C0-6AF5-AED1-EDE91ADCC6F5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json">
+      <UniqueIdentifier>{A9F628AC-95C4-1CB2-7E58-8DD86AC5F816}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\BattleEnemies">
+      <UniqueIdentifier>{1AF3F787-06AE-E733-AF65-607E9BFF31C4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\Cameras">
+      <UniqueIdentifier>{94B3AB3E-80AD-D490-691A-6BA155B33AFD}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\Colliders">
+      <UniqueIdentifier>{B908B946-A52D-08C7-CE78-ED56BAFC06E5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\Combo">
+      <UniqueIdentifier>{882B59E4-74BA-E2AD-1DD9-F6A80947F353}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\CubeMap">
+      <UniqueIdentifier>{35358B6C-212F-B4BE-0A9C-4ACFF6341A2B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\CubeMap\SkyBox">
+      <UniqueIdentifier>{84BA3FF8-F0D2-2622-B97F-B6BB2557BBBB}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\FieldEnemies">
+      <UniqueIdentifier>{0288C077-6E95-EE5D-F77B-EA486388BA14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\GpuEmitters">
+      <UniqueIdentifier>{F125974D-DD35-431E-46EF-A73C321E32B7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\LevelData">
+      <UniqueIdentifier>{AAA01D16-96C5-6C96-BF10-5226AB946BB4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\Objects">
+      <UniqueIdentifier>{622E85DC-4E28-AE2E-3795-443F232E149B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\Objects\DemoPlayer">
+      <UniqueIdentifier>{63DB4096-CF49-9615-1833-511584E08BB1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\Objects\Enemies">
+      <UniqueIdentifier>{3797F7AC-23BD-C113-0C03-47DFF8C7E6DF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\Objects\Player">
+      <UniqueIdentifier>{3E5DC01E-AA75-A748-7322-37E2DFF93BE2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\Particles">
+      <UniqueIdentifier>{BF62F725-AB87-46A6-D4D2-2B36C05645C4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\Particles\Settings">
+      <UniqueIdentifier>{BF9E374D-2B0D-8DCC-74F6-47CCE0A38268}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\PostEffectPresets">
+      <UniqueIdentifier>{B1A52236-9DF6-0D78-C65A-FC39B20AA1E1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\Prefabs">
+      <UniqueIdentifier>{3BFC774E-27F6-A0A0-1063-37B1FCFB060D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\SceneSync">
+      <UniqueIdentifier>{4366EB64-2F8B-3AE5-58D6-1F75445A3903}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\Scenes">
+      <UniqueIdentifier>{B9CFF393-253C-AF8E-EE2F-47EC5A5BD1F6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\UI">
+      <UniqueIdentifier>{36B56AA2-A2CB-6838-EB42-F459579839C0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Json\Weapon">
+      <UniqueIdentifier>{827B6A9D-EEE7-2598-B7DB-BDF523074800}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models">
+      <UniqueIdentifier>{B33CF260-9F35-11B3-C867-F637B4BFF0BE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\Alien">
+      <UniqueIdentifier>{4B6A1FBA-3764-480C-20D1-DE1C0C6AAE78}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\Bell_Tower">
+      <UniqueIdentifier>{D1C1B66E-3DCF-E454-C6B5-E03F32C2B00B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\Blacksmith">
+      <UniqueIdentifier>{241DABE0-902A-D9C6-1911-D5B1851DA57D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\GreenSpikyBlob">
+      <UniqueIdentifier>{4298314E-AE7B-408E-B77E-6ECA23E106DF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\Ground">
+      <UniqueIdentifier>{31C97B0C-9D00-C4A3-A60A-28C712C1EA9C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\House_1">
+      <UniqueIdentifier>{B6055BE2-A22A-AA62-CB75-8FF2B7F9A880}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\House_2">
+      <UniqueIdentifier>{B7055BE2-A32A-AA62-CC75-8FF2B8F9A880}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\Inn">
+      <UniqueIdentifier>{276972D4-13F8-FB9D-BC16-1099A8840C44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\Multi">
+      <UniqueIdentifier>{6D8EFDBA-5988-260D-42F5-BC1D2E8E8C79}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\Mushnub_Evolved">
+      <UniqueIdentifier>{5833EF02-4484-DA44-6DE8-C80659986DAE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\Player">
+      <UniqueIdentifier>{6F060621-DB3D-4EB8-E447-B2DB50FE74B1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\Sawmill">
+      <UniqueIdentifier>{DB629410-C787-E390-F0D2-C820DC56E2AE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\Shield_Heater">
+      <UniqueIdentifier>{33D02882-1FF6-F2E8-083C-78B4F40018B5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\Sword_Golden">
+      <UniqueIdentifier>{891555ED-F52D-3C17-BEDA-CBB02AB2D0B0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\cube">
+      <UniqueIdentifier>{81ECCD62-ED58-895D-B64C-21BB2278ABC5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\needle_Body">
+      <UniqueIdentifier>{9CBE26AF-8879-165B-3131-8FA51DCB60EB}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\plane">
+      <UniqueIdentifier>{12C971BD-FEC2-9A0F-E72F-3120D3C8007C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Models\weapon">
+      <UniqueIdentifier>{6C66807B-D89D-C812-E1A7-2C364D5EEF0B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders">
+      <UniqueIdentifier>{D92F8C3C-4546-8AD2-8EBD-15F4FA125B5A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\CubeMap">
+      <UniqueIdentifier>{659E6C3C-D160-A0C6-1A11-2F53861279A4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\Method">
+      <UniqueIdentifier>{8931E25D-7556-31DE-9EA1-166E8A2530FC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\Object3d">
+      <UniqueIdentifier>{F6813939-E291-E509-4B4B-4A28377AD4A2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\Particle">
+      <UniqueIdentifier>{FCD73CEC-E8E7-E8BC-51A1-4DDB3DD0D755}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\PostEffect">
+      <UniqueIdentifier>{BB1F1CE6-A7DA-0B92-5092-84DC3C2C5622}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\PostEffect\Blur">
+      <UniqueIdentifier>{3FB8341F-AB26-8A9E-F40F-459E60BD7F3A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\PostEffect\ColorRemapping">
+      <UniqueIdentifier>{0C448808-78A9-1B8F-0182-BD676DE610FE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\PostEffect\CopyImage">
+      <UniqueIdentifier>{4800F655-3452-CD45-1D71-0A560962E62E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\PostEffect\Dissolve">
+      <UniqueIdentifier>{9333808C-FFF7-7E7C-C85D-AF4634E11AB2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\PostEffect\FullScreen">
+      <UniqueIdentifier>{FDE4AB58-6974-6D43-7270-4E5BDE7EA84F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\PostEffect\Grayscale">
+      <UniqueIdentifier>{A53DF66C-918F-CD5C-7AAE-0A6D669FE645}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\PostEffect\OutLine">
+      <UniqueIdentifier>{AAA54AA5-968C-0C9D-3FDD-72BA2BA38503}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\PostEffect\Sepia">
+      <UniqueIdentifier>{FC73FB06-E8AF-FE70-51C2-16683D1DA78B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\PostEffect\Smoothing">
+      <UniqueIdentifier>{4216F363-2E68-CA53-1787-07640378E33C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\PostEffect\Transition">
+      <UniqueIdentifier>{D5A7FDF1-4137-BFDC-4A33-A0F4B641FAE8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\PostEffect\Vignette">
+      <UniqueIdentifier>{506FC30C-BC33-C2FC-8599-F2C6F11C5E32}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\Primitive">
+      <UniqueIdentifier>{8103205F-ED10-4E45-76F7-4930E2031AFC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\Primitive\Line">
+      <UniqueIdentifier>{D8550103-C4A6-EC44-ED0A-DB06D9BA7FAE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\Shadow">
+      <UniqueIdentifier>{AEF20C6C-9A17-5CEC-C362-417CAFE65A0A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\Skinning">
+      <UniqueIdentifier>{298D609D-159D-0C6E-7E56-718C6A85FB06}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders\Sprite">
+      <UniqueIdentifier>{FF1EA76C-EB43-F6EC-148F-DB7C0013F50A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Textures">
+      <UniqueIdentifier>{D33C360A-BF20-F75F-2881-F1B21484E1E1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Textures\ClearScene">
+      <UniqueIdentifier>{17B303FF-83CB-EA28-4C78-7AC2B84F7FC2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Textures\GameScene">
+      <UniqueIdentifier>{6A233BB5-56DE-2A61-FF95-A3ABEB2F75F1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Textures\Option">
+      <UniqueIdentifier>{5B0402BC-C7C6-3546-1077-C4D27C780E24}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Textures\TitleScene">
+      <UniqueIdentifier>{92088BEE-FE20-7218-C7CD-01B233A506B2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\UIConfigs">
+      <UniqueIdentifier>{567049F2-C2D1-2600-4B3F-6DB2B79F5DBF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\UIConfigs\ClearScene">
+      <UniqueIdentifier>{BACE595D-A6F4-23C4-8F3A-A98F7BFF4890}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\UIConfigs\GameScene">
+      <UniqueIdentifier>{ADD69AC7-19EF-81F1-E29B-118B4E73168B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\UIConfigs\Title">
+      <UniqueIdentifier>{47E87B8F-B3AA-AF19-FC5A-3EA6685C88F7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\UIScenes">
+      <UniqueIdentifier>{AE158E33-9AF9-4E89-035A-49DCEF5C390B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\images">
+      <UniqueIdentifier>{C5DF1CA2-B1D8-3BF4-DA0A-2179C6621B00}</UniqueIdentifier>
+    </Filter>
     <Filter Include="YMain">
       <UniqueIdentifier>{C368750E-2F7D-9DBF-F8FE-401F64D299F0}</UniqueIdentifier>
     </Filter>
@@ -9,5 +249,776 @@
     <ClCompile Include="Main.cpp">
       <Filter>YMain</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\Resources\Shaders\CubeMap\CubeMap.PS.hlsl">
+      <Filter>Resources\Shaders\CubeMap</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\CubeMap\CubeMap.VS.hlsl">
+      <Filter>Resources\Shaders\CubeMap</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Object3d\InstanceObj.PS.hlsl">
+      <Filter>Resources\Shaders\Object3d</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Object3d\InstanceObj.VS.hlsl">
+      <Filter>Resources\Shaders\Object3d</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Object3d\Object3d.PS.hlsl">
+      <Filter>Resources\Shaders\Object3d</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Object3d\Object3d.VS.hlsl">
+      <Filter>Resources\Shaders\Object3d</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Particle\EmitParticle.CS.hlsl">
+      <Filter>Resources\Shaders\Particle</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Particle\GPUParticle.PS.hlsl">
+      <Filter>Resources\Shaders\Particle</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Particle\GPUParticle.VS.hlsl">
+      <Filter>Resources\Shaders\Particle</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Particle\InitializeParticle.CS.hlsl">
+      <Filter>Resources\Shaders\Particle</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Particle\Particle.PS.hlsl">
+      <Filter>Resources\Shaders\Particle</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Particle\Particle.VS.hlsl">
+      <Filter>Resources\Shaders\Particle</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Particle\UpdateParticle.CS.hlsl">
+      <Filter>Resources\Shaders\Particle</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\Blur\RadialBlur.PS.hlsl">
+      <Filter>Resources\Shaders\PostEffect\Blur</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\ColorRemapping\Chromatic.PS.hlsl">
+      <Filter>Resources\Shaders\PostEffect\ColorRemapping</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\ColorRemapping\ColorAdjust.PS.hlsl">
+      <Filter>Resources\Shaders\PostEffect\ColorRemapping</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\ColorRemapping\ToneMapping.PS.hlsl">
+      <Filter>Resources\Shaders\PostEffect\ColorRemapping</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\CopyImage\CopyImage.PS.hlsl">
+      <Filter>Resources\Shaders\PostEffect\CopyImage</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\Dissolve\Dissolve.PS.hlsl">
+      <Filter>Resources\Shaders\PostEffect\Dissolve</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\FullScreen\FullScreen.VS.hlsl">
+      <Filter>Resources\Shaders\PostEffect\FullScreen</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\Grayscale\Grayscale.PS.hlsl">
+      <Filter>Resources\Shaders\PostEffect\Grayscale</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\OutLine\DepthBasedOutLine.PS.hlsl">
+      <Filter>Resources\Shaders\PostEffect\OutLine</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\OutLine\LuminanceBasedOutLine.PS.hlsl">
+      <Filter>Resources\Shaders\PostEffect\OutLine</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\Sepia\Sepia.PS.hlsl">
+      <Filter>Resources\Shaders\PostEffect\Sepia</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\Smoothing\BoxFilter.PS.hlsl">
+      <Filter>Resources\Shaders\PostEffect\Smoothing</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\Smoothing\GaussianFilter.PS.hlsl">
+      <Filter>Resources\Shaders\PostEffect\Smoothing</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\Transition\ShatterTransition.PS.hlsl">
+      <Filter>Resources\Shaders\PostEffect\Transition</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\Vignette\Vignette.PS.hlsl">
+      <Filter>Resources\Shaders\PostEffect\Vignette</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Primitive\Line\Line.PS.hlsl">
+      <Filter>Resources\Shaders\Primitive\Line</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Primitive\Line\Line.VS.hlsl">
+      <Filter>Resources\Shaders\Primitive\Line</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Shadow\Shadowmap.PS.hlsl">
+      <Filter>Resources\Shaders\Shadow</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Shadow\Shadowmap.VS.hlsl">
+      <Filter>Resources\Shaders\Shadow</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Skinning\Skinning.CS.hlsl">
+      <Filter>Resources\Shaders\Skinning</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Skinning\Skinning.PS.hlsl">
+      <Filter>Resources\Shaders\Skinning</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Skinning\Skinning.VS.hlsl">
+      <Filter>Resources\Shaders\Skinning</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Skinning\SkinningCS.VS.hlsl">
+      <Filter>Resources\Shaders\Skinning</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Sprite\Sprite.PS.hlsl">
+      <Filter>Resources\Shaders\Sprite</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Sprite\Sprite.VS.hlsl">
+      <Filter>Resources\Shaders\Sprite</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Resources\Binary\BrainStem_.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Attack1.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Attack2.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Attack3.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Attack4.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Block1.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Block2.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Block_Idle.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Death2.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Idle1.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Idle2.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Idle3.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Idle4.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Run1.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Run2.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Slash1.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Slash2.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Slash3.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Slash4.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Slash5.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_Walk1.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\Player_idle.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\sneakWalk_.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\Binary\walk_.anim">
+      <Filter>Resources\Binary</Filter>
+    </None>
+    <None Include="..\Resources\DDS\vz_classic_cubemap_ue.dds">
+      <Filter>Resources\DDS</Filter>
+    </None>
+    <None Include="..\Resources\DDS\vz_classic_land_cubemap_ue.dds">
+      <Filter>Resources\DDS</Filter>
+    </None>
+    <None Include="..\Resources\DDS\vz_sinister_cubemap_ue.dds">
+      <Filter>Resources\DDS</Filter>
+    </None>
+    <None Include="..\Resources\DDS\vz_sinister_land_cubemap_ue.dds">
+      <Filter>Resources\DDS</Filter>
+    </None>
+    <None Include="..\Resources\DDS\vz_techno_cubemap_ue.dds">
+      <Filter>Resources\DDS</Filter>
+    </None>
+    <None Include="..\Resources\Data\emitters.json">
+      <Filter>Resources\Data</Filter>
+    </None>
+    <None Include="..\Resources\Fonts\FiraMono-Medium.ttf">
+      <Filter>Resources\Fonts</Filter>
+    </None>
+    <None Include="..\Resources\Fonts\Free-Solid-900.otf">
+      <Filter>Resources\Fonts</Filter>
+    </None>
+    <None Include="..\Resources\Fonts\ipaexg.ttf">
+      <Filter>Resources\Fonts</Filter>
+    </None>
+    <None Include="..\Resources\Json\BattleEnemies\enemy_data.json">
+      <Filter>Resources\Json\BattleEnemies</Filter>
+    </None>
+    <None Include="..\Resources\Json\Cameras\BattleCamera.json">
+      <Filter>Resources\Json\Cameras</Filter>
+    </None>
+    <None Include="..\Resources\Json\Cameras\BattleStartCamera.json">
+      <Filter>Resources\Json\Cameras</Filter>
+    </None>
+    <None Include="..\Resources\Json\Cameras\ClearCamera.json">
+      <Filter>Resources\Json\Cameras</Filter>
+    </None>
+    <None Include="..\Resources\Json\Cameras\DebugCamera.json">
+      <Filter>Resources\Json\Cameras</Filter>
+    </None>
+    <None Include="..\Resources\Json\Cameras\DefaultCamera.json">
+      <Filter>Resources\Json\Cameras</Filter>
+    </None>
+    <None Include="..\Resources\Json\Cameras\FollowCamera.json">
+      <Filter>Resources\Json\Cameras</Filter>
+    </None>
+    <None Include="..\Resources\Json\Cameras\SplineCamera.json">
+      <Filter>Resources\Json\Cameras</Filter>
+    </None>
+    <None Include="..\Resources\Json\Colliders\DemoPlayerCollider.json">
+      <Filter>Resources\Json\Colliders</Filter>
+    </None>
+    <None Include="..\Resources\Json\Colliders\PlayerCollider.json">
+      <Filter>Resources\Json\Colliders</Filter>
+    </None>
+    <None Include="..\Resources\Json\Colliders\PlayerShieldCollider.json">
+      <Filter>Resources\Json\Colliders</Filter>
+    </None>
+    <None Include="..\Resources\Json\Colliders\PlayerSwordCollider.json">
+      <Filter>Resources\Json\Colliders</Filter>
+    </None>
+    <None Include="..\Resources\Json\Colliders\TitlePlayerCollider.json">
+      <Filter>Resources\Json\Colliders</Filter>
+    </None>
+    <None Include="..\Resources\Json\Combo\AttackData.json">
+      <Filter>Resources\Json\Combo</Filter>
+    </None>
+    <None Include="..\Resources\Json\CubeMap\SkyBox\SkyBox.json">
+      <Filter>Resources\Json\CubeMap\SkyBox</Filter>
+    </None>
+    <None Include="..\Resources\Json\FieldEnemies\field_enemy_data.json">
+      <Filter>Resources\Json\FieldEnemies</Filter>
+    </None>
+    <None Include="..\Resources\Json\FieldEnemies\field_spawn_data.json">
+      <Filter>Resources\Json\FieldEnemies</Filter>
+    </None>
+    <None Include="..\Resources\Json\GpuEmitters\emitters.json">
+      <Filter>Resources\Json\GpuEmitters</Filter>
+    </None>
+    <None Include="..\Resources\Json\LevelData\t.json">
+      <Filter>Resources\Json\LevelData</Filter>
+    </None>
+    <None Include="..\Resources\Json\Objects\DemoPlayer\DemoPlayer.json">
+      <Filter>Resources\Json\Objects\DemoPlayer</Filter>
+    </None>
+    <None Include="..\Resources\Json\Objects\Enemies\Enemy.json">
+      <Filter>Resources\Json\Objects\Enemies</Filter>
+    </None>
+    <None Include="..\Resources\Json\Objects\Enemies\EnemyManager.json">
+      <Filter>Resources\Json\Objects\Enemies</Filter>
+    </None>
+    <None Include="..\Resources\Json\Objects\Player\Player.json">
+      <Filter>Resources\Json\Objects\Player</Filter>
+    </None>
+    <None Include="..\Resources\Json\Objects\Player\PlayerAttack.json">
+      <Filter>Resources\Json\Objects\Player</Filter>
+    </None>
+    <None Include="..\Resources\Json\Particles\PlayerHitParticle.json">
+      <Filter>Resources\Json\Particles</Filter>
+    </None>
+    <None Include="..\Resources\Json\Particles\PlayerParticle.json">
+      <Filter>Resources\Json\Particles</Filter>
+    </None>
+    <None Include="..\Resources\Json\Particles\Settings\ClearParticle.json">
+      <Filter>Resources\Json\Particles\Settings</Filter>
+    </None>
+    <None Include="..\Resources\Json\Particles\Settings\GuardParticle.json">
+      <Filter>Resources\Json\Particles\Settings</Filter>
+    </None>
+    <None Include="..\Resources\Json\Particles\Settings\PlayerHitParticle.json">
+      <Filter>Resources\Json\Particles\Settings</Filter>
+    </None>
+    <None Include="..\Resources\Json\Particles\Settings\PlayerParticle.json">
+      <Filter>Resources\Json\Particles\Settings</Filter>
+    </None>
+    <None Include="..\Resources\Json\Particles\Settings\TestParticle.json">
+      <Filter>Resources\Json\Particles\Settings</Filter>
+    </None>
+    <None Include="..\Resources\Json\Particles\Settings\TitleParticle.json">
+      <Filter>Resources\Json\Particles\Settings</Filter>
+    </None>
+    <None Include="..\Resources\Json\Particles\TestParticle.json">
+      <Filter>Resources\Json\Particles</Filter>
+    </None>
+    <None Include="..\Resources\Json\PostEffectPresets\Color.json">
+      <Filter>Resources\Json\PostEffectPresets</Filter>
+    </None>
+    <None Include="..\Resources\Json\Prefabs\3object.json">
+      <Filter>Resources\Json\Prefabs</Filter>
+    </None>
+    <None Include="..\Resources\Json\Prefabs\Title.json">
+      <Filter>Resources\Json\Prefabs</Filter>
+    </None>
+    <None Include="..\Resources\Json\Prefabs\TitleScene.json">
+      <Filter>Resources\Json\Prefabs</Filter>
+    </None>
+    <None Include="..\Resources\Json\Prefabs\a.json">
+      <Filter>Resources\Json\Prefabs</Filter>
+    </None>
+    <None Include="..\Resources\Json\Prefabs\aaa.json">
+      <Filter>Resources\Json\Prefabs</Filter>
+    </None>
+    <None Include="..\Resources\Json\Prefabs\biru.json">
+      <Filter>Resources\Json\Prefabs</Filter>
+    </None>
+    <None Include="..\Resources\Json\Prefabs\pre.json">
+      <Filter>Resources\Json\Prefabs</Filter>
+    </None>
+    <None Include="..\Resources\Json\Prefabs\test.json">
+      <Filter>Resources\Json\Prefabs</Filter>
+    </None>
+    <None Include="..\Resources\Json\SceneSync\sync_data.json">
+      <Filter>Resources\Json\SceneSync</Filter>
+    </None>
+    <None Include="..\Resources\Json\Scenes\GameScene.json">
+      <Filter>Resources\Json\Scenes</Filter>
+    </None>
+    <None Include="..\Resources\Json\Scenes\TitleScene.json">
+      <Filter>Resources\Json\Scenes</Filter>
+    </None>
+    <None Include="..\Resources\Json\UI\Title.json">
+      <Filter>Resources\Json\UI</Filter>
+    </None>
+    <None Include="..\Resources\Json\Weapon\PlayerShield.json">
+      <Filter>Resources\Json\Weapon</Filter>
+    </None>
+    <None Include="..\Resources\Json\Weapon\PlayerSword.json">
+      <Filter>Resources\Json\Weapon</Filter>
+    </None>
+    <None Include="..\Resources\Models\Alien\Alien.mtl">
+      <Filter>Resources\Models\Alien</Filter>
+    </None>
+    <None Include="..\Resources\Models\Alien\Alien.obj">
+      <Filter>Resources\Models\Alien</Filter>
+    </None>
+    <None Include="..\Resources\Models\Bell_Tower\Bell_Tower.mtl">
+      <Filter>Resources\Models\Bell_Tower</Filter>
+    </None>
+    <None Include="..\Resources\Models\Bell_Tower\Bell_Tower.obj">
+      <Filter>Resources\Models\Bell_Tower</Filter>
+    </None>
+    <None Include="..\Resources\Models\Blacksmith\Blacksmith.mtl">
+      <Filter>Resources\Models\Blacksmith</Filter>
+    </None>
+    <None Include="..\Resources\Models\Blacksmith\Blacksmith.obj">
+      <Filter>Resources\Models\Blacksmith</Filter>
+    </None>
+    <None Include="..\Resources\Models\GreenSpikyBlob\GreenSpikyBlob.mtl">
+      <Filter>Resources\Models\GreenSpikyBlob</Filter>
+    </None>
+    <None Include="..\Resources\Models\GreenSpikyBlob\GreenSpikyBlob.obj">
+      <Filter>Resources\Models\GreenSpikyBlob</Filter>
+    </None>
+    <None Include="..\Resources\Models\Ground\Ground.mtl">
+      <Filter>Resources\Models\Ground</Filter>
+    </None>
+    <None Include="..\Resources\Models\Ground\Ground.obj">
+      <Filter>Resources\Models\Ground</Filter>
+    </None>
+    <None Include="..\Resources\Models\House_1\House_1.mtl">
+      <Filter>Resources\Models\House_1</Filter>
+    </None>
+    <None Include="..\Resources\Models\House_1\House_1.obj">
+      <Filter>Resources\Models\House_1</Filter>
+    </None>
+    <None Include="..\Resources\Models\House_2\House_2.mtl">
+      <Filter>Resources\Models\House_2</Filter>
+    </None>
+    <None Include="..\Resources\Models\House_2\House_2.obj">
+      <Filter>Resources\Models\House_2</Filter>
+    </None>
+    <None Include="..\Resources\Models\Inn\Inn.mtl">
+      <Filter>Resources\Models\Inn</Filter>
+    </None>
+    <None Include="..\Resources\Models\Inn\Inn.obj">
+      <Filter>Resources\Models\Inn</Filter>
+    </None>
+    <None Include="..\Resources\Models\Multi\Multi.mtl">
+      <Filter>Resources\Models\Multi</Filter>
+    </None>
+    <None Include="..\Resources\Models\Multi\Multi.obj">
+      <Filter>Resources\Models\Multi</Filter>
+    </None>
+    <None Include="..\Resources\Models\Mushnub_Evolved\Mushnub_Evolved.mtl">
+      <Filter>Resources\Models\Mushnub_Evolved</Filter>
+    </None>
+    <None Include="..\Resources\Models\Mushnub_Evolved\Mushnub_Evolved.obj">
+      <Filter>Resources\Models\Mushnub_Evolved</Filter>
+    </None>
+    <None Include="..\Resources\Models\Player\Player.bin">
+      <Filter>Resources\Models\Player</Filter>
+    </None>
+    <None Include="..\Resources\Models\Player\Player.gltf">
+      <Filter>Resources\Models\Player</Filter>
+    </None>
+    <None Include="..\Resources\Models\Sawmill\Sawmill.mtl">
+      <Filter>Resources\Models\Sawmill</Filter>
+    </None>
+    <None Include="..\Resources\Models\Sawmill\Sawmill.obj">
+      <Filter>Resources\Models\Sawmill</Filter>
+    </None>
+    <None Include="..\Resources\Models\Shield_Heater\Shield_Heater.mtl">
+      <Filter>Resources\Models\Shield_Heater</Filter>
+    </None>
+    <None Include="..\Resources\Models\Shield_Heater\Shield_Heater.obj">
+      <Filter>Resources\Models\Shield_Heater</Filter>
+    </None>
+    <None Include="..\Resources\Models\Sword_Golden\Sword_Golden.mtl">
+      <Filter>Resources\Models\Sword_Golden</Filter>
+    </None>
+    <None Include="..\Resources\Models\Sword_Golden\Sword_Golden.obj">
+      <Filter>Resources\Models\Sword_Golden</Filter>
+    </None>
+    <None Include="..\Resources\Models\cube\cube.dds">
+      <Filter>Resources\Models\cube</Filter>
+    </None>
+    <None Include="..\Resources\Models\cube\cube.mtl">
+      <Filter>Resources\Models\cube</Filter>
+    </None>
+    <None Include="..\Resources\Models\cube\cube.obj">
+      <Filter>Resources\Models\cube</Filter>
+    </None>
+    <None Include="..\Resources\Models\needle_Body\needle_Body.mtl">
+      <Filter>Resources\Models\needle_Body</Filter>
+    </None>
+    <None Include="..\Resources\Models\needle_Body\needle_Body.obj">
+      <Filter>Resources\Models\needle_Body</Filter>
+    </None>
+    <None Include="..\Resources\Models\plane\plane.bin">
+      <Filter>Resources\Models\plane</Filter>
+    </None>
+    <None Include="..\Resources\Models\plane\plane.blend">
+      <Filter>Resources\Models\plane</Filter>
+    </None>
+    <None Include="..\Resources\Models\plane\plane.gltf">
+      <Filter>Resources\Models\plane</Filter>
+    </None>
+    <None Include="..\Resources\Models\plane\plane.mtl">
+      <Filter>Resources\Models\plane</Filter>
+    </None>
+    <None Include="..\Resources\Models\plane\plane.obj">
+      <Filter>Resources\Models\plane</Filter>
+    </None>
+    <None Include="..\Resources\Models\weapon\weapon.mtl">
+      <Filter>Resources\Models\weapon</Filter>
+    </None>
+    <None Include="..\Resources\Models\weapon\weapon.obj">
+      <Filter>Resources\Models\weapon</Filter>
+    </None>
+    <None Include="..\Resources\Shaders\CubeMap\CubeMap.hlsli">
+      <Filter>Resources\Shaders\CubeMap</Filter>
+    </None>
+    <None Include="..\Resources\Shaders\Method\Random.hlsli">
+      <Filter>Resources\Shaders\Method</Filter>
+    </None>
+    <None Include="..\Resources\Shaders\Object3d\InstanceObj.hlsli">
+      <Filter>Resources\Shaders\Object3d</Filter>
+    </None>
+    <None Include="..\Resources\Shaders\Object3d\Object3d.hlsli">
+      <Filter>Resources\Shaders\Object3d</Filter>
+    </None>
+    <None Include="..\Resources\Shaders\Particle\GPUParticle.hlsli">
+      <Filter>Resources\Shaders\Particle</Filter>
+    </None>
+    <None Include="..\Resources\Shaders\Particle\Particle.hlsli">
+      <Filter>Resources\Shaders\Particle</Filter>
+    </None>
+    <None Include="..\Resources\Shaders\PostEffect\FullScreen\FullScreen.hlsli">
+      <Filter>Resources\Shaders\PostEffect\FullScreen</Filter>
+    </None>
+    <None Include="..\Resources\Shaders\Shadow\Shadowmap.hlsli">
+      <Filter>Resources\Shaders\Shadow</Filter>
+    </None>
+    <None Include="..\Resources\Shaders\Skinning\Skinning.hlsli">
+      <Filter>Resources\Shaders\Skinning</Filter>
+    </None>
+    <None Include="..\Resources\Shaders\Sprite\Sprite.hlsli">
+      <Filter>Resources\Shaders\Sprite</Filter>
+    </None>
+    <None Include="..\Resources\Textures\GameScene\A.dds">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\Textures\GameScene\B.dds">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\Textures\GameScene\GameOver.dds">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\Textures\GameScene\LB.dds">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\Textures\GameScene\RB.dds">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\Textures\GameScene\strongAttack.dds">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\Textures\GameScene\weakAttack.dds">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\Textures\TitleScene\Space.dds">
+      <Filter>Resources\Textures\TitleScene</Filter>
+    </None>
+    <None Include="..\Resources\Textures\TitleScene\Start.dds">
+      <Filter>Resources\Textures\TitleScene</Filter>
+    </None>
+    <None Include="..\Resources\Textures\TitleScene\title.dds">
+      <Filter>Resources\Textures\TitleScene</Filter>
+    </None>
+    <None Include="..\Resources\Textures\icon.ico">
+      <Filter>Resources\Textures</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\ClearScene\Clear.json">
+      <Filter>Resources\UIConfigs\ClearScene</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\GameScene\A.json">
+      <Filter>Resources\UIConfigs\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\GameScene\B.json">
+      <Filter>Resources\UIConfigs\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\GameScene\BackGround.json">
+      <Filter>Resources\UIConfigs\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\GameScene\GameOver.json">
+      <Filter>Resources\UIConfigs\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\GameScene\Guard.json">
+      <Filter>Resources\UIConfigs\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\GameScene\LB.json">
+      <Filter>Resources\UIConfigs\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\GameScene\Retry.json">
+      <Filter>Resources\UIConfigs\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\GameScene\Strong.json">
+      <Filter>Resources\UIConfigs\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\GameScene\ToTitle.json">
+      <Filter>Resources\UIConfigs\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\GameScene\UIBackGround.json">
+      <Filter>Resources\UIConfigs\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\GameScene\Weak.json">
+      <Filter>Resources\UIConfigs\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\GameScene\startButton.json">
+      <Filter>Resources\UIConfigs\GameScene</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\NewUI.json">
+      <Filter>Resources\UIConfigs</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\NewUI_1.json">
+      <Filter>Resources\UIConfigs</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\Title\A.json">
+      <Filter>Resources\UIConfigs\Title</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\Title\Space.json">
+      <Filter>Resources\UIConfigs\Title</Filter>
+    </None>
+    <None Include="..\Resources\UIConfigs\Title\TitleLogo.json">
+      <Filter>Resources\UIConfigs\Title</Filter>
+    </None>
+    <None Include="..\Resources\UIScenes\ClearScene.json">
+      <Filter>Resources\UIScenes</Filter>
+    </None>
+    <None Include="..\Resources\UIScenes\GameScene.json">
+      <Filter>Resources\UIScenes</Filter>
+    </None>
+    <None Include="..\Resources\UIScenes\Title.json">
+      <Filter>Resources\UIScenes</Filter>
+    </None>
+    <None Include="..\Resources\images\rostock_laage_airport_4k.dds">
+      <Filter>Resources\images</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Resources\Effects\circle.png">
+      <Filter>Resources\Effects</Filter>
+    </Image>
+    <Image Include="..\Resources\Effects\circle2.png">
+      <Filter>Resources\Effects</Filter>
+    </Image>
+    <Image Include="..\Resources\Effects\gradationLine.png">
+      <Filter>Resources\Effects</Filter>
+    </Image>
+    <Image Include="..\Resources\Effects\hanabira.png">
+      <Filter>Resources\Effects</Filter>
+    </Image>
+    <Image Include="..\Resources\Effects\momiji.png">
+      <Filter>Resources\Effects</Filter>
+    </Image>
+    <Image Include="..\Resources\Effects\momiji_s.png">
+      <Filter>Resources\Effects</Filter>
+    </Image>
+    <Image Include="..\Resources\Effects\sakura.png">
+      <Filter>Resources\Effects</Filter>
+    </Image>
+    <Image Include="..\Resources\Effects\smoke.png">
+      <Filter>Resources\Effects</Filter>
+    </Image>
+    <Image Include="..\Resources\Effects\snow.png">
+      <Filter>Resources\Effects</Filter>
+    </Image>
+    <Image Include="..\Resources\Effects\square.png">
+      <Filter>Resources\Effects</Filter>
+    </Image>
+    <Image Include="..\Resources\Effects\star.png">
+      <Filter>Resources\Effects</Filter>
+    </Image>
+    <Image Include="..\Resources\Effects\starSmall.png">
+      <Filter>Resources\Effects</Filter>
+    </Image>
+    <Image Include="..\Resources\Effects\sun.png">
+      <Filter>Resources\Effects</Filter>
+    </Image>
+    <Image Include="..\Resources\Effects\trail_amiami.png">
+      <Filter>Resources\Effects</Filter>
+    </Image>
+    <Image Include="..\Resources\Effects\wind.png">
+      <Filter>Resources\Effects</Filter>
+    </Image>
+    <Image Include="..\Resources\Models\Alien\Atlas_Monsters.png">
+      <Filter>Resources\Models\Alien</Filter>
+    </Image>
+    <Image Include="..\Resources\Models\GreenSpikyBlob\Atlas_Monsters.png">
+      <Filter>Resources\Models\GreenSpikyBlob</Filter>
+    </Image>
+    <Image Include="..\Resources\Models\Ground\Ground.png">
+      <Filter>Resources\Models\Ground</Filter>
+    </Image>
+    <Image Include="..\Resources\Models\Multi\cube.jpg">
+      <Filter>Resources\Models\Multi</Filter>
+    </Image>
+    <Image Include="..\Resources\Models\Multi\uvChecker.png">
+      <Filter>Resources\Models\Multi</Filter>
+    </Image>
+    <Image Include="..\Resources\Models\Multi\white.png">
+      <Filter>Resources\Models\Multi</Filter>
+    </Image>
+    <Image Include="..\Resources\Models\Mushnub_Evolved\Atlas_Monsters.png">
+      <Filter>Resources\Models\Mushnub_Evolved</Filter>
+    </Image>
+    <Image Include="..\Resources\Models\cube\cube.jpg">
+      <Filter>Resources\Models\cube</Filter>
+    </Image>
+    <Image Include="..\Resources\Models\needle_Body\needle_Body.png">
+      <Filter>Resources\Models\needle_Body</Filter>
+    </Image>
+    <Image Include="..\Resources\Models\plane\uvChecker.png">
+      <Filter>Resources\Models\plane</Filter>
+    </Image>
+    <Image Include="..\Resources\Models\weapon\weapon.png">
+      <Filter>Resources\Models\weapon</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\ClearScene\clear.png">
+      <Filter>Resources\Textures\ClearScene</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\GameScene\A.png">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\GameScene\B.png">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\GameScene\BattleScene.png">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\GameScene\FieldScene.png">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\GameScene\GameOver.png">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\GameScene\LB.png">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\GameScene\RB.png">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\GameScene\Retry.png">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\GameScene\ToTitle.png">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\GameScene\guard.png">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\GameScene\startButton.png">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\GameScene\strongAttack.png">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\GameScene\weakAttack.png">
+      <Filter>Resources\Textures\GameScene</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\Option\number_sheet.png">
+      <Filter>Resources\Textures\Option</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\TitleScene\Space.png">
+      <Filter>Resources\Textures\TitleScene</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\TitleScene\Start.png">
+      <Filter>Resources\Textures\TitleScene</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\TitleScene\title.png">
+      <Filter>Resources\Textures\TitleScene</Filter>
+    </Image>
+    <Image Include="..\Resources\Textures\white.png">
+      <Filter>Resources\Textures</Filter>
+    </Image>
+    <Image Include="..\Resources\images\break.png">
+      <Filter>Resources\images</Filter>
+    </Image>
+    <Image Include="..\Resources\images\circle.png">
+      <Filter>Resources\images</Filter>
+    </Image>
+    <Image Include="..\Resources\images\circle2.png">
+      <Filter>Resources\images</Filter>
+    </Image>
+    <Image Include="..\Resources\images\gradationLine.png">
+      <Filter>Resources\images</Filter>
+    </Image>
+    <Image Include="..\Resources\images\noise0.png">
+      <Filter>Resources\images</Filter>
+    </Image>
+    <Image Include="..\Resources\images\noise1.png">
+      <Filter>Resources\images</Filter>
+    </Image>
+    <Image Include="..\Resources\images\white.png">
+      <Filter>Resources\images</Filter>
+    </Image>
   </ItemGroup>
 </Project>

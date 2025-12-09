@@ -107,6 +107,411 @@
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\Resources\Shaders\CubeMap\CubeMap.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\CubeMap\CubeMap.VS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Object3d\InstanceObj.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Object3d\InstanceObj.VS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Object3d\Object3d.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Object3d\Object3d.VS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Particle\EmitParticle.CS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Particle\GPUParticle.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Particle\GPUParticle.VS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Particle\InitializeParticle.CS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Particle\Particle.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Particle\Particle.VS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Particle\UpdateParticle.CS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\Blur\RadialBlur.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\ColorRemapping\Chromatic.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\ColorRemapping\ColorAdjust.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\ColorRemapping\ToneMapping.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\CopyImage\CopyImage.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\Dissolve\Dissolve.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\FullScreen\FullScreen.VS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\Grayscale\Grayscale.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\OutLine\DepthBasedOutLine.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\OutLine\LuminanceBasedOutLine.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\Sepia\Sepia.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\Smoothing\BoxFilter.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\Smoothing\GaussianFilter.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\Transition\ShatterTransition.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\PostEffect\Vignette\Vignette.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Primitive\Line\Line.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Primitive\Line\Line.VS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Shadow\Shadowmap.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Shadow\Shadowmap.VS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Skinning\Skinning.CS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Skinning\Skinning.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Skinning\Skinning.VS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Skinning\SkinningCS.VS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Sprite\Sprite.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\Sprite\Sprite.VS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Resources\Binary\BrainStem_.anim" />
+    <None Include="..\Resources\Binary\Player_.anim" />
+    <None Include="..\Resources\Binary\Player_Attack1.anim" />
+    <None Include="..\Resources\Binary\Player_Attack2.anim" />
+    <None Include="..\Resources\Binary\Player_Attack3.anim" />
+    <None Include="..\Resources\Binary\Player_Attack4.anim" />
+    <None Include="..\Resources\Binary\Player_Block1.anim" />
+    <None Include="..\Resources\Binary\Player_Block2.anim" />
+    <None Include="..\Resources\Binary\Player_Block_Idle.anim" />
+    <None Include="..\Resources\Binary\Player_Death2.anim" />
+    <None Include="..\Resources\Binary\Player_Idle1.anim" />
+    <None Include="..\Resources\Binary\Player_Idle2.anim" />
+    <None Include="..\Resources\Binary\Player_Idle3.anim" />
+    <None Include="..\Resources\Binary\Player_Idle4.anim" />
+    <None Include="..\Resources\Binary\Player_Run1.anim" />
+    <None Include="..\Resources\Binary\Player_Run2.anim" />
+    <None Include="..\Resources\Binary\Player_Slash1.anim" />
+    <None Include="..\Resources\Binary\Player_Slash2.anim" />
+    <None Include="..\Resources\Binary\Player_Slash3.anim" />
+    <None Include="..\Resources\Binary\Player_Slash4.anim" />
+    <None Include="..\Resources\Binary\Player_Slash5.anim" />
+    <None Include="..\Resources\Binary\Player_Walk1.anim" />
+    <None Include="..\Resources\Binary\Player_idle.anim" />
+    <None Include="..\Resources\Binary\sneakWalk_.anim" />
+    <None Include="..\Resources\Binary\walk_.anim" />
+    <None Include="..\Resources\DDS\vz_classic_cubemap_ue.dds" />
+    <None Include="..\Resources\DDS\vz_classic_land_cubemap_ue.dds" />
+    <None Include="..\Resources\DDS\vz_sinister_cubemap_ue.dds" />
+    <None Include="..\Resources\DDS\vz_sinister_land_cubemap_ue.dds" />
+    <None Include="..\Resources\DDS\vz_techno_cubemap_ue.dds" />
+    <None Include="..\Resources\Data\emitters.json" />
+    <None Include="..\Resources\Fonts\FiraMono-Medium.ttf" />
+    <None Include="..\Resources\Fonts\Free-Solid-900.otf" />
+    <None Include="..\Resources\Fonts\ipaexg.ttf" />
+    <None Include="..\Resources\Json\BattleEnemies\enemy_data.json" />
+    <None Include="..\Resources\Json\Cameras\BattleCamera.json" />
+    <None Include="..\Resources\Json\Cameras\BattleStartCamera.json" />
+    <None Include="..\Resources\Json\Cameras\ClearCamera.json" />
+    <None Include="..\Resources\Json\Cameras\DebugCamera.json" />
+    <None Include="..\Resources\Json\Cameras\DefaultCamera.json" />
+    <None Include="..\Resources\Json\Cameras\FollowCamera.json" />
+    <None Include="..\Resources\Json\Cameras\SplineCamera.json" />
+    <None Include="..\Resources\Json\Colliders\DemoPlayerCollider.json" />
+    <None Include="..\Resources\Json\Colliders\PlayerCollider.json" />
+    <None Include="..\Resources\Json\Colliders\PlayerShieldCollider.json" />
+    <None Include="..\Resources\Json\Colliders\PlayerSwordCollider.json" />
+    <None Include="..\Resources\Json\Colliders\TitlePlayerCollider.json" />
+    <None Include="..\Resources\Json\Combo\AttackData.json" />
+    <None Include="..\Resources\Json\CubeMap\SkyBox\SkyBox.json" />
+    <None Include="..\Resources\Json\FieldEnemies\field_enemy_data.json" />
+    <None Include="..\Resources\Json\FieldEnemies\field_spawn_data.json" />
+    <None Include="..\Resources\Json\GpuEmitters\emitters.json" />
+    <None Include="..\Resources\Json\LevelData\t.json" />
+    <None Include="..\Resources\Json\Objects\DemoPlayer\DemoPlayer.json" />
+    <None Include="..\Resources\Json\Objects\Enemies\Enemy.json" />
+    <None Include="..\Resources\Json\Objects\Enemies\EnemyManager.json" />
+    <None Include="..\Resources\Json\Objects\Player\Player.json" />
+    <None Include="..\Resources\Json\Objects\Player\PlayerAttack.json" />
+    <None Include="..\Resources\Json\Particles\PlayerHitParticle.json" />
+    <None Include="..\Resources\Json\Particles\PlayerParticle.json" />
+    <None Include="..\Resources\Json\Particles\Settings\ClearParticle.json" />
+    <None Include="..\Resources\Json\Particles\Settings\GuardParticle.json" />
+    <None Include="..\Resources\Json\Particles\Settings\PlayerHitParticle.json" />
+    <None Include="..\Resources\Json\Particles\Settings\PlayerParticle.json" />
+    <None Include="..\Resources\Json\Particles\Settings\TestParticle.json" />
+    <None Include="..\Resources\Json\Particles\Settings\TitleParticle.json" />
+    <None Include="..\Resources\Json\Particles\TestParticle.json" />
+    <None Include="..\Resources\Json\PostEffectPresets\Color.json" />
+    <None Include="..\Resources\Json\Prefabs\3object.json" />
+    <None Include="..\Resources\Json\Prefabs\Title.json" />
+    <None Include="..\Resources\Json\Prefabs\TitleScene.json" />
+    <None Include="..\Resources\Json\Prefabs\a.json" />
+    <None Include="..\Resources\Json\Prefabs\aaa.json" />
+    <None Include="..\Resources\Json\Prefabs\biru.json" />
+    <None Include="..\Resources\Json\Prefabs\pre.json" />
+    <None Include="..\Resources\Json\Prefabs\test.json" />
+    <None Include="..\Resources\Json\SceneSync\sync_data.json" />
+    <None Include="..\Resources\Json\Scenes\GameScene.json" />
+    <None Include="..\Resources\Json\Scenes\TitleScene.json" />
+    <None Include="..\Resources\Json\UI\Title.json" />
+    <None Include="..\Resources\Json\Weapon\PlayerShield.json" />
+    <None Include="..\Resources\Json\Weapon\PlayerSword.json" />
+    <None Include="..\Resources\Models\Alien\Alien.mtl" />
+    <None Include="..\Resources\Models\Alien\Alien.obj" />
+    <None Include="..\Resources\Models\Bell_Tower\Bell_Tower.mtl" />
+    <None Include="..\Resources\Models\Bell_Tower\Bell_Tower.obj" />
+    <None Include="..\Resources\Models\Blacksmith\Blacksmith.mtl" />
+    <None Include="..\Resources\Models\Blacksmith\Blacksmith.obj" />
+    <None Include="..\Resources\Models\GreenSpikyBlob\GreenSpikyBlob.mtl" />
+    <None Include="..\Resources\Models\GreenSpikyBlob\GreenSpikyBlob.obj" />
+    <None Include="..\Resources\Models\Ground\Ground.mtl" />
+    <None Include="..\Resources\Models\Ground\Ground.obj" />
+    <None Include="..\Resources\Models\House_1\House_1.mtl" />
+    <None Include="..\Resources\Models\House_1\House_1.obj" />
+    <None Include="..\Resources\Models\House_2\House_2.mtl" />
+    <None Include="..\Resources\Models\House_2\House_2.obj" />
+    <None Include="..\Resources\Models\Inn\Inn.mtl" />
+    <None Include="..\Resources\Models\Inn\Inn.obj" />
+    <None Include="..\Resources\Models\Multi\Multi.mtl" />
+    <None Include="..\Resources\Models\Multi\Multi.obj" />
+    <None Include="..\Resources\Models\Mushnub_Evolved\Mushnub_Evolved.mtl" />
+    <None Include="..\Resources\Models\Mushnub_Evolved\Mushnub_Evolved.obj" />
+    <None Include="..\Resources\Models\Player\Player.bin" />
+    <None Include="..\Resources\Models\Player\Player.gltf" />
+    <None Include="..\Resources\Models\Sawmill\Sawmill.mtl" />
+    <None Include="..\Resources\Models\Sawmill\Sawmill.obj" />
+    <None Include="..\Resources\Models\Shield_Heater\Shield_Heater.mtl" />
+    <None Include="..\Resources\Models\Shield_Heater\Shield_Heater.obj" />
+    <None Include="..\Resources\Models\Sword_Golden\Sword_Golden.mtl" />
+    <None Include="..\Resources\Models\Sword_Golden\Sword_Golden.obj" />
+    <None Include="..\Resources\Models\cube\cube.dds" />
+    <None Include="..\Resources\Models\cube\cube.mtl" />
+    <None Include="..\Resources\Models\cube\cube.obj" />
+    <None Include="..\Resources\Models\needle_Body\needle_Body.mtl" />
+    <None Include="..\Resources\Models\needle_Body\needle_Body.obj" />
+    <None Include="..\Resources\Models\plane\plane.bin" />
+    <None Include="..\Resources\Models\plane\plane.blend" />
+    <None Include="..\Resources\Models\plane\plane.gltf" />
+    <None Include="..\Resources\Models\plane\plane.mtl" />
+    <None Include="..\Resources\Models\plane\plane.obj" />
+    <None Include="..\Resources\Models\weapon\weapon.mtl" />
+    <None Include="..\Resources\Models\weapon\weapon.obj" />
+    <None Include="..\Resources\Shaders\CubeMap\CubeMap.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\Resources\Shaders\Method\Random.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\Resources\Shaders\Object3d\InstanceObj.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\Resources\Shaders\Object3d\Object3d.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\Resources\Shaders\Particle\GPUParticle.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\Resources\Shaders\Particle\Particle.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\Resources\Shaders\PostEffect\FullScreen\FullScreen.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\Resources\Shaders\Shadow\Shadowmap.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\Resources\Shaders\Skinning\Skinning.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\Resources\Shaders\Sprite\Sprite.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\Resources\Textures\GameScene\A.dds" />
+    <None Include="..\Resources\Textures\GameScene\B.dds" />
+    <None Include="..\Resources\Textures\GameScene\GameOver.dds" />
+    <None Include="..\Resources\Textures\GameScene\LB.dds" />
+    <None Include="..\Resources\Textures\GameScene\RB.dds" />
+    <None Include="..\Resources\Textures\GameScene\strongAttack.dds" />
+    <None Include="..\Resources\Textures\GameScene\weakAttack.dds" />
+    <None Include="..\Resources\Textures\TitleScene\Space.dds" />
+    <None Include="..\Resources\Textures\TitleScene\Start.dds" />
+    <None Include="..\Resources\Textures\TitleScene\title.dds" />
+    <None Include="..\Resources\Textures\icon.ico" />
+    <None Include="..\Resources\UIConfigs\ClearScene\Clear.json" />
+    <None Include="..\Resources\UIConfigs\GameScene\A.json" />
+    <None Include="..\Resources\UIConfigs\GameScene\B.json" />
+    <None Include="..\Resources\UIConfigs\GameScene\BackGround.json" />
+    <None Include="..\Resources\UIConfigs\GameScene\GameOver.json" />
+    <None Include="..\Resources\UIConfigs\GameScene\Guard.json" />
+    <None Include="..\Resources\UIConfigs\GameScene\LB.json" />
+    <None Include="..\Resources\UIConfigs\GameScene\Retry.json" />
+    <None Include="..\Resources\UIConfigs\GameScene\Strong.json" />
+    <None Include="..\Resources\UIConfigs\GameScene\ToTitle.json" />
+    <None Include="..\Resources\UIConfigs\GameScene\UIBackGround.json" />
+    <None Include="..\Resources\UIConfigs\GameScene\Weak.json" />
+    <None Include="..\Resources\UIConfigs\GameScene\startButton.json" />
+    <None Include="..\Resources\UIConfigs\NewUI.json" />
+    <None Include="..\Resources\UIConfigs\NewUI_1.json" />
+    <None Include="..\Resources\UIConfigs\Title\A.json" />
+    <None Include="..\Resources\UIConfigs\Title\Space.json" />
+    <None Include="..\Resources\UIConfigs\Title\TitleLogo.json" />
+    <None Include="..\Resources\UIScenes\ClearScene.json" />
+    <None Include="..\Resources\UIScenes\GameScene.json" />
+    <None Include="..\Resources\UIScenes\Title.json" />
+    <None Include="..\Resources\images\rostock_laage_airport_4k.dds" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Resources\Effects\circle.png" />
+    <Image Include="..\Resources\Effects\circle2.png" />
+    <Image Include="..\Resources\Effects\gradationLine.png" />
+    <Image Include="..\Resources\Effects\hanabira.png" />
+    <Image Include="..\Resources\Effects\momiji.png" />
+    <Image Include="..\Resources\Effects\momiji_s.png" />
+    <Image Include="..\Resources\Effects\sakura.png" />
+    <Image Include="..\Resources\Effects\smoke.png" />
+    <Image Include="..\Resources\Effects\snow.png" />
+    <Image Include="..\Resources\Effects\square.png" />
+    <Image Include="..\Resources\Effects\star.png" />
+    <Image Include="..\Resources\Effects\starSmall.png" />
+    <Image Include="..\Resources\Effects\sun.png" />
+    <Image Include="..\Resources\Effects\trail_amiami.png" />
+    <Image Include="..\Resources\Effects\wind.png" />
+    <Image Include="..\Resources\Models\Alien\Atlas_Monsters.png" />
+    <Image Include="..\Resources\Models\GreenSpikyBlob\Atlas_Monsters.png" />
+    <Image Include="..\Resources\Models\Ground\Ground.png" />
+    <Image Include="..\Resources\Models\Multi\cube.jpg" />
+    <Image Include="..\Resources\Models\Multi\uvChecker.png" />
+    <Image Include="..\Resources\Models\Multi\white.png" />
+    <Image Include="..\Resources\Models\Mushnub_Evolved\Atlas_Monsters.png" />
+    <Image Include="..\Resources\Models\cube\cube.jpg" />
+    <Image Include="..\Resources\Models\needle_Body\needle_Body.png" />
+    <Image Include="..\Resources\Models\plane\uvChecker.png" />
+    <Image Include="..\Resources\Models\weapon\weapon.png" />
+    <Image Include="..\Resources\Textures\ClearScene\clear.png" />
+    <Image Include="..\Resources\Textures\GameScene\A.png" />
+    <Image Include="..\Resources\Textures\GameScene\B.png" />
+    <Image Include="..\Resources\Textures\GameScene\BattleScene.png" />
+    <Image Include="..\Resources\Textures\GameScene\FieldScene.png" />
+    <Image Include="..\Resources\Textures\GameScene\GameOver.png" />
+    <Image Include="..\Resources\Textures\GameScene\LB.png" />
+    <Image Include="..\Resources\Textures\GameScene\RB.png" />
+    <Image Include="..\Resources\Textures\GameScene\Retry.png" />
+    <Image Include="..\Resources\Textures\GameScene\ToTitle.png" />
+    <Image Include="..\Resources\Textures\GameScene\guard.png" />
+    <Image Include="..\Resources\Textures\GameScene\startButton.png" />
+    <Image Include="..\Resources\Textures\GameScene\strongAttack.png" />
+    <Image Include="..\Resources\Textures\GameScene\weakAttack.png" />
+    <Image Include="..\Resources\Textures\Option\number_sheet.png" />
+    <Image Include="..\Resources\Textures\TitleScene\Space.png" />
+    <Image Include="..\Resources\Textures\TitleScene\Start.png" />
+    <Image Include="..\Resources\Textures\TitleScene\title.png" />
+    <Image Include="..\Resources\Textures\white.png" />
+    <Image Include="..\Resources\images\break.png" />
+    <Image Include="..\Resources\images\circle.png" />
+    <Image Include="..\Resources\images\circle2.png" />
+    <Image Include="..\Resources\images\gradationLine.png" />
+    <Image Include="..\Resources\images\noise0.png" />
+    <Image Include="..\Resources\images\noise1.png" />
+    <Image Include="..\Resources\images\white.png" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
