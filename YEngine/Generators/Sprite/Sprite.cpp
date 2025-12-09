@@ -46,15 +46,39 @@ void Sprite::Initialize(const std::string& textureFilePath)
 /// </summary>
 void Sprite::Update()
 {
-	/// ※アンカーポイントを考慮するため更新内にある
+	/// 頂点更新
 	CreateVertex();
 
-	// Transform パラメータ反映
-	transform_.translate = { translate_.x,translate_.y,translate_.z };
-	transform_.rotate = { rotate_.x,rotate_.y,rotate_.z };
-	transform_.scale = { size_.x,size_.y,1.0f };
+	//────────────────────────────────
+	// 3D → 2D 座標変換（camera_ がある場合のみ）
+	//────────────────────────────────
+	Vector3 screenPos = translate_; // デフォルトはそのまま使う
 
-	// 行列生成
+	if (camera_) {
+		// 3D ワールド座標として扱う
+		Vector4 worldPos = { translate_.x, translate_.y, translate_.z, 1.0f };
+
+		// clip space = world * VP
+		Vector4 clip = Transform(worldPos, camera_->GetViewProjectionMatrix());
+
+		// 透視除算
+		clip.x /= clip.w;
+		clip.y /= clip.w;
+
+		// NDC → Screen
+		screenPos.x = (clip.x * 0.5f + 0.5f) * WinApp::kClientWidth;
+		screenPos.y = (-clip.y * 0.5f + 0.5f) * WinApp::kClientHeight;
+		screenPos.z = 0.0f; // スプライトは2D
+	}
+
+	//────────────────────────────────
+	//スプライトの 2D 用 Transform を適用
+	//────────────────────────────────
+	transform_.translate = screenPos;
+	transform_.rotate = rotate_;
+	transform_.scale = { size_.x, size_.y, 1.0f };
+
+	// 正射影行列で処理
 	Matrix4x4 worldMatrix = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
 	Matrix4x4 viewMatrix = MakeIdentity4x4();
 	Matrix4x4 projectionMatrix = MakeOrthographicMatrix(
@@ -63,21 +87,17 @@ void Sprite::Update()
 		float(WinApp::kClientHeight),
 		0.0f, 100.0f
 	);
-	Matrix4x4 worldProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 
-	// カメラ利用時はWVP合成
-	if (camera_) {
-		transformationMatrixData_->WVP = worldProjectionMatrix * camera_->GetViewProjectionMatrix();
-	} else {
-		transformationMatrixData_->WVP = worldProjectionMatrix;
-	}
-
+	transformationMatrixData_->WVP = Multiply(worldMatrix, projectionMatrix);
 	transformationMatrixData_->World = worldMatrix;
 
-	// UV Transform行列を計算
+	//────────────────────────────────
+	// UV Transform
+	//────────────────────────────────
 	Matrix4x4 uvScaleMatrix = MakeScaleMatrix({ uvScale_.x, uvScale_.y, 1.0f });
 	Matrix4x4 uvRotateMatrix = MakeRotateMatrixZ(uvRotation_);
 	Matrix4x4 uvTranslateMatrix = MakeTranslateMatrix({ uvTranslation_.x, uvTranslation_.y, 0.0f });
+
 	materialData_->uvTransform = Multiply(uvScaleMatrix, Multiply(uvRotateMatrix, uvTranslateMatrix));
 }
 

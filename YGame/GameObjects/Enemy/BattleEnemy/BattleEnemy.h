@@ -2,6 +2,7 @@
 #include "../Generators/Object3D/BaseObject.h"
 #include "../IEnemyState.h"
 #include "BattleEnemyData.h"
+#include "UI/HealthBar/EnemyHealthBarUI.h"
 
 #include <string>
 #include <vector>
@@ -36,6 +37,9 @@ public:
 
 	// 描画処理
 	void Draw() override;
+
+	// UI描画
+	void DrawUI();
 
 	// 影の処理
 	void DrawShadow();
@@ -214,4 +218,6 @@ private:
 
 	//	ノックバックデータ
 	KnockbackData knockbackData_;
+
+	std::unique_ptr<EnemyHealthBarUI> healthBarUI_;
 };

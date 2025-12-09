@@ -837,6 +837,16 @@ void BattleEnemyManager::Draw() {
 	}
 }
 
+void BattleEnemyManager::DrawUI()
+{
+	if (!isBattleActive_) return;
+	for (auto& enemy : battleEnemies_) {
+		if (enemy) {
+			enemy->DrawUI();
+		}
+	}
+}
+
 void BattleEnemyManager::DrawShadow()
 {
 	if (!isBattleActive_) return;

@@ -34,6 +34,9 @@ void BattleEnemy::Initialize(Camera* camera) {
 	wt_.Initialize();
 	wt_.useAnchorPoint_ = true;
 	InitCollision();
+
+	healthBarUI_ = std::make_unique<EnemyHealthBarUI>(this, camera);
+	healthBarUI_->Initialize();
 }
 
 /*==========================================================================
@@ -97,6 +100,8 @@ void BattleEnemy::Update() {
 		ChangeState(std::make_unique<BattleDeadState>());
 		PlayDeathEffect();
 	}
+
+	healthBarUI_->Update();
 
 	// 行列とコリジョン更新
 	wt_.UpdateMatrix();
@@ -292,6 +297,14 @@ void BattleEnemy::Draw() {
 		}
 	}
 	if (obj_) obj_->Draw(camera_, wt_);
+}
+
+/*==========================================================================
+UI描画
+//========================================================================*/
+void BattleEnemy::DrawUI()
+{
+	healthBarUI_->Draw();
 }
 
 /*==========================================================================

@@ -148,7 +148,10 @@ void BattleScene::DrawLine() {
 /// UI描画
 /// </summary>
 void BattleScene::DrawUI() {
-	sprite_->Draw();
+	//sprite_->Draw();
+	if (battleEnemyManager_) {
+		battleEnemyManager_->DrawUI();
+	}
 }
 
 void BattleScene::DrawNonOffscreen()

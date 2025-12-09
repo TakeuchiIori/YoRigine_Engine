@@ -73,6 +73,9 @@ public:
 	// 描画処理
 	void Draw();
 
+	// UI描画処理
+	void DrawUI();
+
 	// 影描画処理
 	void DrawShadow();
 

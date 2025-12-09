@@ -292,6 +292,9 @@ void GameScene::DrawLine() {
 /// </summary>
 void GameScene::DrawUI() {
 	gameUI_->DrawAll();
+	if (subSceneManager_) {
+		subSceneManager_->DrawUI();
+	}
 }
 
 /// <summary>
