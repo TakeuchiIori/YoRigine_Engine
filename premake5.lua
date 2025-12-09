@@ -1,5 +1,5 @@
 -- =============================================================================
--- Premake5 ビルドスクリプト
+-- Premake5 ビルドスクリプト (最終版 - デバッグ時リソースコピー回避)
 -- =============================================================================
 
 -- 出力ディレクトリと中間ディレクトリの定義
@@ -149,6 +149,7 @@ group "Engine"
         links { "YMath", "DirectXTex.lib" }
 
         postbuildcommands {
+            -- DXC/DXIL DLLのコピーは引き続き行う（EXEの隣に必須）
             'xcopy /Q /Y /I "$(WindowsSdkDir)bin\\$(TargetPlatformVersion)\\x64\\dxcompiler.dll" "%{cfg.targetdir}"',
             'xcopy /Q /Y /I "$(WindowsSdkDir)bin\\$(TargetPlatformVersion)\\x64\\dxil.dll" "%{cfg.targetdir}"',
         }
@@ -222,7 +223,9 @@ group "Game"
         -- 先にGame側をビルド
         dependson { "YGame" ,"YResources"}
         
-        debugdir (outputDir)
+        -- 【変更点 1】デバッグ時の作業ディレクトリをワークスペースルートに設定
+        -- これにより、EXEはここで実行され、"Resources"はソースフォルダを指す
+        debugdir "%{wks.basedir}" 
         fatalwarnings { "All" }
 
         files { "YMain/Main.cpp" }
@@ -234,15 +237,20 @@ group "Game"
         includedirs(engine_includes)
         includedirs(game_includes)
         
-        postbuildcommands {
-            'xcopy /Q /E /I /Y "%{wks.basedir}/Resources" "%{cfg.targetdir}/Resources"'
-        }
+        -- 【変更点 2】共通のpostbuildcommandsからリソースコピーを削除
+        -- DXC/DXIL DLLのコピーはYEngineに移したので、ここは空でOK
+        postbuildcommands { } 
 
         filter "configurations:Debug"
             defines { "_DEBUG" }
+            -- Debug時はリソースコピー処理なし (元のフォルダを直接読み書き)
         
         filter "configurations:Release"
             defines { "NDEBUG" }
+            -- 【変更点 3】Release時のみリソースをEXEの隣にコピー
+            postbuildcommands {
+                 'xcopy /Q /E /I /Y "%{wks.basedir}/Resources" "%{cfg.targetdir}/Resources"'
+            }
 
         filter {}
 

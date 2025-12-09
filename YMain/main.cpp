@@ -18,8 +18,17 @@ void Logger(const char* message) {
 //-----------------------------------------------------------------------------
 // 設定
 //-----------------------------------------------------------------------------
-const std::wstring DLL_NAME_ORIGIN = L"YGame.dll";      // コンパイラが出力する原本
-const std::wstring DLL_NAME_COPY = L"YGame_Hot.dll";    // 実行用にコピーするやつ
+#ifdef _DEBUG
+    // Debug構成の場合: generated/outputs/Debug/
+const std::wstring CONFIG_PATH = L"../generated/outputs/Debug/";
+#else
+    // Release構成の場合: generated/outputs/Release/
+const std::wstring CONFIG_PATH = L"../generated/outputs/Release/";
+#endif
+
+// DLLの実際のパスを、実行場所からの相対パスとして指定
+const std::wstring DLL_NAME_ORIGIN = CONFIG_PATH + L"YGame.dll";      // コンパイラが出力する原本
+const std::wstring DLL_NAME_COPY = CONFIG_PATH + L"YGame_Hot.dll";
 
 //-----------------------------------------------------------------------------
 // グローバル変数
@@ -67,6 +76,9 @@ bool LoadGameDLL() {
     lastWriteTime = std::filesystem::last_write_time(DLL_NAME_ORIGIN);
 
     // DLLをコピーする
+    // 【注意】DLL_NAME_ORIGINの場所は、EXEの実行場所からの相対パスとして解決されます。
+    // Premake設定でdebugdirを%{wks.basedir}にした場合、YGame.dllは
+    // %{wks.basedir}/generated/outputs/%{cfg.buildcfg}/YGame.dll にあるはずです。
     Logger("  Copying DLL (Origin -> Hot)...");
     std::filesystem::copy_file(DLL_NAME_ORIGIN, DLL_NAME_COPY, std::filesystem::copy_options::overwrite_existing);
 
@@ -113,12 +125,24 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     //------------------------------------------------------------
     // メインループ
     //------------------------------------------------------------
+    MSG msg = {};
     while (true) {
+
+        // 【修正点】ウィンドウメッセージの取得と処理
+        // PeekMessageW を使用し、メッセージがあれば処理し、なければゲームへ制御を渡す
+        if (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE)) {
+            if (msg.message == WM_QUIT) {
+                break; // 終了メッセージを受け取ったらループを抜ける
+            }
+            TranslateMessage(&msg); // キーボードメッセージを変換
+            DispatchMessageW(&msg); // ウィンドウプロシージャへメッセージを渡す
+        }
 
         // ホットリロードのチェック
         try {
             auto currentWriteTime = std::filesystem::last_write_time(DLL_NAME_ORIGIN);
             if (currentWriteTime != lastWriteTime) {
+                // ファイルアクセス競合を防ぐために少し待つ
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 LoadGameDLL();
             }
@@ -129,7 +153,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         // ゲームの更新と描画
         if (gameInstance) {
-            // ウィンドウメッセージ処理
+            // ウィンドウメッセージ処理（WM_QUITなど）によって IsEndRequst が設定される
             if (gameInstance->IsEndRequst()) {
                 break;
             }
