@@ -2,7 +2,7 @@ name: DebugBuild
 on:
   push:
     branches:
-      -'**' 
+      - '**' 
 env:
   SOLUTION_FILE_PATH: YoRigine.sln
   CONFIGURATION: Debug
