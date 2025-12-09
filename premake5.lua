@@ -125,8 +125,8 @@ group "Engine"
             ["*"] = "YMath/**"
         }
 
-    --------------------- YoRigine (Static Library) ---------------------
-    project "YoRigine"
+    --------------------- YEngine (Static Library) ---------------------
+    project "YEngine"
         kind "StaticLib"
         location "%{wks.basedir}/YEngine"
         defines { "GAME_BUILD_DLL" }
@@ -199,7 +199,7 @@ group "Game"
         includedirs(game_includes)
         includedirs(engine_includes)
 
-        links { "YMath", "YoRigine", "DirectXTex.lib" }
+        links { "YMath", "YEngine", "DirectXTex.lib" }
         links(directx_libs)
 
         filter "configurations:Debug"
@@ -220,16 +220,14 @@ group "Game"
         location "%{wks.basedir}/YMain"
 
         -- 先にGame側をビルド
-        dependson { "YGame" }
+        dependson { "YGame" ,"YResources"}
         
         debugdir (outputDir)
         fatalwarnings { "All" }
 
         files { "YMain/Main.cpp" }
-        files { "Resources/**.*" }
         vpaths {
             ["YMain/*"] = "YMain/**",
-            ["Resources/*"] = "Resources/**"
         }
 
         includedirs { "." }
@@ -251,4 +249,23 @@ group "Game"
 --------------------------------------------------------------------------------
 -- グループ終了
 --------------------------------------------------------------------------------
+group ""
+
+--------------------------------------------------------------------------------
+-- Resources (リソース管理)
+--------------------------------------------------------------------------------
+group "Resources"
+
+    project "YResources"
+        kind "None" 
+        location "Resources"
+        
+        files { "Resources/**.*" }
+        
+        vpaths {
+           ["Resources/*"] = "Resources/**"
+        }
+
+        excludes { "Resources/**.*" }
+
 group ""
