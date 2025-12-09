@@ -1,4 +1,4 @@
-name: Debug
+name: DebugBuild
 on:
   push:
     branches:
@@ -19,7 +19,7 @@ jobs:
       - name: Run Premake to Generate Solution
         run: |
           # リポジトリにあるバッチファイルを実行
-          .\premake.bat 
+          .premake.bat 
       # -----------------------------------
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
