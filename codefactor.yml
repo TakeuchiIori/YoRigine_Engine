@@ -1,2 +1,2 @@
 exclude:
-- "Externals/*"
+  - "Externals/DirectTex/**"
