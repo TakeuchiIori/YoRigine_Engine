@@ -40,5 +40,6 @@ private:
 
 	std::unique_ptr<YoRigine::JsonManager> jsonManager_;
     Vector3 offset_{};
+	Vector3 screenOffset_{};
     Vector2 size_{};
 };
