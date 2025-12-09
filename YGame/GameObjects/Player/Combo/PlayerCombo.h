@@ -147,6 +147,15 @@ public:
 		}
 		return 0.0f;
 	}
+
+	// 現在の攻撃ノックバック値取得
+	float GetCurrentKnockbackDuaration() const {
+		if (currentAttack_) {
+			return currentAttack_->knockbackDuaration;
+		}
+		return 0.0f;
+	}
+
 	// 現在の攻撃範囲取得
 	Vector3 GetCurrentAttackRange() const {
 		if (currentAttack_) {

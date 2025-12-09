@@ -46,10 +46,6 @@ GuardingCombatState::GuardingCombatState(PlayerCombat* combat) : combat_(combat)
 			break;
 
 		case PlayerGuard::State::Idle:
-			//obj->SetMotionSpeed(player->GetMotionSpeed(2));
-			//obj->SetChangeMotion("Player.gltf", MotionPlayMode::Loop, "Idle4");
-			//movement->SetCanMove(true);
-			//movement->SetCanRotate(true);
 			break;
 		}
 		});
@@ -70,9 +66,6 @@ GuardingCombatState::GuardingCombatState(PlayerCombat* combat) : combat_(combat)
 
 		// パリィ成功でCCを少量回復
 		combat->GetCombo()->RecoverCC(1);
-
-		// 反撃として軽攻撃を即時実行
-		combat->TryAttack(AttackType::A_Arte);
 		});
 
 	//---------------------------------------------------------------------------------------------

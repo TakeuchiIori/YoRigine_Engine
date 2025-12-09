@@ -38,7 +38,9 @@ public:
 	void OnCollision([[maybe_unused]] BaseCollider* self, BaseCollider* other);
 	void OnExitCollision([[maybe_unused]] BaseCollider* self, [[maybe_unused]] BaseCollider* other);
 	void OnDirectionCollision([[maybe_unused]] BaseCollider* self, [[maybe_unused]] BaseCollider* other, [[maybe_unused]] HitDirection dir);
-
+	void SetEnableCollider(bool enable) {
+		obbCollider_->SetCollisionEnabled(enable);
+	}
 private:
 	///************************* 内部処理関数 *************************///
 

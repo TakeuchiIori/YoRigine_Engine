@@ -164,11 +164,19 @@ void Player::Update() {
 	//------------------------------------------------------------
 	// 生存時処理
 	//------------------------------------------------------------
+
 	// 剣のコライダーON/OFF制御
-	if (combat_ && combat_->IsIdle()) {
-		playerSword_->SetEnableCollider(false);
-	} else {
+	if (combat_->GetCurrentState() == CombatState::Attacking) {
 		playerSword_->SetEnableCollider(true);
+	} else {
+		playerSword_->SetEnableCollider(false);
+	}
+
+	// 盾のコライダーON/OFF制御
+	if (combat_->GetCurrentState() == CombatState::Guarding) {
+		playerShield_->SetEnableCollider(true);
+	} else {
+		playerShield_->SetEnableCollider(false);
 	}
 
 	UpdateMotionTime();

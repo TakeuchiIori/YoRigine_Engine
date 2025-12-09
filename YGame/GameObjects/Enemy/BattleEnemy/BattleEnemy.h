@@ -150,7 +150,7 @@ public:
 	// 移動到達閾値を取得
 	float GetArrivalThreshold() const { return arrivalThreshold_; }
 
-
+	// ノックバックデータを取得
 	const KnockbackData& GetKnockbackData() { return knockbackData_; }
 
 	///************************* 攻撃・エフェクト処理 *************************///

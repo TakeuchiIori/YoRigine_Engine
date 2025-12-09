@@ -225,7 +225,7 @@ void BattleEnemy::OnEnterCollision([[maybe_unused]] BaseCollider* self, BaseColl
 			knockbackDir = Vector3::Normalize(knockbackDir);
 
 			float power = player_->GetCombat()->GetCombo()->GetCurrentKnockback();
-			float duaration = player_->GetCombat()->GetCombo()->GetCurrentAttack()->knockbackDuaration;
+			float duaration = player_->GetCombat()->GetCombo()->GetCurrentKnockbackDuaration();
 			StartKnockback(knockbackDir, power, duaration);
 		}
 	}
