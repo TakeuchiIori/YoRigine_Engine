@@ -24,16 +24,13 @@ void HitCombatState::OnEnter()
     switch (combat_->GetHitDirection())
     {
     case HitDirection::Front:
-        //motionName = "impact_front";
         break;
     case HitDirection::Back:
         motionName = "Impact2";
         break;
     case HitDirection::Left:
-        //motionName = "impact_left";
         break;
     case HitDirection::Right:
-        //motionName = "impact_right";
         break;
     }
 
