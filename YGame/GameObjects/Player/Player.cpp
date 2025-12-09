@@ -372,7 +372,12 @@ void Player::OnExitCollision([[maybe_unused]] BaseCollider* self, BaseCollider* 
 /// <summary>
 /// 衝突方向ごとの処理
 /// </summary>
-void Player::OnDirectionCollision([[maybe_unused]] BaseCollider* self, BaseCollider* other, [[maybe_unused]] HitDirection dir) {
+void Player::OnDirectionCollision([[maybe_unused]] BaseCollider* self, [[maybe_unused]] BaseCollider* other, [[maybe_unused]] HitDirection dir) {
+
+}
+
+void Player::OnEnterDirectionCollision([[maybe_unused]] BaseCollider* self, BaseCollider* other, HitDirection dir)
+{
 	if (other->GetTypeID() == static_cast<uint32_t>(CollisionTypeIdDef::kBattleEnemy)) {
 		// 方向ヒット状態へ遷移
 		combat_->SetHitDirection(dir);

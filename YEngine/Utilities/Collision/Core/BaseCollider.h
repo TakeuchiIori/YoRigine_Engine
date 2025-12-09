@@ -46,6 +46,8 @@ public:
 	// 衝突方向を持つコールバック登録（前後左右のヒット判定など）
 	void SetOnDirectionCollision(DirectionalCollisionCallback cb) { directionCallback_ = cb; }
 
+	void SetOnEnterDirectionCollision(DirectionalCollisionCallback cb) { enterDirectionCallback_ = cb; }
+
 	// 衝突開始時のコールバック呼び出し
 	void CallOnEnterCollision(BaseCollider* other) {
 		if (enterCallback_) enterCallback_(this, other);
@@ -64,6 +66,11 @@ public:
 	// 衝突方向付きのコールバック呼び出し
 	void CallOnDirectionCollision(BaseCollider* other, HitDirection dir) {
 		if (directionCallback_) directionCallback_(this, other, dir);
+	}
+
+	// 衝突開始時の方向付きコールバック呼び出し
+	void CallOnEnterDirectionCollision(BaseCollider* other, HitDirection dir) {
+		if (enterDirectionCallback_) enterDirectionCallback_(this, other, dir);
 	}
 
 public:
@@ -146,4 +153,6 @@ private:
 	CollisionCallback collisionCallback_;
 	CollisionCallback exitCallback_;
 	DirectionalCollisionCallback directionCallback_;
+	DirectionalCollisionCallback enterDirectionCallback_;
+
 };

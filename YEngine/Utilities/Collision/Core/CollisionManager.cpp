@@ -558,6 +558,10 @@ namespace YoRigine {
 			if (!wasColliding) {
 				a->CallOnEnterCollision(b);
 				b->CallOnEnterCollision(a);
+				if (dirA != HitDirection::None || dirB != HitDirection::None) {
+					a->CallOnEnterDirectionCollision(b, dirA);
+					b->CallOnEnterDirectionCollision(a, dirB);
+				}
 				collidingPairs_.insert(key);
 			}
 			a->CallOnCollision(b);
