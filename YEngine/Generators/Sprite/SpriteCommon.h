@@ -13,7 +13,7 @@ public:
 	static SpriteCommon* GetInstance();
 	SpriteCommon() = default;
 	~SpriteCommon() = default;
-	void Initialize(DirectXCommon* dxCommon);
+	void Initialize(YoRigine::DirectXCommon* dxCommon);
 	void DrawPreference();
 
 	// コマンドリストにセット
@@ -23,7 +23,7 @@ public:
 
 public:
 	///************************* アクセッサ *************************///
-	DirectXCommon* GetDxCommon() const { return dxCommon_; }
+	YoRigine::DirectXCommon* GetDxCommon() const { return dxCommon_; }
 
 private:
 	// シングルトンインスタンス
@@ -33,7 +33,7 @@ private:
 	SpriteCommon& operator=(const SpriteCommon&) = delete;
 
 	///************************* メンバ変数 *************************///
-	DirectXCommon* dxCommon_;
+	YoRigine::DirectXCommon* dxCommon_;
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature_ = nullptr;
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> graphicsPipelineState_ = nullptr;
 

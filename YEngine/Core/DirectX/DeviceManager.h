@@ -11,29 +11,30 @@
 #include <thread>
 #include <format>
 
-/// <summary>
-/// デバイス管理クラス
-/// </summary>
-class DeviceManager
-{
-public:
-	///************************* 基本的な関数 *************************///
-	void Initialize();
-	void Finalize();
-public:
+namespace YoRigine {
+	/// <summary>
+	/// デバイス管理クラス
+	/// </summary>
+	class DeviceManager
+	{
+	public:
+		///************************* 基本的な関数 *************************///
+		void Initialize();
+		void Finalize();
+	public:
 
-	///************************* アクセッサ *************************///
-	Microsoft::WRL::ComPtr<ID3D12Device> GetDevice() { return device_; }
-	Microsoft::WRL::ComPtr<IDXGIFactory7> GetDXGIFactory() { return dxgiFactory_; }
+		///************************* アクセッサ *************************///
+		Microsoft::WRL::ComPtr<ID3D12Device> GetDevice() { return device_; }
+		Microsoft::WRL::ComPtr<IDXGIFactory7> GetDXGIFactory() { return dxgiFactory_; }
 
-private:
+	private:
 
-	///************************* 基盤 *************************///
+		///************************* 基盤 *************************///
 
-	// DirectX12デバイス
-	Microsoft::WRL::ComPtr<ID3D12Device> device_;
-	// DXGIファクトリ
-	Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory_;
+		// DirectX12デバイス
+		Microsoft::WRL::ComPtr<ID3D12Device> device_;
+		// DXGIファクトリ
+		Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory_;
 
-};
-
+	};
+}

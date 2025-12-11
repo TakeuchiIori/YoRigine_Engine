@@ -32,7 +32,7 @@ public:
 	///************************* 基本関数 *************************///
 
 	// 初期化
-	void Initialze(DirectXCommon* dxCommon);
+	void Initialze(YoRigine::DirectXCommon* dxCommon);
 
 	// モデル読み込み
 	void LoadModel(const std::string& directoryPath, const std::string& filePath, const std::string& animationName = "", bool isAnimation = false);

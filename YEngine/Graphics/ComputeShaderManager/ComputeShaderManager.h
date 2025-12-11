@@ -47,7 +47,7 @@ private:
 
 private:
 	///************************* メンバ変数 *************************///
-	DirectXCommon* dxCommon_ = nullptr;
+	YoRigine::DirectXCommon* dxCommon_ = nullptr;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12RootSignature>> rootSignatures_;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> computePipelineStates_;
 };

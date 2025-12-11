@@ -132,7 +132,7 @@ private:
 	PipelineManager(PipelineManager&&) = delete;
 	PipelineManager& operator=(PipelineManager&&) = delete;
 	///************************* メンバ変数 *************************///
-	DirectXCommon* dxCommon_ = nullptr;
+	YoRigine::DirectXCommon* dxCommon_ = nullptr;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> pipelineStates_;
 	std::unordered_map<BlendMode, Microsoft::WRL::ComPtr<ID3D12PipelineState>> blendModePipelineStates_;
 	std::unordered_map<BlendMode, Microsoft::WRL::ComPtr<ID3D12PipelineState>> blendModePipelineStatesGPU_;
