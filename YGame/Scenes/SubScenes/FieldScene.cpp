@@ -15,9 +15,9 @@
 #include "imgui.h"
 #endif
 
-/// <summary>
-/// フィールドシーン初期化
-/// </summary>
+/*==========================================================================
+	初期化
+//========================================================================*/
 void FieldScene::Initialize(Camera* camera, Player* player) {
 
 	sceneCamera_ = camera;
@@ -60,9 +60,9 @@ void FieldScene::Initialize(Camera* camera, Player* player) {
 #endif
 }
 
-/// <summary>
-/// 更新処理
-/// </summary>
+/*==========================================================================
+	更新処理
+//========================================================================*/
 void FieldScene::Update() {
 	player_->Update();
 	ground_->Update();
@@ -94,9 +94,9 @@ void FieldScene::Update() {
 #endif // _DEBUG
 }
 
-/// <summary>
-/// 3Dオブジェクト描画
-/// </summary>
+/*==========================================================================
+	オブジェクトの描画
+//========================================================================*/
 void FieldScene::DrawObject() {
 	player_->Draw();
 	ground_->Draw();
@@ -104,9 +104,9 @@ void FieldScene::DrawObject() {
 	player_->DrawAnimation();
 }
 
-/// <summary>
-/// 当たり判定ラインやボーン描画
-/// </summary>
+/*==========================================================================
+	線の描画
+//========================================================================*/
 void FieldScene::DrawLine() {
 #ifdef USE_IMGUI
 	player_->DrawCollision();
@@ -115,26 +115,32 @@ void FieldScene::DrawLine() {
 #endif
 }
 
-/// <summary>
-/// UI描画
-/// </summary>
+/*==========================================================================
+	UIの描画
+//========================================================================*/
 void FieldScene::DrawUI() {
 	//sprite_->Draw();
 }
 
+/*==========================================================================
+	ポストエフェクトに描画したくないものをここに描画
+//========================================================================*/
 void FieldScene::DrawNonOffscreen()
 {
 }
 
+/*==========================================================================
+	影の描画
+//========================================================================*/
 void FieldScene::DrawShadow()
 {
 	player_->DrawShadow();
 	fieldEnemyManager_->DrawShadow();
 }
 
-/// <summary>
-/// シーン遷移時に呼ばれる：フィールド開始処理
-/// </summary>
+/*==========================================================================
+	シーンに入った時の処理
+//========================================================================*/
 void FieldScene::OnEnter() {
 	BaseSubScene::OnEnter();
 
@@ -163,9 +169,9 @@ void FieldScene::OnEnter() {
 	Logger("[FieldScene] ===== OnEnter() END =====\n");
 }
 
-/// <summary>
-/// シーンを抜ける時の処理（バトル遷移前の保存）
-/// </summary>
+/*==========================================================================
+	シーンを抜けるときの処理
+//========================================================================*/
 void FieldScene::OnExit() {
 	BaseSubScene::OnExit();
 
@@ -210,9 +216,9 @@ void FieldScene::OnExit() {
 	Logger("[FieldScene] ===== OnExit() END =====\n");
 }
 
-/// <summary>
-/// カメラモードの切り替え（デバッグ用）
-/// </summary>
+/*==========================================================================
+	カメラモードの切り替え
+//========================================================================*/
 void FieldScene::UpdateCameraMode() {
 #ifdef USE_IMGUI
 	if (ImGui::Button("Follow Camera")) { currentCameraMode_ = CameraMode::FOLLOW; }
@@ -222,9 +228,9 @@ void FieldScene::UpdateCameraMode() {
 #endif
 }
 
-/// <summary>
-/// エンカウント発生時の詳細処理
-/// </summary>
+/*==========================================================================
+	エンカウント発生時の処理
+//========================================================================*/
 void FieldScene::HandleDetailedEncounter(const EncountInfo& encounterInfo) {
 	Logger("[FieldScene] ===== 詳細エンカウント処理 START =====\n");
 
@@ -244,7 +250,7 @@ void FieldScene::HandleDetailedEncounter(const EncountInfo& encounterInfo) {
 
 	if (fieldEnemyManager_) {
 
-		// 改善: エンカウント「グループ数」で判定（敵の個体数ではなく）
+		// エンカウント「グループ数」で判定（敵の個体数ではなく）
 		remainingGroups = fieldEnemyManager_->GetActiveEncounterGroupCount();
 
 		char debugBuffer[256];
@@ -298,20 +304,22 @@ void FieldScene::HandleDetailedEncounter(const EncountInfo& encounterInfo) {
 }
 
 
-/// <summary>
-/// カメラ状態の保存（バトル遷移用）
-/// </summary>
+/*==========================================================================
+	カメラ状態の保存（戦闘復帰用）
+//========================================================================*/
 void FieldScene::SaveCameraState(BattleTransitionData& data) {
 	data.cameraPosition = sceneCamera_->transform_.translate;
 	data.cameraMode = currentCameraMode_;
 }
 
-/// <summary>
-/// バトル復帰時の処理（勝敗に応じた復元）
-/// </summary>
+/*==========================================================================
+	バトル復帰時の処理（勝敗によって変わる）
+//========================================================================*/
 void FieldScene::HandleBattleReturn(const FieldReturnData& data) {
 	Logger("[FieldScene] ===== HandleBattleReturn() START =====\n");
 
+	// 念のためここでもエンカウントリセット関数を呼ぶ
+	fieldEnemyManager_->ResetEnCount();
 	Vector3 returnPos = data.playerPosition;
 
 	if (data.playerWon) {
@@ -338,23 +346,23 @@ void FieldScene::HandleBattleReturn(const FieldReturnData& data) {
 	Logger("[FieldScene] ===== HandleBattleReturn() END =====\n");
 }
 
-/// <summary>
-/// カメラ状態の復元
-/// </summary>
+/*==========================================================================
+	カメラ状態の復元
+//========================================================================*/
 void FieldScene::RestoreCameraState(const FieldReturnData& data) {
 	currentCameraMode_ = data.cameraMode;
 }
 
-/// <summary>
-/// プレイヤー位置の取得
-/// </summary>
+/*==========================================================================
+	プレイヤーの位置取得
+//========================================================================*/
 Vector3 FieldScene::GetPlayerPosition() const {
 	return player_ ? player_->GetWorldPosition() : Vector3(0.0f, 0.0f, 0.0f);
 }
 
-/// <summary>
-/// すべての敵が撃破されたかチェック
-/// </summary>
+/*==========================================================================
+	全ての敵が激はされたかチェック
+//========================================================================*/
 bool FieldScene::AreAllEnemiesDefeated() const {
 	if (!fieldEnemyManager_) {
 		return false;
@@ -378,9 +386,9 @@ bool FieldScene::AreAllEnemiesDefeated() const {
 	return totalEnemyCount == 0 && fieldEnemyManager_->HasAnyEnemiesBeenSpawned();
 }
 
-/// <summary>
-/// 終了処理
-/// </summary>
+/*==========================================================================
+	終了処理
+//========================================================================*/
 void FieldScene::Finalize() {
 	if (fieldEnemyManager_) {
 		fieldEnemyManager_->Finalize();
