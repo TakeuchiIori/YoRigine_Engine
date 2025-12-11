@@ -66,7 +66,7 @@ private:
 private:
 	///************************* メンバ変数 *************************///
 	LineManager* lineManager_ = nullptr;
-	YoRigine::DirectXCommon* dxCommon_ = nullptr;
+	DirectXCommon* dxCommon_ = nullptr;
 	Camera* camera_ = nullptr;
 
 	// 頂点関連

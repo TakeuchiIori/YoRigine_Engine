@@ -141,7 +141,7 @@ private:
 
 private:
 	///************************* メンバ変数 *************************///
-	YoRigine::DirectXCommon* dxCommon_;
+	DirectXCommon* dxCommon_;
 	PipelineManager* pipelineManager_;
 	ComputeShaderManager* computeShaderManager_;
 	Camera* camera_;

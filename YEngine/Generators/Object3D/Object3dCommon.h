@@ -26,7 +26,7 @@ public: // メンバ関数
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	void Initialize(YoRigine::DirectXCommon* dxCommon);
+	void Initialize(DirectXCommon* dxCommon);
 
 	/// <summary>
 	/// 共通部描画設定
@@ -38,7 +38,7 @@ public: // アクセッサ
 	Camera* GetDefaultCamera() const { return defaultCamera_; }
 
 	// setter
-	YoRigine::DirectXCommon* GetDxCommon() const { return dxCommon_; }
+	DirectXCommon* GetDxCommon() const { return dxCommon_; }
 	void SetDefaultCamera(Camera* camera) { this->defaultCamera_ = camera; }
 
 private:
@@ -68,7 +68,7 @@ private:
 	Object3dCommon& operator=(Object3dCommon&) = delete;
 
 	// DirectX共通クラスのポインタ
-	YoRigine::DirectXCommon* dxCommon_;
+	DirectXCommon* dxCommon_;
 	// デフォルトカメラのポインタ
 	Camera* defaultCamera_ = nullptr;
 

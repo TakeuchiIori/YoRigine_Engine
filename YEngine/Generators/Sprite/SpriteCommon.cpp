@@ -20,7 +20,7 @@ SpriteCommon* SpriteCommon::GetInstance()
 /// スプライト共通処理の初期化（ルートシグネチャ・PSO を設定）
 /// </summary>
 /// <param name="dxCommon">DirectX 共通管理クラス</param>
-void SpriteCommon::Initialize(YoRigine::DirectXCommon* dxCommon)
+void SpriteCommon::Initialize(DirectXCommon* dxCommon)
 {
 	// DirectX共通クラスを記録
 	dxCommon_ = dxCommon;

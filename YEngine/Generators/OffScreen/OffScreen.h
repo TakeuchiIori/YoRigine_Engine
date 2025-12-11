@@ -252,7 +252,7 @@ private:
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState;
 	};
 
-	YoRigine::DirectXCommon* dxCommon_ = nullptr;
+	DirectXCommon* dxCommon_ = nullptr;
 	std::unordered_map<OffScreenEffectType, OffScreenPipeline> pipelineMap_;
 
 	///************************* GPU リソース *************************///

@@ -123,7 +123,7 @@ private:
 private:
 	///************************* メンバ変数 *************************///
 
-	YoRigine::DirectXCommon* dxCommon_ = nullptr;
+	DirectXCommon* dxCommon_ = nullptr;
 	RtvManager* rtvManager_ = nullptr;
 	OffScreen* offScreen_ = nullptr;
 

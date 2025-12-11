@@ -50,7 +50,7 @@ private:
 	};
 
 	///************************* メンバ変数 *************************///
-	YoRigine::DirectXCommon* dxCommon_;
+	DirectXCommon* dxCommon_;
 	SrvManager* srvManager_;
 	Camera* camera_;
 	YoRigine::LightManager* lightManager_ = nullptr;  // LightManagerへの参照

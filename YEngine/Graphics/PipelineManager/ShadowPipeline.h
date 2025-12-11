@@ -51,7 +51,7 @@ private:
     ShadowPipeline& operator=(ShadowPipeline&&) = delete;
 
 	///************************* メンバ変数 *************************///
-    YoRigine::DirectXCommon* dxCommon_ = nullptr;
+    DirectXCommon* dxCommon_ = nullptr;
     std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> pipelineStates_;
     std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12RootSignature>> rootSignatures_;
 };

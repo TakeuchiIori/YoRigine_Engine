@@ -21,7 +21,7 @@ ImGuiManager* ImGuiManager::GetInstance()
 	return instance;
 }
 
-void ImGuiManager::Initialize([[maybe_unused]] WinApp* winApp, [[maybe_unused]] YoRigine::DirectXCommon* dxCommon)
+void ImGuiManager::Initialize([[maybe_unused]] WinApp* winApp, [[maybe_unused]] DirectXCommon* dxCommon)
 {
 #ifdef USE_IMGUI
 	// メンバ変数に引数を渡す

@@ -36,7 +36,7 @@ private:
 	LineManager& operator=(LineManager&&) = delete;
 private:
 	///************************* メンバ変数 *************************///
-	YoRigine::DirectXCommon* dxCommon_ = nullptr;
+	DirectXCommon* dxCommon_ = nullptr;
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature_;
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> graphicsPipelineState_;
 

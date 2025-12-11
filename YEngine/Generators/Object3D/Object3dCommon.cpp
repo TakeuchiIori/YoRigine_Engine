@@ -21,7 +21,7 @@ Object3dCommon* Object3dCommon::GetInstance()
 /// <summary>
 /// 共通処理の初期化（ルートシグネチャ・PSO の取得）
 /// </summary>
-void Object3dCommon::Initialize(YoRigine::DirectXCommon* dxCommon)
+void Object3dCommon::Initialize(DirectXCommon* dxCommon)
 {
 	dxCommon_ = dxCommon;
 

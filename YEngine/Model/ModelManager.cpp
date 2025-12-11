@@ -20,7 +20,7 @@ ModelManager* ModelManager::GetInstance()
 /// 初期化処理
 /// </summary>
 /// <param name="dxCommon">DirectXの共通オブジェクト</param>
-void ModelManager::Initialze(YoRigine::DirectXCommon* dxCommon)
+void ModelManager::Initialze(DirectXCommon* dxCommon)
 {
 	// ModelCommonのインスタンスを生成し、初期化
 	ModelCommon::GetInstance()->Initialize(dxCommon);

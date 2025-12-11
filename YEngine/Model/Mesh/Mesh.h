@@ -102,7 +102,7 @@ public:
 
 private:
 	///************************* メンバ変数 *************************///
-	YoRigine::DirectXCommon* dxCommon_ = nullptr;
+	DirectXCommon* dxCommon_ = nullptr;
 
 	// 各データ
 	MeshData meshData_;

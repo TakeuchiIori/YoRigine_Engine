@@ -44,7 +44,7 @@ public:
 	WinApp* GetWinApp() { return winApp_; }
 protected:
 	///************************* 継承間で使用 *************************///
-	YoRigine::DirectXCommon* dxCommon_;
+	DirectXCommon* dxCommon_;
 	WinApp* winApp_ = nullptr;
 	YoRigine::Input* input_ = nullptr;
 	YoRigine::Audio* audio_ = nullptr;
