@@ -99,7 +99,7 @@ void DebugConsole::RecordTextureLoad()
 
 void DebugConsole::UpdateMemoryInfo()
 {
-    auto dxCommon = DirectXCommon::GetInstance();
+    auto dxCommon = YoRigine::DirectXCommon::GetInstance();
     if (!dxCommon) return;
 
     // DXGIアダプタから情報取得
@@ -191,7 +191,7 @@ void DebugConsole::DrawMemoryTab()
 
 void DebugConsole::DrawResourceTab()
 {
-    auto dxCommon = DirectXCommon::GetInstance();
+    auto dxCommon = YoRigine::DirectXCommon::GetInstance();
     if (!dxCommon) return;
 
     ImGui::Text("テクスチャ数: %d", textureCount_);
@@ -220,7 +220,7 @@ void DebugConsole::DrawResourceTab()
 
 void DebugConsole::DrawFrameContextTab()
 {
-    auto dxCommon = DirectXCommon::GetInstance();
+    auto dxCommon = YoRigine::DirectXCommon::GetInstance();
     if (!dxCommon) return;
 
     auto commandManager = dxCommon->GetCommandList();  // CommandManagerへのアクセスが必要

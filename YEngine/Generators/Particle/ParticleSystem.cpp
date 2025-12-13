@@ -24,7 +24,7 @@ ParticleSystem::ParticleSystem(const std::string& name)
 }
 
 void ParticleSystem::InitializeResources(SrvManager* srvManager) {
-    auto dxCommon = DirectXCommon::GetInstance();
+    auto dxCommon = YoRigine::DirectXCommon::GetInstance();
 
     // インスタンシング用リソース作成
     instancingResource_ = dxCommon->CreateBufferResource(sizeof(ParticleForGPU) * kMaxInstances_);
@@ -835,7 +835,7 @@ void ParticleSystem::InitializeTrailResources(SrvManager* srvManager)
 {
     if (!settings_.GetTrailEnabled()) return;
 
-    auto dxCommon = DirectXCommon::GetInstance();
+    auto dxCommon = YoRigine::DirectXCommon::GetInstance();
 
     // 頂点バッファの作成（動的に変更されるため大きめに確保）
     const size_t maxVertices = kMaxTrailInstances_ * 4; // 1セグメントあたり4頂点

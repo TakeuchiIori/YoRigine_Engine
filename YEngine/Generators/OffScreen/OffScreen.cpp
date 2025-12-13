@@ -8,7 +8,7 @@
 /// </summary>
 void OffScreen::Initialize()
 {
-	dxCommon_ = DirectXCommon::GetInstance();
+	dxCommon_ = YoRigine::DirectXCommon::GetInstance();
 
 	auto pipelineManager = PipelineManager::GetInstance();
 

@@ -8,7 +8,9 @@
 #include <mutex>
 
 // 3Dオブジェクト共通部
-class DirectXCommon;
+namespace YoRigine {
+	class DirectXCommon;
+}
 
 /// <summary>
 /// オブジェクトのパイプライン設定クラス
@@ -26,7 +28,7 @@ public: // メンバ関数
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	void Initialize(DirectXCommon* dxCommon);
+	void Initialize(YoRigine::DirectXCommon* dxCommon);
 
 	/// <summary>
 	/// 共通部描画設定
@@ -38,7 +40,7 @@ public: // アクセッサ
 	Camera* GetDefaultCamera() const { return defaultCamera_; }
 
 	// setter
-	DirectXCommon* GetDxCommon() const { return dxCommon_; }
+	YoRigine::DirectXCommon* GetDxCommon() const { return dxCommon_; }
 	void SetDefaultCamera(Camera* camera) { this->defaultCamera_ = camera; }
 
 private:
@@ -68,7 +70,7 @@ private:
 	Object3dCommon& operator=(Object3dCommon&) = delete;
 
 	// DirectX共通クラスのポインタ
-	DirectXCommon* dxCommon_;
+	YoRigine::DirectXCommon* dxCommon_;
 	// デフォルトカメラのポインタ
 	Camera* defaultCamera_ = nullptr;
 

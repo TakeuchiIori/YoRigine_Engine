@@ -3,7 +3,7 @@
 
 void MaterialLighting::Initialize()
 {
-	resource_ = DirectXCommon::GetInstance()->CreateBufferResource(sizeof(MaterialLight));
+	resource_ = YoRigine::DirectXCommon::GetInstance()->CreateBufferResource(sizeof(MaterialLight));
 	resource_->Map(0, nullptr, reinterpret_cast<void**>(&materialLight_));
 	materialLight_->enableLighting = true;
 	materialLight_->shininess = 70.0f;

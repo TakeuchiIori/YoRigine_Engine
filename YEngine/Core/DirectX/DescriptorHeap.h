@@ -8,8 +8,9 @@
 
 // Engine
 
-
-class DirectXCommon;
+namespace YoRigine {
+	class DirectXCommon;
+}
 /// <summary>
 /// ヒープ管理クラス
 /// </summary>
@@ -17,7 +18,7 @@ class DescriptorHeap
 {
 public:
 	///************************* 基本的な関数 *************************///
-	void Initialize(DirectXCommon* directXCommon);
+	void Initialize(YoRigine::DirectXCommon* directXCommon);
 
 	// ディスクリプターヒープの作成
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible);
@@ -27,7 +28,7 @@ public:
 	static D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeap, uint32_t descriptorSize, uint32_t index);
 private:
 	///************************* メンバ変数 *************************///
-	DirectXCommon* directXCommon_ = nullptr;
+	YoRigine::DirectXCommon* directXCommon_ = nullptr;
 
 };
 

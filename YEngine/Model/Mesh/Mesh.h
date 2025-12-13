@@ -18,7 +18,11 @@
 
 
 
-class DirectXCommon;
+namespace YoRigine {
+	class DirectXCommon;
+}
+
+
 class SkinCluster;
 
 // メッシュクラス
@@ -102,7 +106,7 @@ public:
 
 private:
 	///************************* メンバ変数 *************************///
-	DirectXCommon* dxCommon_ = nullptr;
+	YoRigine::DirectXCommon* dxCommon_ = nullptr;
 
 	// 各データ
 	MeshData meshData_;

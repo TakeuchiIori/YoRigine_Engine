@@ -13,7 +13,10 @@
 
 class Camera;
 class LineManager;
+
+namespace YoRigine{
 class DirectXCommon;
+}
 
 /// <summary>
 /// ライン描画クラス
@@ -66,7 +69,7 @@ private:
 private:
 	///************************* メンバ変数 *************************///
 	LineManager* lineManager_ = nullptr;
-	DirectXCommon* dxCommon_ = nullptr;
+	YoRigine::DirectXCommon* dxCommon_ = nullptr;
 	Camera* camera_ = nullptr;
 
 	// 頂点関連

@@ -9,7 +9,10 @@
 
 // Forward Declaration
 class WinApp;
+
+namespace YoRigine{
 class DirectXCommon;
+}
 
 
 // ImGuiの初期化・描画・終了処理を一括管理する
@@ -27,7 +30,7 @@ public:
 public:
 	///************************* 基本関数 *************************///
 
-	void Initialize(WinApp* winApp, DirectXCommon* dxCommon);
+	void Initialize(WinApp* winApp, YoRigine::DirectXCommon* dxCommon);
 	void Begin();
 	void End();
 	void Draw();
@@ -51,7 +54,7 @@ private:
 #ifdef USE_IMGUI
 	///************************* メンバ変数 *************************///
 
-	DirectXCommon* dxCommon_ = nullptr;
+	YoRigine::DirectXCommon* dxCommon_ = nullptr;
 	WinApp* winApp_ = nullptr;
 #endif
 };

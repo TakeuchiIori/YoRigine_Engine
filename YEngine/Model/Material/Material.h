@@ -18,7 +18,9 @@
 #include <assimp/material.h>
 
 
-class DirectXCommon;
+namespace YoRigine {
+	class DirectXCommon;
+}
 
 // マテリアルクラス
 class Material
@@ -106,7 +108,7 @@ public:
 
 private:
 	///************************* メンバ変数 *************************///
-	DirectXCommon* dxCommon_ = nullptr;
+	YoRigine::DirectXCommon* dxCommon_ = nullptr;
 
 	// リソース関連
 	Microsoft::WRL::ComPtr<ID3D12Resource> materialResource_;

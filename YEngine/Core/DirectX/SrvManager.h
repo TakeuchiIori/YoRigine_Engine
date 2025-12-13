@@ -7,7 +7,9 @@
 #include <dxgi1_6.h>
 #include <DirectXTex.h>
 
-class DirectXCommon;
+namespace YoRigine {
+	class DirectXCommon;
+}
 class SrvManager
 {
 public:
@@ -16,7 +18,7 @@ public:
 	// 最大SRV数
 	static const uint32_t kMaxSRVCount_;
 	static SrvManager* GetInstance();
-	void Initialize(DirectXCommon* dxCommon);
+	void Initialize(YoRigine::DirectXCommon* dxCommon);
 	void Finalize();
 	SrvManager() = default;
 	~SrvManager() = default;
@@ -68,7 +70,7 @@ private:
 	SrvManager& operator = (SrvManager&) = delete;
 
 	// ポインタ
-	DirectXCommon* dxCommon_ = nullptr;
+	YoRigine::DirectXCommon* dxCommon_ = nullptr;
 	// 次に使用するSRVインデックス
 	uint32_t useIndex_ = 0;
 	// ディスクリプタサイズ

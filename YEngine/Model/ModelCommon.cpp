@@ -5,6 +5,6 @@ ModelCommon* ModelCommon::GetInstance() {
     return &instance;
 }
 
-void ModelCommon::Initialize(DirectXCommon* dxCommon) {
+void ModelCommon::Initialize(YoRigine::DirectXCommon* dxCommon) {
     dxCommon_ = dxCommon;
 }

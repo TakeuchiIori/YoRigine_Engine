@@ -16,7 +16,7 @@ void Line::Initialize()
 	index = 0u;
 
 	lineManager_ = LineManager::GetInstance();
-	dxCommon_ = DirectXCommon::GetInstance();
+	dxCommon_ = YoRigine::DirectXCommon::GetInstance();
 
 	CrateMaterialResource();
 	CrateVetexResource();

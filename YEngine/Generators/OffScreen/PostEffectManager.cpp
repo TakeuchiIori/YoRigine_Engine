@@ -162,7 +162,7 @@ namespace JsonUtil {
 /// </summary>
 void PostEffectManager::Initialize()
 {
-	dxCommon_ = DirectXCommon::GetInstance();
+	dxCommon_ = YoRigine::DirectXCommon::GetInstance();
 	rtvManager_ = dxCommon_->GetRTVManager();
 	offScreen_ = OffScreen::GetInstance();
 

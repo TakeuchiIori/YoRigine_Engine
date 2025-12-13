@@ -12,7 +12,11 @@
 #include "WinApp/WinApp.h"
 
 
-class DirectXCommon;
+namespace YoRigine {
+	class DirectXCommon;
+}
+
+
 /// <summary>
 /// オフスクリーン生成クラス
 /// </summary>
@@ -252,7 +256,7 @@ private:
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState;
 	};
 
-	DirectXCommon* dxCommon_ = nullptr;
+	YoRigine::DirectXCommon* dxCommon_ = nullptr;
 	std::unordered_map<OffScreenEffectType, OffScreenPipeline> pipelineMap_;
 
 	///************************* GPU リソース *************************///

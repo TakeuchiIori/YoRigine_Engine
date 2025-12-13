@@ -361,7 +361,7 @@ void GPUEmitter::EmitAtPosition(const Vector3& position, float count)
 /// </summary>
 void GPUEmitter::CreateEmitterResources()
 {
-	auto* dx = DirectXCommon::GetInstance();
+	auto* dx = YoRigine::DirectXCommon::GetInstance();
 
 	//-----------------------------------------
 	// 共通データ
@@ -404,7 +404,7 @@ void GPUEmitter::CreateEmitterResources()
 
 void GPUEmitter::CreateParticleParametersResource()
 {
-	auto* dx = DirectXCommon::GetInstance();
+	auto* dx = YoRigine::DirectXCommon::GetInstance();
 	particleParametersResource_ = dx->CreateBufferResource(sizeof(ParticleParameters));
 	particleParametersResource_->Map(0, nullptr, reinterpret_cast<void**>(&particleParameters_));
 }
@@ -414,7 +414,7 @@ void GPUEmitter::CreateParticleParametersResource()
 /// </summary>
 void GPUEmitter::CreatePerFrameResource()
 {
-	auto* dx = DirectXCommon::GetInstance();
+	auto* dx = YoRigine::DirectXCommon::GetInstance();
 
 	perframeResource_ = dx->CreateBufferResource(sizeof(PerFrameData));
 	perframeResource_->Map(0, nullptr, reinterpret_cast<void**>(&perframeData_));
@@ -422,7 +422,7 @@ void GPUEmitter::CreatePerFrameResource()
 
 void GPUEmitter::CreateMeshTriangleBuffer()
 {
-	auto* dx = DirectXCommon::GetInstance();
+	auto* dx = YoRigine::DirectXCommon::GetInstance();
 
 	// 最大三角形数分のバッファを確保
 	size_t bufferSize = sizeof(MeshTriangle) * kMaxTriangles_;
@@ -578,7 +578,7 @@ void GPUEmitter::UpdateMeshTriangleData(Model* model)
 /// </summary>
 void GPUEmitter::Dispatch()
 {
-	auto* dx = DirectXCommon::GetInstance();
+	auto* dx = YoRigine::DirectXCommon::GetInstance();
 	auto* cmd = dx->GetCommandList().Get();
 
 	//-----------------------------------------

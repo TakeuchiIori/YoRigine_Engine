@@ -15,7 +15,7 @@ ComputeShaderManager* ComputeShaderManager::GetInstance()
 /// </summary>
 void ComputeShaderManager::Initialize()
 {
-	dxCommon_ = DirectXCommon::GetInstance();
+	dxCommon_ = YoRigine::DirectXCommon::GetInstance();
 
 	// 各コンピュートシェーダーの PSO / RootSignature を生成
 	CreateSkinningCS();

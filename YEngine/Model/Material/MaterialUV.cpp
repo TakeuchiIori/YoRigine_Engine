@@ -3,7 +3,7 @@
 
 void MaterialUV::Initialize()
 {
-	resource_ = DirectXCommon::GetInstance()->CreateBufferResource(sizeof(MaterialUVData));
+	resource_ = YoRigine::DirectXCommon::GetInstance()->CreateBufferResource(sizeof(MaterialUVData));
 	resource_->Map(0, nullptr, reinterpret_cast<void**>(&materialUV_));
 
 	materialUV_->uvTransform = MakeIdentity4x4();

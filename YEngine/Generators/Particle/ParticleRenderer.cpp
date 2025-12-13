@@ -14,7 +14,7 @@
 /// パーティクルレンダラーの初期化（バッファ生成・パイプライン取得）
 /// </summary>
 void ParticleRenderer::Initialize(SrvManager* srvManager) {
-	dxCommon_ = DirectXCommon::GetInstance();
+	dxCommon_ = YoRigine::DirectXCommon::GetInstance();
 	srvManager_ = srvManager;
 
 	// LightManagerを取得

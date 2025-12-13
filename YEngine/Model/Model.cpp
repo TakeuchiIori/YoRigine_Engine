@@ -106,7 +106,7 @@ void Model::Draw() {
 
 	if (hasBones_) {
 
-		DirectXCommon::GetInstance()->TransitionBarrier(
+		YoRigine::DirectXCommon::GetInstance()->TransitionBarrier(
 			skinCluster_->GetOutputResource(),
 			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
@@ -117,7 +117,7 @@ void Model::Draw() {
 		commandList->SetGraphicsRootSignature(
 			PipelineManager::GetInstance()->GetRootSignature("Object"));
 
-		DirectXCommon::GetInstance()->TransitionBarrier(
+		YoRigine::DirectXCommon::GetInstance()->TransitionBarrier(
 			skinCluster_->GetOutputResource(),
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
 			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
@@ -149,7 +149,7 @@ void Model::Draw() {
 
 	=================================================================*/
 
-	auto shadowHandle = DirectXCommon::GetInstance()->GetShadowDepthGPUHandle();
+	auto shadowHandle = YoRigine::DirectXCommon::GetInstance()->GetShadowDepthGPUHandle();
 	commandList->SetGraphicsRootDescriptorTable(11, shadowHandle);
 	for (size_t i = 0; i < meshes_.size(); ++i) {
 		auto& mesh = meshes_[i];

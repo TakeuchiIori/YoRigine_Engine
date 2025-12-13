@@ -35,7 +35,7 @@ void MyGame::Initialize() {
 	// パーティクル関連の初期化
 	//------------------------------------------------------------
 	ParticleEditor::GetInstance().Initialize();
-	YoRigine::ParticleManager::GetInstance()->Initialize(srvManager_);
+	YoRigine::ParticleManager::GetInstance()->Initialize(dxCommon_->GetSrvManager());
 
 	// パーティクルグループ作成
 	YoRigine::ParticleManager::GetInstance()->CreateParticleGroup("PlayerParticle", "Resources/images/circle.png");
@@ -148,7 +148,7 @@ void MyGame::Draw() {
 	dxCommon_->PreDrawShadow();
 	SceneManager::GetInstance()->DrawShadow();
 	dxCommon_->PreDrawOffScreen();
-	srvManager_->PreDraw();
+	dxCommon_->GetSrvManager()->PreDraw();
 
 	// シーン描画
 	SceneManager::GetInstance()->Draw();

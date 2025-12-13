@@ -7,7 +7,10 @@
 #include <d3d12.h>
 #include "PostEffectChain.h"
 
+namespace YoRigine{
 class DirectXCommon;
+}
+
 class RtvManager;
 class OffScreen;
 
@@ -123,7 +126,7 @@ private:
 private:
 	///************************* メンバ変数 *************************///
 
-	DirectXCommon* dxCommon_ = nullptr;
+	YoRigine::DirectXCommon* dxCommon_ = nullptr;
 	RtvManager* rtvManager_ = nullptr;
 	OffScreen* offScreen_ = nullptr;
 

@@ -3,7 +3,7 @@
 
 void MaterialColor::Initialize()
 {
-	resource_ = DirectXCommon::GetInstance()->CreateBufferResource(sizeof(ColorData));
+	resource_ = YoRigine::DirectXCommon::GetInstance()->CreateBufferResource(sizeof(ColorData));
 	resource_->Map(0, nullptr, reinterpret_cast<void**>(&colorData_));
 	colorData_->color = { 1.0f, 1.0f, 1.0f, 1.0f };
 }

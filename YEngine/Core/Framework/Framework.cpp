@@ -20,7 +20,7 @@ void Framework::Initialize()
 	//-----------------------------------------
 	// DirectX 初期化
 	//-----------------------------------------
-	dxCommon_ = DirectXCommon::GetInstance();
+	dxCommon_ = YoRigine::DirectXCommon::GetInstance();
 	dxCommon_->Initialize(winApp_);
 
 #ifdef USE_IMGUI
@@ -36,11 +36,6 @@ void Framework::Initialize()
 	//-----------------------------------------
 	audio_ = YoRigine::Audio::GetInstance();
 	audio_->Initialize();
-
-	//-----------------------------------------
-	// SRV マネージャ
-	//-----------------------------------------
-	srvManager_ = SrvManager::GetInstance();
 
 	//-----------------------------------------
 	// ImGui
@@ -126,7 +121,6 @@ void Framework::Finalize()
 	pipelineManager_->Finalize();
 	computeShaderManager_->Finalize();
 	textureManager_->Finalize();
-	srvManager_->Finalize();
 	imguiManager_->Finalize();
 	audio_->Finalize();
 	dxCommon_->Finalize();

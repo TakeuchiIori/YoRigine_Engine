@@ -3,7 +3,7 @@
 #include <Loaders/Texture/TextureManager.h>
 void Material::Initialize(std::string& textureFilePath)
 {
-	dxCommon_ = DirectXCommon::GetInstance();
+	dxCommon_ = YoRigine::DirectXCommon::GetInstance();
 	textureFilePath_ = textureFilePath;
 
 	SetTextureFilePath(textureFilePath_);

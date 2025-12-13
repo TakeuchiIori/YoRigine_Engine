@@ -16,7 +16,7 @@ PipelineManager* PipelineManager::GetInstance()
 
 void PipelineManager::Initialize()
 {
-	dxCommon_ = DirectXCommon::GetInstance();
+	dxCommon_ = YoRigine::DirectXCommon::GetInstance();
 
 	CreatePSO_Sprite();
 	CreatePSO_Object();

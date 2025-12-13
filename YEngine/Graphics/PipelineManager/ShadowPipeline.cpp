@@ -12,7 +12,7 @@ ShadowPipeline* ShadowPipeline::GetInstance()
 
 void ShadowPipeline::Initialize()
 {
-	dxCommon_ = DirectXCommon::GetInstance();
+	dxCommon_ = YoRigine::DirectXCommon::GetInstance();
 	CreateShadowmapPSO();
 }
 

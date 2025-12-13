@@ -28,7 +28,7 @@ void SrvManager::Finalize()
 /// <summary>
 /// SRV 用ディスクリプタヒープの初期化
 /// </summary>
-void SrvManager::Initialize(DirectXCommon* dxCommon)
+void SrvManager::Initialize(YoRigine::DirectXCommon* dxCommon)
 {
 	// すでに初期化済みなら何もしない
 	if (dxCommon_ != nullptr) {

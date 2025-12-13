@@ -7,7 +7,7 @@
 /// <summary>
 /// DirectXCommon 参照を保持
 /// </summary>
-void DescriptorHeap::Initialize(DirectXCommon* directXCommon)
+void DescriptorHeap::Initialize(YoRigine::DirectXCommon* directXCommon)
 {
 	directXCommon_ = directXCommon;
 }

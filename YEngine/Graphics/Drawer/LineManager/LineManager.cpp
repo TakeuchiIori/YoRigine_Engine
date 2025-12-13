@@ -19,7 +19,7 @@ LineManager* LineManager::GetInstance()
 void LineManager::Initialize()
 {
 	// ポインタを渡す
-	dxCommon_ = DirectXCommon::GetInstance();
+	dxCommon_ = YoRigine::DirectXCommon::GetInstance();
 
 	// Line 用パイプラインリソース取得
 	rootSignature_ = PipelineManager::GetInstance()->GetRootSignature("Line");

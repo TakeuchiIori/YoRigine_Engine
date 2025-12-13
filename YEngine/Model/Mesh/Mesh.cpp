@@ -3,14 +3,14 @@
 #include "../Skeleton/SkinCluster.h"
 
 void Mesh::Initialize() {
-	dxCommon_ = DirectXCommon::GetInstance();
+	dxCommon_ = YoRigine::DirectXCommon::GetInstance();
 	meshData_.vertices.clear();
 	meshData_.indices.clear();
 }
 
 void Mesh::Initialize(const std::vector<VertexData>& vertices, const std::vector<uint32_t>& indices)
 {
-	dxCommon_ = DirectXCommon::GetInstance();
+	dxCommon_ = YoRigine::DirectXCommon::GetInstance();
 	meshData_.vertices = vertices;
 	meshData_.indices = indices;
 	InitResources();

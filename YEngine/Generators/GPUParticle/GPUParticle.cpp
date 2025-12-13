@@ -16,7 +16,7 @@ void GPUParticle::Initialize(const std::string& filepath, Camera* camera)
 {
 	textureFilePath_ = filepath;
 	camera_ = camera;
-	dxCommon_ = DirectXCommon::GetInstance();
+	dxCommon_ = YoRigine::DirectXCommon::GetInstance();
 	pipelineManager_ = PipelineManager::GetInstance();
 	computeShaderManager_ = ComputeShaderManager::GetInstance();
 

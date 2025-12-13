@@ -167,7 +167,7 @@ void Editor::DrawGameWindow()
 		ImGuiWindowFlags_NoTitleBar))
 	{
 		ImVec2 avail = ImGui::GetContentRegionAvail();
-		auto dxCommon = DirectXCommon::GetInstance();
+		auto dxCommon = YoRigine::DirectXCommon::GetInstance();
 
 		if (dxCommon) {
 			ImTextureID textureID = (ImTextureID)dxCommon->GetFinalResultGPUHandle().ptr;

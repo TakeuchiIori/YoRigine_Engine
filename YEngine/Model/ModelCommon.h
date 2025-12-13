@@ -1,8 +1,9 @@
 #pragma once
 
 // モデル共通クラス
-class DirectXCommon;
-
+namespace YoRigine {
+	class DirectXCommon;
+}
 class ModelCommon
 {
 public:
@@ -12,13 +13,13 @@ public:
 	static ModelCommon* GetInstance();
 
 	// 初期化
-	void Initialize(DirectXCommon* dxCommon);
+	void Initialize(YoRigine::DirectXCommon* dxCommon);
 
 public:
 	///************************* アクセッサ *************************///
 
 	// DirectX共通取得
-	DirectXCommon* GetDxCommon() const { return dxCommon_; }
+	YoRigine::DirectXCommon* GetDxCommon() const { return dxCommon_; }
 
 private:
 	///************************* コンストラクタ禁止 *************************///
@@ -32,5 +33,5 @@ private:
 	///************************* メンバ変数 *************************///
 
 	// DirectX共通クラス
-	DirectXCommon* dxCommon_ = nullptr;
+	YoRigine::DirectXCommon* dxCommon_ = nullptr;
 };

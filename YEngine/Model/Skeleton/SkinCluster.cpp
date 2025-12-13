@@ -42,7 +42,7 @@ void SkinCluster::CreateResourceCS(size_t jointsSize, size_t verticesSize, std::
 	UINT baseIndex = SrvManager::GetInstance()->Allocate(4);
 
 	// === Palette用のResource (t0) ===
-	paletteResource_ = DirectXCommon::GetInstance()->CreateBufferResource(sizeof(WellForGPU) * jointsSize);
+	paletteResource_ = YoRigine::DirectXCommon::GetInstance()->CreateBufferResource(sizeof(WellForGPU) * jointsSize);
 	WellForGPU* mappedPalette = nullptr;
 	paletteResource_->Map(0, nullptr, reinterpret_cast<void**>(&mappedPalette));
 	mappedPalette_ = { mappedPalette, jointsSize };
@@ -51,13 +51,13 @@ void SkinCluster::CreateResourceCS(size_t jointsSize, size_t verticesSize, std::
 	paletteSrvHandle_.second = SrvManager::GetInstance()->GetGPUDescriptorHandle(baseIndex + 0);
 
 	// === InputVertices用のResource (t1) ===
-	inputVerticesResource_ = DirectXCommon::GetInstance()->CreateBufferResource(sizeof(Vertex) * verticesSize);
+	inputVerticesResource_ = YoRigine::DirectXCommon::GetInstance()->CreateBufferResource(sizeof(Vertex) * verticesSize);
 	inputVerticesResource_->Map(0, nullptr, reinterpret_cast<void**>(&mappedInputVertices_));
 	std::memset(mappedInputVertices_, 0, sizeof(Vertex) * verticesSize);
 	SrvManager::GetInstance()->CreateSRVforStructuredBuffer(baseIndex + 1, inputVerticesResource_.Get(), UINT(verticesSize), sizeof(Vertex));
 
 	// === Influence用のResource (t2) ===
-	influenceResource_ = DirectXCommon::GetInstance()->CreateBufferResource(sizeof(VertexInfluence) * verticesSize);
+	influenceResource_ = YoRigine::DirectXCommon::GetInstance()->CreateBufferResource(sizeof(VertexInfluence) * verticesSize);
 	VertexInfluence* mappedInfluence = nullptr;
 	influenceResource_->Map(0, nullptr, reinterpret_cast<void**>(&mappedInfluence));
 	std::memset(mappedInfluence, 0, sizeof(VertexInfluence) * verticesSize);
@@ -70,7 +70,7 @@ void SkinCluster::CreateResourceCS(size_t jointsSize, size_t verticesSize, std::
 
 	srvIndex_ = baseIndex;
 	// === OutputVertices（UAV: u0） ===
-	outputResource_ = DirectXCommon::GetInstance()->CreateBufferResourceUAV(sizeof(Vertex) * verticesSize);
+	outputResource_ = YoRigine::DirectXCommon::GetInstance()->CreateBufferResourceUAV(sizeof(Vertex) * verticesSize);
 	SrvManager::GetInstance()->CreateUAVForStructuredBuffer(baseIndex + 3, outputResource_.Get(), static_cast<UINT>(verticesSize), sizeof(Vertex));
 	uavIndex_ = baseIndex + 3;
 
@@ -79,7 +79,7 @@ void SkinCluster::CreateResourceCS(size_t jointsSize, size_t verticesSize, std::
 	outputBufferView_.StrideInBytes = sizeof(Vertex);
 
 	// === CBV（b0） ===
-	skinningInformationResource_ = DirectXCommon::GetInstance()->CreateBufferResource(sizeof(SkinningInformation));
+	skinningInformationResource_ = YoRigine::DirectXCommon::GetInstance()->CreateBufferResource(sizeof(SkinningInformation));
 	skinningInformationResource_->Map(0, nullptr, reinterpret_cast<void**>(&mappedSkinningInfo_));
 	mappedSkinningInfo_->numVertices = static_cast<uint32_t>(verticesSize);
 
@@ -199,7 +199,7 @@ void SkinCluster::LoadFromScene(const aiScene* scene) {
 
 void SkinCluster::ExecuteSkinningCS()
 {
-	auto commandList = DirectXCommon::GetInstance()->GetCommandList();
+	auto commandList = YoRigine::DirectXCommon::GetInstance()->GetCommandList();
 
 	// パイプラインとルートシグネチャをセット
 	commandList->SetComputeRootSignature(rootSignature_.Get());

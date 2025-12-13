@@ -12,7 +12,9 @@
 #include <list>
 #include <unordered_map >
 
-class DirectXCommon;
+namespace YoRigine {
+	class DirectXCommon;
+}
 /// <summary>
 /// ラインのパイプライン設定クラス
 /// </summary>
@@ -36,7 +38,7 @@ private:
 	LineManager& operator=(LineManager&&) = delete;
 private:
 	///************************* メンバ変数 *************************///
-	DirectXCommon* dxCommon_ = nullptr;
+	YoRigine::DirectXCommon* dxCommon_ = nullptr;
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature_;
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> graphicsPipelineState_;
 

@@ -36,7 +36,7 @@ void TextureManager::Finalize()
 /// </summary>
 /// <param name="dxCommon">DirectX共通オブジェクト</param>
 /// <param name="srvManager">SRVマネージャー</param>
-void TextureManager::Initialize(DirectXCommon* dxCommon, SrvManager* srvManager)
+void TextureManager::Initialize(YoRigine::DirectXCommon* dxCommon, SrvManager* srvManager)
 {
 	if (!dxCommon || !srvManager) {
 		Logger("Error: DirectXCommon or SrvManager is null in TextureManager::Initialize");
@@ -212,7 +212,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> TextureManager::CreateTextureResource(con
 	heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;					 // プロセッサの近くに配置
 	// Resourceの生成　( VRAM )
 	Microsoft::WRL::ComPtr<ID3D12Resource> resource = nullptr;
-	HRESULT hr = DirectXCommon::GetInstance()->GetDevice()->CreateCommittedResource(
+	HRESULT hr = YoRigine::DirectXCommon::GetInstance()->GetDevice()->CreateCommittedResource(
 		&heapProperties,						// heapの設定
 		D3D12_HEAP_FLAG_NONE,					// heaoの特殊な設定。特になし。
 		&resourceDesc,							// Resourceの設定
@@ -229,14 +229,14 @@ Microsoft::WRL::ComPtr<ID3D12Resource> TextureManager::UploadTextureData(Microso
 {
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 	// 読み込んだデータからDirectX12用のSubresourceの配列を作成
-	DirectX::PrepareUpload(DirectXCommon::GetInstance()->GetDevice().Get(), mipImages.GetImages(), mipImages.GetImageCount(), mipImages.GetMetadata(), subresources);
+	DirectX::PrepareUpload(YoRigine::DirectXCommon::GetInstance()->GetDevice().Get(), mipImages.GetImages(), mipImages.GetImageCount(), mipImages.GetMetadata(), subresources);
 	// Subresourceの数を基に、コピー元となるIntermediateResourceに必要なサイズを計算する。
 	uint64_t intermediateSize = GetRequiredIntermediateSize(texture.Get(), 0, UINT(subresources.size()));
 	// 計算したサイズでIntermediateResourceを作成
-	Microsoft::WRL::ComPtr<ID3D12Resource> intermediateResource = DirectXCommon::GetInstance()->CreateBufferResource(intermediateSize);
+	Microsoft::WRL::ComPtr<ID3D12Resource> intermediateResource = YoRigine::DirectXCommon::GetInstance()->CreateBufferResource(intermediateSize);
 	// IntermediateResourceにSubresourceのデータ書き込み、tectureに転送するコマンドを積む
 
-	auto commandList_ = DirectXCommon::GetInstance()->GetCommandList();
+	auto commandList_ = YoRigine::DirectXCommon::GetInstance()->GetCommandList();
 	UpdateSubresources(commandList_.Get(), texture.Get(), intermediateResource.Get(), 0, 0, UINT(subresources.size()), subresources.data());
 
 	//Tetureへの転送後は利用できるよう、D3D12_RESOURCE_ STATE_ COPY_DESTからD3012_RESOURCE_STATE GENERIC_READへResourcestateを変更する
