@@ -6,23 +6,24 @@
 #include "Collision/Core/CollisionDirection.h"
 #include "Collision/OBB/OBBCollider.h"
 #include <Particle/ParticleEmitter.h>
+#include "Object3d/BaseObject.h"
 
 class Player;
 /// <summary>
 /// プレイヤーの剣クラス
 /// </summary>
-class PlayerSword
+class PlayerSword : public BaseObject
 {
 public:
 	///************************* 基本関数 *************************///
 
 	~PlayerSword();
 
-	void Initialize();
-	void Update();
-	void Draw();
+	void Initialize(Camera* camera) override;
+	void Update()override;
+	void Draw()override;
 	void DrawShadow();
-	void DrawCollision();
+	void DrawCollision()override;
 
 	/// ジョイントが有効かどうか
 	bool IsJointValid() const { return isValidJoint_; }
@@ -37,20 +38,18 @@ public:
 	void OnEnterDirectionCollision([[maybe_unused]] BaseCollider* self, BaseCollider* other, [[maybe_unused]] HitDirection dir);
 
 private:
-	// 必要な初期化処理
-	void InitCollision();
-	void InitJson();
+	///************************* 内部処理 *************************///
+
+	void InitCollision()override;
+	void InitJson()override;
 
 	// 手ジョイントのインデックスを探す
 	void FindHandJointIndex();
-
 	// 武器の位置をプレイヤーに合わせる
 	void SetPlayerWeaponPosition();
-
 	// コライダー用のワールド変換を更新
 	void UpdateColliderWorldTransform();
 	Vector3 GetHandPosition();
-
 	// 行列から平行移動成分を抽出
 	Vector3 ExtractTranslation(const Matrix4x4& matrix);
 
@@ -62,15 +61,11 @@ public:
 	void SetEnableCollider(bool enable) {
 		obbCollider_->SetCollisionEnabled(enable);
 	}
-
-	WorldTransform& GetWorldTransform() { return wt_; }
 	Vector3 GetWowldPosition();
 
 	/// プレイヤーのセット
 	void SetPlayer(Player* player) { player_ = player; }
 	void SetObject(Object3d* obj3d) { obj3d_ = obj3d; }
-	/// カメラのセット
-	void SetCamera(Camera* camera) { camera_ = camera; }
 
 private:
 	///************************* ポインタ *************************///
@@ -78,12 +73,7 @@ private:
 	Object3d* obj3d_ = nullptr;
 	Player* player_ = nullptr;
 
-	WorldTransform wt_;
 	WorldTransform colliderWT_;  // コライダー用のワールド変換
-	std::unique_ptr<Object3d> obj_;
-	std::unique_ptr<YoRigine::JsonManager> jsonManager_;
-	std::unique_ptr<YoRigine::JsonManager> jsonCollider_;
-	std::shared_ptr<OBBCollider> obbCollider_;
 	std::unique_ptr<ParticleEmitter> hitParticleEmitter_;
 	std::unique_ptr<ParticleEmitter> particleEmitter_;
 	std::unique_ptr<ParticleEmitter> testEmitter_;

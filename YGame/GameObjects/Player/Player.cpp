@@ -43,14 +43,12 @@ void Player::Initialize(Camera* camera) {
 	playerSword_ = std::make_unique<PlayerSword>();
 	playerSword_->SetPlayer(this);
 	playerSword_->SetObject(obj_.get());
-	playerSword_->SetCamera(camera_);
-	playerSword_->Initialize();
+	playerSword_->Initialize(camera_);
 
 	playerShield_ = std::make_unique<PlayerShield>();
 	playerShield_->SetPlayer(this);
 	playerShield_->SetObject(obj_.get());
-	playerShield_->SetCamera(camera_);
-	playerShield_->Initialize();
+	playerShield_->Initialize(camera_);
 
 	testEmitter_ = std::make_unique<ParticleEmitter>("GuardParticle", wt_.translate_, 10);
 
@@ -376,6 +374,9 @@ void Player::OnDirectionCollision([[maybe_unused]] BaseCollider* self, [[maybe_u
 
 }
 
+/// <summary>
+/// 衝突判定開始時の方向ごとの処理
+/// </summary>
 void Player::OnEnterDirectionCollision([[maybe_unused]] BaseCollider* self, BaseCollider* other, HitDirection dir)
 {
 	if (other->GetTypeID() == static_cast<uint32_t>(CollisionTypeIdDef::kBattleEnemy)) {

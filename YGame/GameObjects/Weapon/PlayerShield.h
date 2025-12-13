@@ -6,29 +6,31 @@
 #include "Collision/Core/CollisionDirection.h"
 #include "Collision/OBB/OBBCollider.h"
 #include <Particle/ParticleEmitter.h>
-
+#include "Object3d/BaseObject.h"
 
 class Player;
 /// <summary>
 /// プレイヤーの盾クラス
 /// </summary>
-class PlayerShield
+class PlayerShield : public BaseObject
 {
 public:
 	///************************* 基本関数 *************************///
 	~PlayerShield();
-	void Initialize();
+	void Initialize(Camera* camera) override;
 
-	void Update();
+	void Update()override;
 
-	void Draw();
+	void Draw()override;
 	void DrawShadow();
-	void DrawCollision();
+	void DrawCollision()override;
 
+
+
+public:
+	///************************* アクセッサ *************************///
 	void SetPlayer(Player* player) { player_ = player; }
 	void SetObject(Object3d* obj3d) { obj3d_ = obj3d; }
-	void SetCamera(Camera* camera) { camera_ = camera; }
-
 	bool IsJointValid() const { return isValidJoint_; }
 	WorldTransform& GetWorldTransform() { return wt_; }
 
@@ -47,8 +49,8 @@ private:
 	///************************* 内部処理関数 *************************///
 
 	// 初期化関数
-	void InitCollision();
-	void InitJson();
+	void InitCollision() override;
+	void InitJson()override;
 
 	// 手ジョイントのインデックスを探す
 	void FindHandJointIndex();
@@ -61,12 +63,6 @@ private:
 	Camera* camera_ = nullptr;
 	Player* player_ = nullptr;
 	Object3d* obj3d_ = nullptr;
-
-	WorldTransform wt_;
-	std::unique_ptr<Object3d> obj_;
-	std::unique_ptr<YoRigine::JsonManager> jsonManager_;
-	std::unique_ptr<YoRigine::JsonManager> jsonCollider_;
-	std::shared_ptr<OBBCollider> obbCollider_;
 	std::unique_ptr<ParticleEmitter> testEmitter_;
 
 	///************************* ジョイント関連 *************************///

@@ -19,7 +19,9 @@ PlayerSword::~PlayerSword() {
 /// <summary>
 /// 初期化処理
 /// </summary>
-void PlayerSword::Initialize() {
+void PlayerSword::Initialize(Camera* camera) {
+
+	camera_ = camera;
 	//------------------------------------------------------------
 	// モデル初期化
 	//------------------------------------------------------------

@@ -43,13 +43,11 @@ void DemoPlayer::Initialize(Camera* camera) {
 	//------------------------------------------------------------
 	playerSword_ = std::make_unique<PlayerSword>();
 	playerSword_->SetObject(obj_.get());
-	playerSword_->SetCamera(camera_);
-	playerSword_->Initialize();
+	playerSword_->Initialize(camera_);
 
 	playerShield_ = std::make_unique<PlayerShield>();
 	playerShield_->SetObject(obj_.get());
-	playerShield_->SetCamera(camera_);
-	playerShield_->Initialize();
+	playerShield_->Initialize(camera_);
 
 	//------------------------------------------------------------
 	// ボーン線や当たり判定などの初期化
