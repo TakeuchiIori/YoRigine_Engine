@@ -325,4 +325,3 @@ void BattleEnemy::DrawShadow()
 void BattleEnemy::DrawCollision() {
 	if (obbCollider_) obbCollider_->Draw();
 }
-
