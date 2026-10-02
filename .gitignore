@@ -2,3 +2,8 @@ x64/
 *.user
 *.suo
 .vs/
+Externals/ImGui/ImGui.vcxproj
+Externals/ImGui/ImGui.vcxproj.filters
+Externals/meshoptimizer/meshoptimizer.vcxproj
+YMath/YMath.vcxproj
+YMath/YMath.vcxproj.filters
