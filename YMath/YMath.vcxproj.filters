@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Frustum">
+      <UniqueIdentifier>{5B919E22-C770-1DBE-D088-A8943CE7831F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Intersection">
+      <UniqueIdentifier>{1CA15422-0804-E4C6-B189-1C7D9DCBAF49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Ray">
+      <UniqueIdentifier>{B11C880B-1D26-887C-A6A1-9E7C12AA937C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shape">
+      <UniqueIdentifier>{D6A4170E-42B9-3FBF-0B3B-E31E770E3CF0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Easing.h" />
+    <ClInclude Include="Frustum\Frustum.h">
+      <Filter>Frustum</Filter>
+    </ClInclude>
+    <ClInclude Include="Intersection\Intersection.h">
+      <Filter>Intersection</Filter>
+    </ClInclude>
+    <ClInclude Include="MathFunc.h" />
+    <ClInclude Include="Matrix3x3.h" />
+    <ClInclude Include="Matrix4x4.h" />
+    <ClInclude Include="Quaternion.h" />
+    <ClInclude Include="Ray\Raycast.h">
+      <Filter>Ray</Filter>
+    </ClInclude>
+    <ClInclude Include="Shape\AABB.h">
+      <Filter>Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Shape\Capsule.h">
+      <Filter>Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Shape\OBB.h">
+      <Filter>Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Shape\Sphere.h">
+      <Filter>Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector2.h" />
+    <ClInclude Include="Vector3.h" />
+    <ClInclude Include="Vector4.h" />
+    <ClInclude Include="YoRigineMath.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Easing.cpp" />
+    <ClCompile Include="Frustum\Frustum.cpp">
+      <Filter>Frustum</Filter>
+    </ClCompile>
+    <ClCompile Include="Intersection\Intersection.cpp">
+      <Filter>Intersection</Filter>
+    </ClCompile>
+    <ClCompile Include="MathFunc.cpp" />
+    <ClCompile Include="Matrix4x4.cpp" />
+    <ClCompile Include="Quaternion.cpp" />
+    <ClCompile Include="Vector3.cpp" />
+    <ClCompile Include="Vector4.cpp" />
+    <ClCompile Include="YoRigineMath.cpp" />
+  </ItemGroup>
+</Project>
