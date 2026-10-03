@@ -500,7 +500,8 @@ void Editor::RegisterGameUI(
 		category.empty() ? InferEditorCategory(name) : category,
 		std::move(drawFunc),
 		defaultVisible,
-		defaultVisible
+		defaultVisible,
+		nextPanelId_++   // 登録のたびに新しい id。上書き登録でも別物として区別できる
 	};
 
 	if (settingsLoaded_) {
@@ -515,6 +516,41 @@ void Editor::RegisterGameUI(
 void Editor::UnregisterGameUI(const std::string& name)
 {
 	gameUIs_.erase(name);
+}
+
+// RegisterGameUI に登録を任せ、振られた id を読み戻してハンドルに包む。
+EditorPanelHandle Editor::RegisterPanel(
+	const std::string& name,
+	std::function<void()> drawFunc,
+	const std::string& sceneName,
+	const std::string& category,
+	bool defaultVisible)
+{
+	RegisterGameUI(name, std::move(drawFunc), sceneName, category, defaultVisible);
+	return EditorPanelHandle(this, name, gameUIs_[name].id, alive_);
+}
+
+// 名前だけでなく id も一致したときのみ消す。
+// 例: A が "X" を登録 → B が "X" を上書き登録 → A が破棄、のとき B の "X" を守る。
+void Editor::UnregisterPanelIfOwner(const std::string& name, uint64_t id)
+{
+	auto it = gameUIs_.find(name);
+	if (it != gameUIs_.end() && it->second.id == id) {
+		gameUIs_.erase(it);
+	}
+}
+
+// EditorPanelHandle::Reset の実体。Editor の定義が要るのでここに置く。
+void EditorPanelHandle::Reset()
+{
+	// Editor が既に破棄されていれば lock() が空を返し、何もしない
+	if (editor_ && alive_.lock()) {
+		editor_->UnregisterPanelIfOwner(name_, id_);
+	}
+	editor_ = nullptr;
+	name_.clear();
+	id_ = 0;
+	alive_.reset();
 }
 
 // =============================================================================

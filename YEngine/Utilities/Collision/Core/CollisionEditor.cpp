@@ -13,13 +13,8 @@
 
 namespace YoRigine {
 
-CollisionEditor* CollisionEditor::GetInstance()
-{
-	static CollisionEditor instance;
-	return &instance;
-}
-
-CollisionEditor::CollisionEditor()
+CollisionEditor::CollisionEditor(CollisionManager& target)
+	: target_(target)
 {
 	autoJson_
 		.Add("broadPhaseCellSize", &broadPhaseCellSize_)
@@ -42,11 +37,11 @@ void CollisionEditor::ApplySettings()
 	resolveIterations_ = std::clamp(resolveIterations_, 0, 16);
 	contactExitGraceFrames_ = std::clamp(contactExitGraceFrames_, 0, 60);
 
-	auto* collisionManager = CollisionManager::GetInstance();
-	collisionManager->SetBroadPhaseCellSize(broadPhaseCellSize_);
-	collisionManager->SetEnableFrustumCulling(enableFrustumCulling_);
-	collisionManager->SetResolveIterations(resolveIterations_);
-	collisionManager->SetContactExitGraceFrames(contactExitGraceFrames_);
+	// グローバルを探さず、持っている参照へ適用する
+	target_.SetBroadPhaseCellSize(broadPhaseCellSize_);
+	target_.SetEnableFrustumCulling(enableFrustumCulling_);
+	target_.SetResolveIterations(resolveIterations_);
+	target_.SetContactExitGraceFrames(contactExitGraceFrames_);
 }
 
 void CollisionEditor::SaveSettings()

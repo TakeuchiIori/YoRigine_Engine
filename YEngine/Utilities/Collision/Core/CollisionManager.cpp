@@ -5,6 +5,8 @@
 #include <unordered_map>
 
 #ifdef USE_IMGUI
+#include "CollisionEditor.h"
+#include "Core/Editor/Editor.h"
 #include "imgui.h"
 #endif // _DEBUG
 
@@ -15,9 +17,26 @@ CollisionManager *CollisionManager::GetInstance() {
   return &instance;
 }
 
+// 完全型の CollisionEditor が見えるこの TU で定義する (unique_ptr の破棄に必要)
+CollisionManager::CollisionManager() = default;
+
 CollisionManager::~CollisionManager() { Reset(); }
 
 void CollisionManager::Initialize() { isDrawCollider_ = false; }
+
+#ifdef USE_IMGUI
+void CollisionManager::InitEditor(Editor &editor) {
+  // 自分自身を渡して生成: エディタは「誰を編集するか」を参照で持つ
+  editor_ = std::make_unique<CollisionEditor>(*this);
+  editor_->Initialize(); // JSON 読み込み → 設定を自分へ適用
+
+  // this ではなく editor_ の生ポインタをキャプチャしても良いが、
+  // 所有者が panel_ なので this キャプチャで寿命は安全。
+  panel_ = editor.RegisterPanel(
+      "当たり判定Editor", [this]() { editor_->DrawImGui(); }, "AllScene",
+      "システム");
+}
+#endif
 
 void CollisionManager::Update() { CheckAllCollisions(); }
 
