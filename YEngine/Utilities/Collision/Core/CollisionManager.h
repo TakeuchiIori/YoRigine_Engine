@@ -23,7 +23,17 @@
 #include "Intersection/Intersection.h"
 #include "MathFunc.h"
 
+#ifdef USE_IMGUI
+#include "Core/Editor/EditorPanelHandle.h"
+class Editor; // グローバル名前空間
+#endif
+
 namespace YoRigine {
+
+#ifdef USE_IMGUI
+class CollisionEditor; // unique_ptr で持つ。完全型は CollisionManager.cpp で
+                       // include
+#endif
 
 // ============================================================
 // 衝突方向のビット列定義
@@ -47,13 +57,22 @@ class CollisionManager {
 public:
   static CollisionManager *GetInstance();
 
-  CollisionManager() = default;
+  // unique_ptr<CollisionEditor> (不完全型) を持つため、ctor/dtor は cpp
+  // 側で定義する。 inline の = default だと、CollisionEditor が見えない TU
+  // でコンパイルエラーになる。
+  CollisionManager();
   ~CollisionManager();
 
   // ============================================================
   // 基本関数
   // ============================================================
   void Initialize();
+
+#ifdef USE_IMGUI
+  // 当たり判定エディタを生成して Editor にパネル登録する (Debug 専用)。
+  // エディタの所有は CollisionManager。パネルは panel_ の寿命で自動解除される。
+  void InitEditor(Editor &editor);
+#endif
   void Update();
   void Reset();
 
@@ -256,6 +275,14 @@ private:
   void RebuildQueryGrid() const;
 
   std::vector<BaseCollider *> colliders_;
+
+#ifdef USE_IMGUI
+  // 宣言順に注意: メンバは宣言の逆順で破棄される。
+  // panel_ を editor_ より「後」に宣言 → panel_ が先に破棄され、
+  // ラムダが editor_ を触りうる期間にパネルが残らない。
+  std::unique_ptr<CollisionEditor> editor_;
+  EditorPanelHandle panel_;
+#endif
 
   // ペアキーをハッシュ化して O(1) 平均で検索する
   struct PairHash {

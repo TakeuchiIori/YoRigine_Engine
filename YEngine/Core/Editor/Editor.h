@@ -9,6 +9,9 @@
 #include <unordered_map>
 #include <fstream>
 #include <algorithm>
+#include <cstdint>
+#include <memory>
+#include "EditorPanelHandle.h"
 
 // =============================================================================
 //  Editor
@@ -43,6 +46,22 @@ public:
 		bool defaultVisible = false);
 
 	void UnregisterGameUI(const std::string& name);
+
+	// --- RAII 版の登録 ---
+	// RegisterGameUI と同じ登録を行い、解除を自動化するハンドルを返す。
+	// 持ち主のメンバに保持すれば、持ち主の破棄と同時にパネルも消える。
+	// [[nodiscard]]: 返り値を捨てると即座に解除されてしまうため、警告で気づけるようにする。
+	// (既存の RegisterGameUI は void のまま。捨てていても壊れない)
+	[[nodiscard]] EditorPanelHandle RegisterPanel(
+		const std::string& name,
+		std::function<void()> drawFunc,
+		const std::string& sceneName = "AllScene",
+		const std::string& category = "",
+		bool defaultVisible = false);
+
+	// id が一致するときだけ解除する (EditorPanelHandle 専用)。
+	// 同名で再登録された別パネルを、古いハンドルが消さないための照合。
+	void UnregisterPanelIfOwner(const std::string& name, uint64_t id);
 
 	// --- コールバック ---
 	void SetSceneChangeCallback(std::function<void(const std::string&)> cb)
@@ -136,6 +155,7 @@ private:
 		std::function<void()> drawFunc;
 		bool                  visible = false;
 		bool                  defaultVisible = false;
+		uint64_t              id = 0;   // 登録ごとに一意。EditorPanelHandle の照合用
 	};
 
 	struct SavedSettings {
@@ -157,6 +177,11 @@ private:
 
 	std::string currentScene_ = "Title";
 	std::vector<std::string> sceneNames_ = { "Title", "Game", "Clear", "Develop" };
+
+	// 「Editor は生きている」ことを示す印。ハンドルが weak_ptr で持つ。
+	// Editor が先に破棄された後にハンドルが解除を試みても、expired になるので安全。
+	std::shared_ptr<void> alive_ = std::make_shared<char>(0);
+	uint64_t              nextPanelId_ = 1;
 
 	std::unordered_map<std::string, GameUI>       gameUIs_;
 	std::unordered_map<std::string, SavedSettings>savedSettings_;
