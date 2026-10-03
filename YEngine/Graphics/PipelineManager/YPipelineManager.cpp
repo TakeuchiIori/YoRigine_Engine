@@ -1,4 +1,5 @@
 #include "YPipelineManager.h"
+#include "ShaderPaths.h"
 #include "DirectXCommon.h"
 #include "RenderFormats.h"
 
@@ -9,9 +10,9 @@ using namespace YoRigine;
 
 namespace {
 const std::wstring DEFAULT_VS_PATH =
-    L"Resources/Shaders/PostEffect/FullScreen/FullScreen.VS.hlsl";
+    YENGINE_SHADER_DIR_W L"PostEffect/FullScreen/FullScreen.VS.hlsl";
 const std::wstring DEFAULT_PS_PATH =
-    L"Resources/Shaders/PostEffect/CopyImage/CopyImage.PS.hlsl";
+    YENGINE_SHADER_DIR_W L"PostEffect/CopyImage/CopyImage.PS.hlsl";
 } // namespace
 
 YPipelineManager *YPipelineManager::GetInstance() {
@@ -231,9 +232,9 @@ void YPipelineManager::CreatePSO_Sprite() {
 
   // ⭐ キャッシュミス or 部分的なキャッシュヒット → 新規作成
   auto vsBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Sprite/Sprite.VS.hlsl", L"vs_6_0");
+      YENGINE_SHADER_DIR_W L"Sprite/Sprite.VS.hlsl", L"vs_6_0");
   auto psBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Sprite/Sprite.PS.hlsl", L"ps_6_0");
+      YENGINE_SHADER_DIR_W L"Sprite/Sprite.PS.hlsl", L"ps_6_0");
 
   YoRigine::ReflectionBasedPipelineBuilder builder;
   auto result =
@@ -285,9 +286,9 @@ void YPipelineManager::CreatePSO_Object() {
   Logger("==============================================================\n");
   // シェーダーをコンパイル
   auto vsBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Object3d/Object3D.VS.hlsl", L"vs_6_0");
+      YENGINE_SHADER_DIR_W L"Object3d/Object3D.VS.hlsl", L"vs_6_0");
   auto psBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Object3d/Object3D.PS.hlsl", L"ps_6_0");
+      YENGINE_SHADER_DIR_W L"Object3d/Object3D.PS.hlsl", L"ps_6_0");
 
   // リフレクションベースで完全自動生成
   // 不透明ジオメトリは法線 G-buffer(SV_TARGET1) へも出力する
@@ -318,7 +319,7 @@ void YPipelineManager::CreatePSO_ShadowMap() {
   Logger("==============================================================\n");
   // シェーダーをコンパイル
   auto vsBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Shadow/ShadowMap.VS.hlsl", L"vs_6_0");
+      YENGINE_SHADER_DIR_W L"Shadow/ShadowMap.VS.hlsl", L"vs_6_0");
   // リフレクションベースで完全自動生成
   ReflectionBasedPipelineBuilder builder;
   auto result =
@@ -343,9 +344,9 @@ void YPipelineManager::CreatePSO_ObjectInstanced() {
   Logger("         Creating Pipeline: ObjectInstanced              \n\n\n");
   Logger("==============================================================\n");
   auto vsBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Object3d/Object3dInstanced.VS.hlsl", L"vs_6_0");
+      YENGINE_SHADER_DIR_W L"Object3d/Object3dInstanced.VS.hlsl", L"vs_6_0");
   auto psBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Object3d/Object3dInstanced.PS.hlsl", L"ps_6_0");
+      YENGINE_SHADER_DIR_W L"Object3d/Object3dInstanced.PS.hlsl", L"ps_6_0");
 
   // 不透明ジオメトリは法線 G-buffer(SV_TARGET1) へも出力する
   ReflectionBasedPipelineBuilder builder;
@@ -372,7 +373,7 @@ void YPipelineManager::CreatePSO_ShadowMapInstanced() {
   Logger("         Creating Pipeline: ShadowMapInstanced              \n\n\n");
   Logger("==============================================================\n");
   auto vsBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Shadow/ShadowmapInstanced.VS.hlsl", L"vs_6_0");
+      YENGINE_SHADER_DIR_W L"Shadow/ShadowmapInstanced.VS.hlsl", L"vs_6_0");
 
   ReflectionBasedPipelineBuilder builder;
   auto result =
@@ -396,9 +397,9 @@ void YPipelineManager::CreatePSO_ObjectOutline() {
   Logger("         Creating Pipeline: ObjectOutline              \n\n\n");
   Logger("==============================================================\n");
   auto vsBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Object3d/OutLine.VS.hlsl", L"vs_6_0");
+      YENGINE_SHADER_DIR_W L"Object3d/OutLine.VS.hlsl", L"vs_6_0");
   auto psBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Object3d/OutLine.PS.hlsl", L"ps_6_0");
+      YENGINE_SHADER_DIR_W L"Object3d/OutLine.PS.hlsl", L"ps_6_0");
 
   // 前面カリング(背面のみ描画)で、押し出したシェルのシルエットを得る。
   D3D12_RASTERIZER_DESC raster = YoRigine::RasterizerPresets::CreateDefault();
@@ -433,9 +434,9 @@ void YPipelineManager::CreatePSO_ObjectOutlineInstanced() {
       "         Creating Pipeline: ObjectOutlineInstanced              \n\n\n");
   Logger("==============================================================\n");
   auto vsBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Object3d/OutLineInstanced.VS.hlsl", L"vs_6_0");
+      YENGINE_SHADER_DIR_W L"Object3d/OutLineInstanced.VS.hlsl", L"vs_6_0");
   auto psBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Object3d/OutLine.PS.hlsl", L"ps_6_0");
+      YENGINE_SHADER_DIR_W L"Object3d/OutLine.PS.hlsl", L"ps_6_0");
 
   // 前面カリング(背面のみ描画)で、押し出したシェルのシルエットを得る。
   D3D12_RASTERIZER_DESC raster = YoRigine::RasterizerPresets::CreateDefault();
@@ -469,9 +470,9 @@ void YPipelineManager::CreatePSO_YGpuParticleALLBlendModes() {
   Logger("==============================================================\n");
   // シェーダーコンパイル（1回だけ）
   auto vsBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Particle/YGpuParticle.VS.hlsl", L"vs_6_0");
+      YENGINE_SHADER_DIR_W L"Particle/YGpuParticle.VS.hlsl", L"vs_6_0");
   auto psBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Particle/YGpuParticle.PS.hlsl", L"ps_6_0");
+      YENGINE_SHADER_DIR_W L"Particle/YGpuParticle.PS.hlsl", L"ps_6_0");
 
   // ブレンドモード設定
   struct BlendConfig {
@@ -545,7 +546,7 @@ void YPipelineManager::CreatePSO_YParticleAllBlendModes() {
   // 全ブレンドモード PSO を生成する。リフレクションで root sig / index
   // も自動生成。
   auto vsBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Particle/YParticle.VS.hlsl", L"vs_6_0");
+      YENGINE_SHADER_DIR_W L"Particle/YParticle.VS.hlsl", L"vs_6_0");
 
   // isSoft=true
   // のソフト版は「深度なしRT」で描くため、深度テスト無効＋DSVフォーマット
@@ -581,8 +582,8 @@ void YPipelineManager::CreatePSO_YParticleAllBlendModes() {
     }
   };
 
-  buildSet("YParticle", L"Resources/Shaders/Particle/YParticle.PS.hlsl", false);
-  buildSet("YParticleSoft", L"Resources/Shaders/Particle/YParticleSoft.PS.hlsl",
+  buildSet("YParticle", YENGINE_SHADER_DIR_W L"Particle/YParticle.PS.hlsl", false);
+  buildSet("YParticleSoft", YENGINE_SHADER_DIR_W L"Particle/YParticleSoft.PS.hlsl",
            true);
 }
 
@@ -599,9 +600,9 @@ void YPipelineManager::CreatePSO_YParticle() {
   Logger("==============================================================\n");
   // シェーダーをコンパイル
   auto vsBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Particle/YParticle.VS.hlsl", L"vs_6_0");
+      YENGINE_SHADER_DIR_W L"Particle/YParticle.VS.hlsl", L"vs_6_0");
   auto psBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Particle/YParticle.PS.hlsl", L"ps_6_0");
+      YENGINE_SHADER_DIR_W L"Particle/YParticle.PS.hlsl", L"ps_6_0");
 
   // リフレクションベースで完全自動生成
   ReflectionBasedPipelineBuilder builder;
@@ -624,9 +625,9 @@ void YPipelineManager::CreatePSO_YParticle() {
 void YPipelineManager::CreatePSO_YGpuParticleInit() {
   // シェーダーをコンパイル
   auto vsBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Particle/YGpuParticle.VS.hlsl", L"vs_6_0");
+      YENGINE_SHADER_DIR_W L"Particle/YGpuParticle.VS.hlsl", L"vs_6_0");
   auto psBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Particle/YGpuParticle.PS.hlsl", L"ps_6_0");
+      YENGINE_SHADER_DIR_W L"Particle/YGpuParticle.PS.hlsl", L"ps_6_0");
 
   // リフレクションベースで完全自動生成
   ReflectionBasedPipelineBuilder builder;
@@ -649,9 +650,9 @@ void YPipelineManager::CreatePSO_YGpuParticleInit() {
 void YPipelineManager::CreatePSO_Line() {
   // シェーダーをコンパイル
   auto vsBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Primitive/Line/Line.VS.hlsl", L"vs_6_0");
+      YENGINE_SHADER_DIR_W L"Primitive/Line/Line.VS.hlsl", L"vs_6_0");
   auto psBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Primitive/Line/Line.PS.hlsl", L"ps_6_0");
+      YENGINE_SHADER_DIR_W L"Primitive/Line/Line.PS.hlsl", L"ps_6_0");
 
   // 細線 (LINELIST)。PSOに焼き込んだ PrimitiveTopologyType は draw 時に
   // IASetPrimitiveTopology で指定する実トポロジと一致させる必要があるため、
@@ -701,10 +702,10 @@ void YPipelineManager::CreatePSO_Line() {
 // ============================================================
 void YPipelineManager::CreatePSO_InstancedCube() {
   auto vsBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Primitive/InstancedCube/InstancedCube.VS.hlsl",
+      YENGINE_SHADER_DIR_W L"Primitive/InstancedCube/InstancedCube.VS.hlsl",
       L"vs_6_0");
   auto psBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Primitive/InstancedCube/InstancedCube.PS.hlsl",
+      YENGINE_SHADER_DIR_W L"Primitive/InstancedCube/InstancedCube.PS.hlsl",
       L"ps_6_0");
 
   ReflectionBasedPipelineBuilder builder;
@@ -732,9 +733,9 @@ void YPipelineManager::CreatePSO_InstancedCube() {
 void YPipelineManager::CreatePSO_CubeMap() {
   // シェーダーをコンパイル
   auto vsBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/CubeMap/CubeMap.VS.hlsl", L"vs_6_0");
+      YENGINE_SHADER_DIR_W L"CubeMap/CubeMap.VS.hlsl", L"vs_6_0");
   auto psBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/CubeMap/CubeMap.PS.hlsl", L"ps_6_0");
+      YENGINE_SHADER_DIR_W L"CubeMap/CubeMap.PS.hlsl", L"ps_6_0");
 
   // リフレクションベースで完全自動生成
   ReflectionBasedPipelineBuilder builder;
@@ -760,9 +761,9 @@ void YPipelineManager::CreatePSO_CubeMap() {
 void YPipelineManager::CreatePSO_EffectObject() {
   // シェーダーをコンパイル
   auto vsBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Effect/Effect.VS.hlsl", L"vs_6_0");
+      YENGINE_SHADER_DIR_W L"Effect/Effect.VS.hlsl", L"vs_6_0");
   auto psBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Effect/Effect.PS.hlsl", L"ps_6_0");
+      YENGINE_SHADER_DIR_W L"Effect/Effect.PS.hlsl", L"ps_6_0");
 
   // リフレクションベースで完全自動生成
   ReflectionBasedPipelineBuilder builder;
@@ -788,9 +789,9 @@ void YPipelineManager::CreatePSO_VfxMeshTrail() {
 
   // シェーダーコンパイル
   auto vsBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Vfx/VfxMesh/VfxMesh.VS.hlsl", L"vs_6_0");
+      YENGINE_SHADER_DIR_W L"Vfx/VfxMesh/VfxMesh.VS.hlsl", L"vs_6_0");
   auto psBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Vfx/VfxMesh/VfxMesh_Trail.PS.hlsl", L"ps_6_0");
+      YENGINE_SHADER_DIR_W L"Vfx/VfxMesh/VfxMesh_Trail.PS.hlsl", L"ps_6_0");
 
   // ブレンドモード設定
   struct BlendConfig {
@@ -848,7 +849,7 @@ void YPipelineManager::CreateVfxMeshBlendPSOs(const std::string &logicalName,
                                               const std::wstring &psPath,
                                               BlendMode defaultMode) {
   auto vsBlob = dxCommon_->CompileShader(
-      L"Resources/Shaders/Vfx/VfxMesh/VfxMesh.VS.hlsl", L"vs_6_0");
+      YENGINE_SHADER_DIR_W L"Vfx/VfxMesh/VfxMesh.VS.hlsl", L"vs_6_0");
   auto psBlob = dxCommon_->CompileShader(psPath, L"ps_6_0");
 
   struct BlendConfig {
@@ -895,7 +896,7 @@ void YPipelineManager::CreateVfxMeshBlendPSOs(const std::string &logicalName,
 void YPipelineManager::CreatePSO_VfxMeshVolume() {
   // 既定は加算。エレメントの blendModeOverride で切り替え可。
   CreateVfxMeshBlendPSOs(
-      "VfxMeshVolume", L"Resources/Shaders/Vfx/VfxMesh/VfxMesh_Volume.PS.hlsl",
+      "VfxMeshVolume", YENGINE_SHADER_DIR_W L"Vfx/VfxMesh/VfxMesh_Volume.PS.hlsl",
       BlendMode::kBlendModeAdd);
 }
 // ============================================================
@@ -907,7 +908,7 @@ void YPipelineManager::CreatePSO_VfxMeshSmoke() {
   // Omen 風ボリュームスモーク。半透明スモークなので既定はアルファ(Normal)。
   // エレメントの blendModeOverride で切り替え可。
   CreateVfxMeshBlendPSOs("VfxMeshSmoke",
-                         L"Resources/Shaders/Vfx/VfxMesh/VfxMesh_Smoke.PS.hlsl",
+                         YENGINE_SHADER_DIR_W L"Vfx/VfxMesh/VfxMesh_Smoke.PS.hlsl",
                          BlendMode::kBlendModeNormal);
 }
 
@@ -920,7 +921,7 @@ void YPipelineManager::CreatePSO_VfxMeshLightning() {
   // プロシージャル稲妻。既定は加算で芯が光る。blendModeOverride で切り替え可。
   CreateVfxMeshBlendPSOs(
       "VfxMeshLightning",
-      L"Resources/Shaders/Vfx/VfxMesh/VfxMesh_Lightning.PS.hlsl",
+      YENGINE_SHADER_DIR_W L"Vfx/VfxMesh/VfxMesh_Lightning.PS.hlsl",
       BlendMode::kBlendModeAdd);
 }
 
@@ -933,7 +934,7 @@ void YPipelineManager::CreatePSO_VfxMeshShockwave() {
   // 爆発の衝撃波リング。既定は加算。blendModeOverride で切り替え可。
   CreateVfxMeshBlendPSOs(
       "VfxMeshShockwave",
-      L"Resources/Shaders/Vfx/VfxMesh/VfxMesh_Shockwave.PS.hlsl",
+      YENGINE_SHADER_DIR_W L"Vfx/VfxMesh/VfxMesh_Shockwave.PS.hlsl",
       BlendMode::kBlendModeAdd);
 }
 
@@ -947,7 +948,7 @@ void YPipelineManager::CreatePSO_VfxMeshAreaField() {
   // で切り替え可。
   CreateVfxMeshBlendPSOs(
       "VfxMeshAreaField",
-      L"Resources/Shaders/Vfx/VfxMesh/VfxMesh_AreaField.PS.hlsl",
+      YENGINE_SHADER_DIR_W L"Vfx/VfxMesh/VfxMesh_AreaField.PS.hlsl",
       BlendMode::kBlendModeAdd);
 }
 
@@ -959,7 +960,7 @@ void YPipelineManager::CreatePSO_VfxMeshAreaField() {
 void YPipelineManager::CreatePSO_VfxMeshRimFx() {
   // 縁から立ち上がる炎/霊気/電撃。既定は加算。blendModeOverride で切り替え可。
   CreateVfxMeshBlendPSOs("VfxMeshRimFx",
-                         L"Resources/Shaders/Vfx/VfxMesh/VfxMesh_RimFx.PS.hlsl",
+                         YENGINE_SHADER_DIR_W L"Vfx/VfxMesh/VfxMesh_RimFx.PS.hlsl",
                          BlendMode::kBlendModeAdd);
 }
 
@@ -997,7 +998,7 @@ void YPipelineManager::CreatePSO_Smoothing(const std::wstring &pixelShaderPath,
   std::wstring vsPath = DEFAULT_VS_PATH;
   std::wstring psPath =
       pixelShaderPath.empty()
-          ? L"Resources/Shaders/PostEffect/Smoothing/GaussianFilter.PS.hlsl"
+          ? YENGINE_SHADER_DIR_W L"PostEffect/Smoothing/GaussianFilter.PS.hlsl"
           : pixelShaderPath;
   std::string key = pipelineKey.empty() ? "Smoothing" : pipelineKey;
 
@@ -1023,7 +1024,7 @@ void YPipelineManager::CreatePSO_DepthOutLine(
   std::wstring vsPath = DEFAULT_VS_PATH;
   std::wstring psPath =
       pixelShaderPath.empty()
-          ? L"Resources/Shaders/PostEffect/OutLine/DepthBasedOutLine.PS.hlsl"
+          ? YENGINE_SHADER_DIR_W L"PostEffect/OutLine/DepthBasedOutLine.PS.hlsl"
           : pixelShaderPath;
   std::string key = pipelineKey.empty() ? "DepthOutLine" : pipelineKey;
 
@@ -1049,7 +1050,7 @@ void YPipelineManager::CreatePSO_RadialBlur(const std::wstring &pixelShaderPath,
   std::wstring vsPath = DEFAULT_VS_PATH;
   std::wstring psPath =
       pixelShaderPath.empty()
-          ? L"Resources/Shaders/PostEffect/Blur/RadialBlur.PS.hlsl"
+          ? YENGINE_SHADER_DIR_W L"PostEffect/Blur/RadialBlur.PS.hlsl"
           : pixelShaderPath;
   std::string key = pipelineKey.empty() ? "RadialBlur" : pipelineKey;
 
@@ -1075,7 +1076,7 @@ void YPipelineManager::CreatePSO_ToneMapping(
   std::wstring vsPath = DEFAULT_VS_PATH;
   std::wstring psPath =
       pixelShaderPath.empty()
-          ? L"Resources/Shaders/PostEffect/ColorRemapping/ToneMapping.PS.hlsl"
+          ? YENGINE_SHADER_DIR_W L"PostEffect/ColorRemapping/ToneMapping.PS.hlsl"
           : pixelShaderPath;
   std::string key = pipelineKey.empty() ? "ToneMapping" : pipelineKey;
 
@@ -1101,7 +1102,7 @@ void YPipelineManager::CreatePSO_Dissolve(const std::wstring &pixelShaderPath,
   std::wstring vsPath = DEFAULT_VS_PATH;
   std::wstring psPath =
       pixelShaderPath.empty()
-          ? L"Resources/Shaders/PostEffect/Dissolve/Dissolve.PS.hlsl"
+          ? YENGINE_SHADER_DIR_W L"PostEffect/Dissolve/Dissolve.PS.hlsl"
           : pixelShaderPath;
   std::string key = pipelineKey.empty() ? "Dissolve" : pipelineKey;
 
@@ -1127,7 +1128,7 @@ void YPipelineManager::CreatePSO_Chromatic(const std::wstring &pixelShaderPath,
   std::wstring vsPath = DEFAULT_VS_PATH;
   std::wstring psPath =
       pixelShaderPath.empty()
-          ? L"Resources/Shaders/PostEffect/ColorRemapping/Chromatic.PS.hlsl"
+          ? YENGINE_SHADER_DIR_W L"PostEffect/ColorRemapping/Chromatic.PS.hlsl"
           : pixelShaderPath;
   std::string key = pipelineKey.empty() ? "Chromatic" : pipelineKey;
 
@@ -1153,7 +1154,7 @@ void YPipelineManager::CreatePSO_ColorAdjust(
   std::wstring vsPath = DEFAULT_VS_PATH;
   std::wstring psPath =
       pixelShaderPath.empty()
-          ? L"Resources/Shaders/PostEffect/ColorRemapping/ColorAdjust.PS.hlsl"
+          ? YENGINE_SHADER_DIR_W L"PostEffect/ColorRemapping/ColorAdjust.PS.hlsl"
           : pixelShaderPath;
   std::string key = pipelineKey.empty() ? "ColorAdjust" : pipelineKey;
 
@@ -1179,7 +1180,7 @@ void YPipelineManager::CreatePSO_ShatterTransition(
   std::wstring vsPath = DEFAULT_VS_PATH;
   std::wstring psPath =
       pixelShaderPath.empty()
-          ? L"Resources/Shaders/PostEffect/Transition/ShatterTransition.PS.hlsl"
+          ? YENGINE_SHADER_DIR_W L"PostEffect/Transition/ShatterTransition.PS.hlsl"
           : pixelShaderPath;
   std::string key = pipelineKey.empty() ? "ShatterTransition" : pipelineKey;
 

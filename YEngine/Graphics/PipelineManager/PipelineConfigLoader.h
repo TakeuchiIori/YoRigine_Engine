@@ -28,8 +28,8 @@ namespace YoRigine {
     ///     ]
     ///   },
     ///   "shaders": {
-    ///     "vertex": "Resources/Shaders/Sprite.VS.hlsl",
-    ///     "pixel": "Resources/Shaders/Sprite.PS.hlsl"
+    ///     "vertex": "Engine/Shaders/Sprite.VS.hlsl",
+    ///     "pixel": "Engine/Shaders/Sprite.PS.hlsl"
     ///   },
     ///   "inputLayout": [
     ///     { "semantic": "POSITION", "format": "R32G32B32A32_FLOAT" },

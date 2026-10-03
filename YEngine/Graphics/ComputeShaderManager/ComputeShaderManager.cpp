@@ -1,4 +1,5 @@
 #include "ComputeShaderManager.h"
+#include "ShaderPaths.h"
 #include "Debugger/Logger.h"
 
 /// <summary>
@@ -151,7 +152,7 @@ void ComputeShaderManager::CreateSkinningCS()
 
 	// ===== Load Shader =====
 	Microsoft::WRL::ComPtr<IDxcBlob> computeShaderBlob =
-		dxCommon_->CompileShader(L"Resources/Shaders/Skinning/Skinning.CS.hlsl", L"cs_6_0");
+		dxCommon_->CompileShader(YENGINE_SHADER_DIR_W L"Skinning/Skinning.CS.hlsl", L"cs_6_0");
 
 	// ===== Create PSO =====
 	D3D12_COMPUTE_PIPELINE_STATE_DESC computePipelineStateDesc = {};
@@ -272,7 +273,7 @@ void ComputeShaderManager::CreatePaticleInitCS()
 	assert(SUCCEEDED(hr));
 
 	Microsoft::WRL::ComPtr<IDxcBlob> computeShaderBlob = dxCommon_->CompileShader(
-		L"Resources/Shaders/Particle/InitializeParticle.CS.hlsl", L"cs_6_0");
+		YENGINE_SHADER_DIR_W L"Particle/InitializeParticle.CS.hlsl", L"cs_6_0");
 
 	D3D12_COMPUTE_PIPELINE_STATE_DESC computePipelineStateDesc = {};
 	computePipelineStateDesc.pRootSignature = rootSignatures_["ParticleInitCS"].Get();
@@ -416,7 +417,7 @@ void ComputeShaderManager::CreateEmitCS()
 
 	// Shader 読み込み
 	Microsoft::WRL::ComPtr<IDxcBlob> computeShaderBlob =
-		dxCommon_->CompileShader(L"Resources/Shaders/Particle/EmitParticle.CS.hlsl", L"cs_6_0");
+		dxCommon_->CompileShader(YENGINE_SHADER_DIR_W L"Particle/EmitParticle.CS.hlsl", L"cs_6_0");
 
 	// PSO 作成
 	D3D12_COMPUTE_PIPELINE_STATE_DESC computePipelineStateDesc = {};
@@ -624,7 +625,7 @@ void ComputeShaderManager::CreateParticleUpdateCS()
 
 	// Shader
 	Microsoft::WRL::ComPtr<IDxcBlob> computeShaderBlob =
-		dxCommon_->CompileShader(L"Resources/Shaders/Particle/UpdateParticle.CS.hlsl", L"cs_6_0");
+		dxCommon_->CompileShader(YENGINE_SHADER_DIR_W L"Particle/UpdateParticle.CS.hlsl", L"cs_6_0");
 
 	// PSO
 	D3D12_COMPUTE_PIPELINE_STATE_DESC computePipelineStateDesc = {};
@@ -639,7 +640,7 @@ void ComputeShaderManager::CreateParticleUpdateCS()
 	// トレイル生成パス（FreeList Pop 専用。Update パスの Push と分離して競合を防ぐ）
 	// ルートシグネチャは ParticleUpdateCS と共用
 	Microsoft::WRL::ComPtr<IDxcBlob> trailSpawnBlob =
-		dxCommon_->CompileShader(L"Resources/Shaders/Particle/SpawnTrailParticle.CS.hlsl", L"cs_6_0");
+		dxCommon_->CompileShader(YENGINE_SHADER_DIR_W L"Particle/SpawnTrailParticle.CS.hlsl", L"cs_6_0");
 
 	D3D12_COMPUTE_PIPELINE_STATE_DESC trailSpawnDesc = {};
 	trailSpawnDesc.pRootSignature = rootSignatures_["ParticleUpdateCS"].Get();
@@ -699,7 +700,7 @@ void ComputeShaderManager::CreateResetDrawArgsCS()
 	assert(SUCCEEDED(hr));
 
 	Microsoft::WRL::ComPtr<IDxcBlob> csBlob =
-		dxCommon_->CompileShader(L"Resources/Shaders/Particle/ResetDrawArgs.CS.hlsl", L"cs_6_0");
+		dxCommon_->CompileShader(YENGINE_SHADER_DIR_W L"Particle/ResetDrawArgs.CS.hlsl", L"cs_6_0");
 
 	D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = {};
 	psoDesc.pRootSignature = rootSignatures_["ResetDrawArgsCS"].Get();
@@ -1004,35 +1005,35 @@ void ComputeShaderManager::CreatePostEffectCS()
 	struct PsoSpec { const char* key; const wchar_t* path; const char* rsKey; };
 	const PsoSpec specs[] = {
 		// Simple
-		{ "PostEffectCopyCS",      L"Resources/Shaders/PostEffect/CopyImage/CopyImage.CS.hlsl",        "PostEffectRS_Simple" },
-		{ "PostEffectSepiaCS",     L"Resources/Shaders/PostEffect/Sepia/Sepia.CS.hlsl",                "PostEffectRS_Simple" },
-		{ "PostEffectGrayscaleCS", L"Resources/Shaders/PostEffect/Grayscale/Grayscale.CS.hlsl",        "PostEffectRS_Simple" },
-		{ "PostEffectVignetteCS",  L"Resources/Shaders/PostEffect/Vignette/Vignette.CS.hlsl",          "PostEffectRS_Simple" },
+		{ "PostEffectCopyCS",      YENGINE_SHADER_DIR_W L"PostEffect/CopyImage/CopyImage.CS.hlsl",        "PostEffectRS_Simple" },
+		{ "PostEffectSepiaCS",     YENGINE_SHADER_DIR_W L"PostEffect/Sepia/Sepia.CS.hlsl",                "PostEffectRS_Simple" },
+		{ "PostEffectGrayscaleCS", YENGINE_SHADER_DIR_W L"PostEffect/Grayscale/Grayscale.CS.hlsl",        "PostEffectRS_Simple" },
+		{ "PostEffectVignetteCS",  YENGINE_SHADER_DIR_W L"PostEffect/Vignette/Vignette.CS.hlsl",          "PostEffectRS_Simple" },
 		// CB
-		{ "PostEffectGaussCS",       L"Resources/Shaders/PostEffect/Smoothing/GaussianFilter.CS.hlsl",   "PostEffectRS_CB" },
-		{ "PostEffectBoxFilterCS",   L"Resources/Shaders/PostEffect/Smoothing/BoxFilter.CS.hlsl",        "PostEffectRS_CB" },
-		{ "PostEffectRadialBlurCS",  L"Resources/Shaders/PostEffect/Blur/RadialBlur.CS.hlsl",            "PostEffectRS_CB" },
-		{ "PostEffectToneMapCS",     L"Resources/Shaders/PostEffect/ColorRemapping/ToneMapping.CS.hlsl", "PostEffectRS_CB" },
-		{ "PostEffectChromaticCS",   L"Resources/Shaders/PostEffect/ColorRemapping/Chromatic.CS.hlsl",   "PostEffectRS_CB" },
+		{ "PostEffectGaussCS",       YENGINE_SHADER_DIR_W L"PostEffect/Smoothing/GaussianFilter.CS.hlsl",   "PostEffectRS_CB" },
+		{ "PostEffectBoxFilterCS",   YENGINE_SHADER_DIR_W L"PostEffect/Smoothing/BoxFilter.CS.hlsl",        "PostEffectRS_CB" },
+		{ "PostEffectRadialBlurCS",  YENGINE_SHADER_DIR_W L"PostEffect/Blur/RadialBlur.CS.hlsl",            "PostEffectRS_CB" },
+		{ "PostEffectToneMapCS",     YENGINE_SHADER_DIR_W L"PostEffect/ColorRemapping/ToneMapping.CS.hlsl", "PostEffectRS_CB" },
+		{ "PostEffectChromaticCS",   YENGINE_SHADER_DIR_W L"PostEffect/ColorRemapping/Chromatic.CS.hlsl",   "PostEffectRS_CB" },
 		// Dual Kawase ブルーム（ミップピラミッド 3 段構成）
-		{ "PostEffectBloomDownCS",   L"Resources/Shaders/PostEffect/Bloom/BloomDownsample.CS.hlsl",      "PostEffectRS_CB" },
-		{ "PostEffectBloomUpCS",     L"Resources/Shaders/PostEffect/Bloom/BloomUpsample.CS.hlsl",        "PostEffectRS_CB" },
-		{ "PostEffectBloomCompCS",   L"Resources/Shaders/PostEffect/Bloom/BloomComposite.CS.hlsl",       "PostEffectRS_Tex" },
-		{ "PostEffectPosterizeCS",   L"Resources/Shaders/PostEffect/Posterize/Posterize.CS.hlsl",        "PostEffectRS_CB" },
-		{ "PostEffectKuwaharaCS",    L"Resources/Shaders/PostEffect/Kuwahara/Kuwahara.CS.hlsl",          "PostEffectRS_CB" },
-		{ "PostEffectHalftoneCS",    L"Resources/Shaders/PostEffect/Halftone/Halftone.CS.hlsl",          "PostEffectRS_CB" },
-		{ "PostEffectCrossHatchCS",  L"Resources/Shaders/PostEffect/CrossHatch/CrossHatch.CS.hlsl",      "PostEffectRS_CB" },
-		{ "PostEffectColorGradeCS",  L"Resources/Shaders/PostEffect/ColorGrade/ColorGrade.CS.hlsl",      "PostEffectRS_CB" },
+		{ "PostEffectBloomDownCS",   YENGINE_SHADER_DIR_W L"PostEffect/Bloom/BloomDownsample.CS.hlsl",      "PostEffectRS_CB" },
+		{ "PostEffectBloomUpCS",     YENGINE_SHADER_DIR_W L"PostEffect/Bloom/BloomUpsample.CS.hlsl",        "PostEffectRS_CB" },
+		{ "PostEffectBloomCompCS",   YENGINE_SHADER_DIR_W L"PostEffect/Bloom/BloomComposite.CS.hlsl",       "PostEffectRS_Tex" },
+		{ "PostEffectPosterizeCS",   YENGINE_SHADER_DIR_W L"PostEffect/Posterize/Posterize.CS.hlsl",        "PostEffectRS_CB" },
+		{ "PostEffectKuwaharaCS",    YENGINE_SHADER_DIR_W L"PostEffect/Kuwahara/Kuwahara.CS.hlsl",          "PostEffectRS_CB" },
+		{ "PostEffectHalftoneCS",    YENGINE_SHADER_DIR_W L"PostEffect/Halftone/Halftone.CS.hlsl",          "PostEffectRS_CB" },
+		{ "PostEffectCrossHatchCS",  YENGINE_SHADER_DIR_W L"PostEffect/CrossHatch/CrossHatch.CS.hlsl",      "PostEffectRS_CB" },
+		{ "PostEffectColorGradeCS",  YENGINE_SHADER_DIR_W L"PostEffect/ColorGrade/ColorGrade.CS.hlsl",      "PostEffectRS_CB" },
 		// CB2
-		{ "PostEffectColorAdjustCS", L"Resources/Shaders/PostEffect/ColorRemapping/ColorAdjust.CS.hlsl", "PostEffectRS_CB2" },
+		{ "PostEffectColorAdjustCS", YENGINE_SHADER_DIR_W L"PostEffect/ColorRemapping/ColorAdjust.CS.hlsl", "PostEffectRS_CB2" },
 		// Depth
-		{ "PostEffectDepthOutlineCS", L"Resources/Shaders/PostEffect/OutLine/DepthBasedOutLine.CS.hlsl", "PostEffectRS_DepthNormal" },
-		{ "PostEffectNormalVisualizeCS", L"Resources/Shaders/PostEffect/NormalVisualize/NormalVisualize.CS.hlsl", "PostEffectRS_DepthNormal" },
-		{ "PostEffectFogCS",          L"Resources/Shaders/PostEffect/Fog/Fog.CS.hlsl",                   "PostEffectRS_Depth" },
-		{ "PostEffectGodRaysCS",      L"Resources/Shaders/PostEffect/GodRays/GodRays.CS.hlsl",           "PostEffectRS_Depth" },
+		{ "PostEffectDepthOutlineCS", YENGINE_SHADER_DIR_W L"PostEffect/OutLine/DepthBasedOutLine.CS.hlsl", "PostEffectRS_DepthNormal" },
+		{ "PostEffectNormalVisualizeCS", YENGINE_SHADER_DIR_W L"PostEffect/NormalVisualize/NormalVisualize.CS.hlsl", "PostEffectRS_DepthNormal" },
+		{ "PostEffectFogCS",          YENGINE_SHADER_DIR_W L"PostEffect/Fog/Fog.CS.hlsl",                   "PostEffectRS_Depth" },
+		{ "PostEffectGodRaysCS",      YENGINE_SHADER_DIR_W L"PostEffect/GodRays/GodRays.CS.hlsl",           "PostEffectRS_Depth" },
 		// Tex
-		{ "PostEffectDissolveCS",  L"Resources/Shaders/PostEffect/Dissolve/Dissolve.CS.hlsl",                 "PostEffectRS_Tex" },
-		{ "PostEffectShatterCS",   L"Resources/Shaders/PostEffect/Transition/ShatterTransition.CS.hlsl",     "PostEffectRS_Tex" },
+		{ "PostEffectDissolveCS",  YENGINE_SHADER_DIR_W L"PostEffect/Dissolve/Dissolve.CS.hlsl",                 "PostEffectRS_Tex" },
+		{ "PostEffectShatterCS",   YENGINE_SHADER_DIR_W L"PostEffect/Transition/ShatterTransition.CS.hlsl",     "PostEffectRS_Tex" },
 	};
 
 	for (const auto& s : specs) {

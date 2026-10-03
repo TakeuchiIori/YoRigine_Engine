@@ -1,6 +1,7 @@
 #ifdef USE_IMGUI
 
 #include "PickBuffer.h"
+#include "ShaderPaths.h"
 
 #include <DirectX/DirectXCommon.h>
 #include <WinApp/WinApp.h>
@@ -309,9 +310,9 @@ namespace YoRigine {
 
         Microsoft::WRL::ComPtr<IDxcBlob> vsBlob, psBlob;
         vsBlob = DirectXCommon::GetInstance()->CompileShader(
-            L"Resources/Shaders/Pick/Picks.VS.hlsl", L"vs_6_0");
+            YENGINE_SHADER_DIR_W L"Pick/Picks.VS.hlsl", L"vs_6_0");
         psBlob = DirectXCommon::GetInstance()->CompileShader(
-            L"Resources/Shaders/Pick/Picks.PS.hlsl", L"ps_6_0");
+            YENGINE_SHADER_DIR_W L"Pick/Picks.PS.hlsl", L"ps_6_0");
 
         D3D12_INPUT_ELEMENT_DESC layout[] = {
             { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,  0,

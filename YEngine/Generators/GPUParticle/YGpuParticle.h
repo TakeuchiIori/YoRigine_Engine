@@ -28,7 +28,7 @@ class YGpuParticle
 public:
 	// 定数
 	// 1エミッタあたりの最大パーティクル数（＝粒子バッファ長・毎フレーム描画インスタンス数・ディスパッチ上限）。
-	// shader 側 Resources/Shaders/Particle/GPUParticle.hlsli の kMaxParticles と必ず一致させること。
+	// shader 側 Engine/Shaders/Particle/GPUParticle.hlsli の kMaxParticles と必ず一致させること。
 	// 5000000: SoA化(hot48+warm64+cold16+freeList4=132B/粒)で 1エミッタ ≈ 629MB。
 	// 毎フレーム500万インスタンス描画は死粒もVSで算出→カリングするため重い。実機負荷を要観察。
 	static const uint32_t kMaxParticles = 65536;		  // 最大パーティクル数

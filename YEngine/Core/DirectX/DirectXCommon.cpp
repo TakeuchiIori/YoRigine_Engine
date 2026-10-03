@@ -1,4 +1,5 @@
 #include "DirectXCommon.h"
+#include "ShaderPaths.h"
 
 // C++
 #include <cassert>
@@ -595,7 +596,7 @@ namespace YoRigine {
 		constexpr uint32_t kShaderCacheVersion = 1;
 		// キャッシュ出力先 / インクルード解決のルート
 		const std::filesystem::path kShaderCacheDir = "Resources/Binary/Shader/";
-		const std::filesystem::path kShaderRoot     = "Resources/Shaders/";
+		const std::filesystem::path kShaderRoot     = YENGINE_SHADER_DIR;
 
 		// FNV-1a（seed を渡して複数バイト列を連結ハッシュできる）
 		uint64_t FnvHash(const void* data, size_t size, uint64_t seed = 0xcbf29ce484222325ULL) {
