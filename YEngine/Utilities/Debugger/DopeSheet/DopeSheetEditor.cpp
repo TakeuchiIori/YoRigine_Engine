@@ -514,7 +514,13 @@ namespace DopeSheet
 
             if (keyChanged && !track.readOnly) changed = true;
 
-            if (key.selected && ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace) && !track.readOnly)
+            // 選択中のキーだけを Delete/Backspace で消す。
+            // （以前は演算子の優先順位により、Backspace だけで全トラックの末尾キーが消えていた）
+            // テキスト入力中のキー操作は対象外にする。
+            const bool deletePressed =
+                !ImGui::GetIO().WantTextInput &&
+                (ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace));
+            if (key.selected && deletePressed && !track.readOnly)
                 removeIdx = ki;
         }
 

@@ -198,6 +198,12 @@ public:
   // Mixamo由来モデルか
   bool IsMixamoAsset() const { return isMixamoAsset_; }
 
+  // ベースレイヤーで最後に読み込んだモーションのキャッシュキー
+  // （"<dir>/<file>#<anim>"。animationCache_ のキーと同じ書式）
+  const std::string &GetBaseMotionCacheKey() const {
+    return baseMotionCacheKey_;
+  }
+
 private:
   ///************************* ポインタ *************************///
 
@@ -216,6 +222,12 @@ private:
   // 再生中モーションはModelインスタンスごとに管理する。
   // staticにすると他オブジェクトの切替がPlayerの切替判定へ干渉する。
   std::string currentMotionCacheKey_;
+  // エディタが「今どのキャッシュ要素を編集すべきか」を知るためのキー。
+  // 初期ロードでも設定される点が currentMotionCacheKey_ と異なる。
+  std::string baseMotionCacheKey_;
+  void SetBaseMotionCacheKey(const std::string &directoryPath,
+                             const std::string &filename,
+                             const std::string &animationName);
   bool isMotion_;
   bool hasBones_;
   bool isMixamoAsset_ = false;

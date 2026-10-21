@@ -110,9 +110,9 @@ public:
 	// ============================================================
 	// キーフレーム計算
 	// ============================================================
-	float      CalculateValue(const std::vector<KeyframeFloat>&      keyframes, float time, InterpolationType interpolationType);
-	Vector3    CalculateValue(const std::vector<KeyframeVector3>&    keyframes, float time, InterpolationType interpolationType);
-	Quaternion CalculateValue(const std::vector<KeyframeQuaternion>& keyframes, float time, InterpolationType interpolationType);
+	float      CalculateValue(const std::vector<KeyframeFloat>&      keyframes, float time, InterpolationType interpolationType) const;
+	Vector3    CalculateValue(const std::vector<KeyframeVector3>&    keyframes, float time, InterpolationType interpolationType) const;
+	Quaternion CalculateValue(const std::vector<KeyframeQuaternion>& keyframes, float time, InterpolationType interpolationType) const;
 
 	// ============================================================
 	// タイムスケールカーブ

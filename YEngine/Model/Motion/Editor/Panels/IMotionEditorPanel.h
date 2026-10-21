@@ -1,36 +1,31 @@
 #pragma once
-#include "../MotionEditorContext.h"
-class IMotionEditorPanel
-{
+
+class MotionEditorSession;
+struct MotionEditorUIState;
+
+// ============================================================
+// モーションエディタのパネル基底
+//
+// ・パネルは「描画」と「入力を Session の関数呼び出しに変換する」ことだけを行う
+// ・モーションデータやスケルトンを直接書き換えない
+// ============================================================
+class IMotionEditorPanel {
 public:
-	virtual ~IMotionEditorPanel() = default;
+  virtual ~IMotionEditorPanel() = default;
 
-	/// <summary>
-	/// パネルの初期化
-	/// </summary>
-	/// <param name="context">共有コンテキストへのポインタ</param>
-	virtual void Initialize(MotionEditorContext* context) = 0;
+  void Initialize(MotionEditorSession *session, MotionEditorUIState *ui) {
+    session_ = session;
+    ui_ = ui;
+    OnInitialize();
+  }
 
-	/// <summary>
-	/// 毎フレームのロジック更新
-	/// </summary>
-	virtual void Update() {}
-
-	/// <summary>
-	/// ImGuiによる描画処理
-	/// </summary>
-	virtual void DrawImGui() = 0;
-
-	/// <summary>
-	/// パネルが有効かどうか
-	/// </summary>
-	virtual bool IsActive() const { return isActive_; }
-
-	/// <summary>
-	/// パネルの有効/無効を切り替える
-	/// </summary>
-	virtual void SetActive(bool active) { isActive_ = active; }
+  // ImGui による描画（USE_IMGUI が無いビルドでは何もしない）
+  virtual void DrawImGui() = 0;
 
 protected:
-	bool isActive_ = true;
+  // 派生クラス固有の初期化
+  virtual void OnInitialize() {}
+
+  MotionEditorSession *session_ = nullptr;
+  MotionEditorUIState *ui_ = nullptr;
 };
