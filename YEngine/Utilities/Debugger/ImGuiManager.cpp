@@ -8,6 +8,7 @@
 #include <imgui_impl_dx12.cpp>
 #include <imgui_impl_dx12.h>
 #include <imgui_impl_win32.h>
+#include <implot/implot.h>
 #endif
 #include <iostream>
 
@@ -25,6 +26,8 @@ void ImGuiManager::Initialize(
 
   // コンテキスト生成
   ImGui::CreateContext();
+  // ImPlot は ImGui コンテキストの上に乗るため、ImGui の直後に生成する
+  ImPlot::CreateContext();
 
   // フォント / IO 設定を先に（フォントビルド前に色設定は不要）
   CustomizeEditor();
@@ -330,6 +333,8 @@ void ImGuiManager::Finalize() {
 #ifdef USE_IMGUI
   ImGui_ImplDX12_Shutdown();
   ImGui_ImplWin32_Shutdown();
+  // 生成と逆順に破棄（ImPlot → ImGui）
+  ImPlot::DestroyContext();
   ImGui::DestroyContext();
 #endif
 }

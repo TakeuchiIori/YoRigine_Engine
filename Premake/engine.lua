@@ -47,6 +47,8 @@ function Y.init(opt)
         Y.e"Externals/nlohmann",
         Y.e"Externals/DirectXTex",
         Y.e"Externals/imgui",
+        -- imgui_gradient は include/imgui_gradient/ 構成のため、<imgui_gradient/imgui_gradient.hpp> で引けるよう追加
+        Y.e"Externals/imgui/imgui_gradient/include",
         Y.e"Externals/assimp/include",
         Y.e"Externals/icon",
         Y.e"Externals/meshoptimizer/src",
@@ -128,12 +130,19 @@ function Y.externals()
         targetdir (Y.outputDir)
         objdir    (Y.intDir)
 
-        files { Y.e"Externals/ImGui/**.h", Y.e"Externals/ImGui/**.cpp" }
+        -- 拡張ライブラリはサブフォルダ単位で配置（implot/, imgui_gradient/, ImGuiFileDialog/ など）。
+        -- サブフォルダにはサンプルを置かず、ライブラリ本体のソースのみ置くこと（**.cpp で全てビルドされる）。
+        files {
+            Y.e"Externals/ImGui/**.h", Y.e"Externals/ImGui/**.hpp",
+            Y.e"Externals/ImGui/**.inl", Y.e"Externals/ImGui/**.cpp"
+        }
 
         includedirs {
             Y.e"Externals/ImGui",
-            Y.e"Externals/DirectXTex"
+            Y.e"Externals/DirectXTex",
+            Y.e"Externals/icon"  -- ImGuiNotify が IconsFontAwesome5.h を参照する
         }
+        -- ※ IMGUI_DEFINE_MATH_OPERATORS は imconfig.h で全体有効化している（imgui_gradient が要求）
 
     -- DirectXTex は毎回コンパイルすると遅く(21ファイル+fxcシェーダ生成)、かつ Rebuild 時に
     -- コミット済みシェーダ生成物(Shaders/Compiled/*.inc)を破壊するため、assimp/curl と同様に
