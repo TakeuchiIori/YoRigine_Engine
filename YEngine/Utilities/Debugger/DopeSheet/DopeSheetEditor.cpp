@@ -73,7 +73,7 @@ namespace DopeSheet
             dl->AddRectFilled(
                 { winPos.x, winPos.y },
                 { winPos.x + kLabelW, winPos.y + kRulerH },
-                IM_COL32(30, 30, 30, 255));
+                IM_COL32(27, 27, 34, 255));
 
             // 各トラックのラベルを描画
             bool collapsed = false;
@@ -109,16 +109,16 @@ namespace DopeSheet
                     dl->AddRectFilled(
                         { winPos.x, y },
                         { winPos.x + kLabelW, y + kRowH },
-                        IM_COL32(52, 44, 16, 255));
-                    // 左端のゴールドバー（通常より太め）
+                        IM_COL32(30, 40, 62, 255));
+                    // 左端のアクセントバー（通常より太め）
                     dl->AddRectFilled(
                         { winPos.x, y },
                         { winPos.x + 4.0f, y + kRowH },
-                        IM_COL32(255, 210, 60, 255));
+                        IM_COL32(110, 165, 255, 255));
                     dl->PushClipRect({ winPos.x, y }, { winPos.x + kLabelW, y + kRowH }, true);
                     float indentX = winPos.x + 8.0f;
-                    dl->AddText({ indentX,      y + 4 }, IM_COL32(255, 210, 60, 255), ICON_FA_CHECK_CIRCLE);
-                    dl->AddText({ indentX + 18, y + 4 }, IM_COL32(255, 224, 100, 255), track.label.c_str());
+                    dl->AddText({ indentX,      y + 4 }, IM_COL32(110, 165, 255, 255), ICON_FA_CHECK_CIRCLE);
+                    dl->AddText({ indentX + 18, y + 4 }, IM_COL32(190, 210, 255, 255), track.label.c_str());
                     dl->PopClipRect();
                     row++;
                     continue;
@@ -127,8 +127,8 @@ namespace DopeSheet
 
                 // 行背景
                 ImU32 bg = (row % 2 == 0)
-                    ? IM_COL32(46, 46, 46, 255)
-                    : IM_COL32(38, 38, 38, 255);
+                    ? IM_COL32(38, 38, 48, 255)
+                    : IM_COL32(32, 32, 42, 255);
                 dl->AddRectFilled(
                     { winPos.x, y },
                     { winPos.x + kLabelW, y + kRowH }, bg);
@@ -252,20 +252,20 @@ namespace DopeSheet
                 continue;
             }
 
-            // 概要トラックはゴールド系背景
+            // 概要トラックはアクセント (青) 系背景
             if (t.isSummary) {
                 dl->AddRectFilled(
                     { origin.x, y },
                     { origin.x + timelineW, y + kRowH },
-                    IM_COL32(48, 40, 14, 255));
+                    IM_COL32(30, 40, 62, 255));
                 row++;
                 continue;
             }
             if (collapsed) continue;
 
             ImU32 bg = (row % 2 == 0)
-                ? IM_COL32(46, 46, 46, 255)
-                : IM_COL32(38, 38, 38, 255);
+                ? IM_COL32(38, 38, 48, 255)
+                : IM_COL32(32, 32, 42, 255);
             dl->AddRectFilled(
                 { origin.x, y },
                 { origin.x + timelineW, y + kRowH }, bg);
@@ -285,7 +285,7 @@ namespace DopeSheet
         dl->AddRectFilled(
             { origin.x, origin.y },
             { origin.x + totalW, origin.y + kRulerH },
-            IM_COL32(30, 30, 30, 255));
+            IM_COL32(27, 27, 34, 255));
 
         const int step = std::max(1, static_cast<int>(30.0f / cellW));
 
@@ -294,9 +294,9 @@ namespace DopeSheet
             bool  isMajor = (f % fps == 0);
             bool  isMedium = (f % 5 == 0);
 
-            ImU32 gridCol = isMajor ? IM_COL32(100, 100, 100, 200)
-                : isMedium ? IM_COL32(70, 70, 70, 150)
-                : IM_COL32(50, 50, 50, 100);
+            ImU32 gridCol = isMajor ? IM_COL32(110, 110, 130, 220)
+                : isMedium ? IM_COL32(80, 80, 98, 150)
+                : IM_COL32(55, 55, 68, 100);
             dl->AddLine(
                 { x, origin.y + kRulerH },
                 { x, origin.y + kRulerH + kRowH * 64 },
@@ -438,11 +438,11 @@ namespace DopeSheet
 
                 // 色: ホバー/選択で明るく
                 ImU32 fillCol = hovered || key.selected
-                    ? IM_COL32(255, 240, 100, 255)
-                    : IM_COL32(255, 200, 50, 230);
+                    ? IM_COL32(170, 205, 255, 255)
+                    : IM_COL32(90, 150, 240, 230);
                 ImU32 outCol = hovered || key.selected
-                    ? IM_COL32(255, 255, 200, 220)
-                    : IM_COL32(200, 160, 30, 180);
+                    ? IM_COL32(220, 235, 255, 220)
+                    : IM_COL32(50, 100, 190, 180);
 
                 // 大きなダイヤモンド
                 dl->AddQuadFilled(
@@ -514,7 +514,13 @@ namespace DopeSheet
 
             if (keyChanged && !track.readOnly) changed = true;
 
-            if (key.selected && ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace) && !track.readOnly)
+            // 選択中のキーだけを Delete/Backspace で消す。
+            // （以前は演算子の優先順位により、Backspace だけで全トラックの末尾キーが消えていた）
+            // テキスト入力中のキー操作は対象外にする。
+            const bool deletePressed =
+                !ImGui::GetIO().WantTextInput &&
+                (ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace));
+            if (key.selected && deletePressed && !track.readOnly)
                 removeIdx = ki;
         }
 
@@ -786,10 +792,10 @@ namespace DopeSheet
 
         dl->AddTriangleFilled(
             { sx - 5, origin.y }, { sx + 5, origin.y }, { sx, origin.y + 10 },
-            IM_COL32(255, 220, 50, 230));
+            IM_COL32(255, 90, 90, 230));
         dl->AddLine(
             { sx, origin.y + 10 }, { sx, origin.y + timelineH },
-            IM_COL32(255, 220, 50, 180), 1.5f);
+            IM_COL32(255, 90, 90, 180), 1.5f);
 
         ImVec2 hitMin = { sx - 6, origin.y };
         ImVec2 hitMax = { sx + 6, origin.y + 12 };

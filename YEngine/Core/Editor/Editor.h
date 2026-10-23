@@ -16,7 +16,7 @@
 // =============================================================================
 //  Editor
 //  エンジンの ImGui エディタ全体を管理するシングルトン
-//  テーマ : "Black Gold" ― 漆黒 × 金箔アクセント
+//  テーマ : ImGuiManager::CustomizeColor (Unreal 風の落ち着いたダークグレー × 青)
 //
 //  新機能 (ImGui 1.92):
 //    ・SeparatorText  による見出し付き区切り線
@@ -101,12 +101,31 @@ public:
 	ImVec2 GetGameWindowAvail()const { return gameWindowAvail_; }
 	bool   GetShowEditor()     const { return showEditor_; }
 
+	// --- ゲームビューのマウス状態 ---
+	//
+	// ゲームビューの絵 (ImGui::Image) に対する ImGui::IsItemHovered() の結果。
+	// ImGui は「最前面のウィンドウ」だけをホバー扱いにするので、ゲームビューの上に
+	// 別の ImGui ウィンドウが重なっていれば **自動的に false** になる。
+	// 矩形の内外判定だけで選ぶと、手前のウィンドウ越しに奥の物を選んでしまう。
+	// ビューポートへのクリック操作 (選択・配置・ボーン選択…) はすべてここを見る。
+	bool   IsGameViewHovered() const { return showEditor_ && gameViewHovered_; }
+	// ゲームビューのウィンドウにフォーカスがあるか (キーボードショートカットの受け口)
+	bool   IsGameViewFocused() const { return showEditor_ && gameViewFocused_; }
+	// ゲームビューへのクリックを「物の選択」に使ってよいか。
+	// ホバー中で、かつギズモのハンドルに乗っていない / 掴んでいないとき true。
+	bool   CanPickInGameView() const;
+
 	// RegisterGameUI で登録した ImGui ウィンドウが現在開かれているか。
 	// ImGui::Begin(..., &visible) で × クリックされると visible=false になる。
 	// 未登録名なら false。
 	bool   IsGameUIVisible(const std::string& name) const {
 		auto it = gameUIs_.find(name);
 		return it != gameUIs_.end() && it->second.visible;
+	}
+	// 登録したパネル (子ウィンドウ含む) にフォーカスがあるか。未登録名なら false。
+	bool   IsGameUIFocused(const std::string& name) const {
+		auto it = gameUIs_.find(name);
+		return showEditor_ && it != gameUIs_.end() && it->second.visible && it->second.focused;
 	}
 
 	// =========================================================================
@@ -156,6 +175,7 @@ private:
 		bool                  visible = false;
 		bool                  defaultVisible = false;
 		uint64_t              id = 0;   // 登録ごとに一意。EditorPanelHandle の照合用
+		bool                  focused = false; // 毎フレーム ImGui から取り直す
 	};
 
 	struct SavedSettings {
@@ -172,8 +192,12 @@ private:
 	bool        dockLayoutDone_ = false;  // デフォルトレイアウト適用済みフラグ
 	bool        settingsLoaded_ = false;
 	bool        workspaceResetRequested_ = false;
+	bool        userResetRequested_ = false;      // メニューから明示的にリセットした
+	int         pendingLanguage_ = -1;            // 次フレーム頭で切り替える言語 (-1 = なし)
+	bool        reloadLanguageRequested_ = false; // 次フレーム頭で翻訳表を読み直す
 
-	static constexpr int kLayoutVersion = 2;
+	// v3: 登録パネルのウィンドウ ID を «訳###名前» 形式に変更
+	static constexpr int kLayoutVersion = 3;
 
 	std::string currentScene_ = "Title";
 	std::vector<std::string> sceneNames_ = { "Title", "Game", "Clear", "Develop" };
@@ -198,6 +222,8 @@ private:
 	ImVec2  gameViewSize_ = { 0, 0 };
 	ImVec2  gameViewPos_ = { 0, 0 };
 	ImVec2  gameWindowAvail_ = { 0, 0 };
+	bool    gameViewHovered_ = false;
+	bool    gameViewFocused_ = false;
 
 	std::function<void()> gizmoDrawCallback_;
 

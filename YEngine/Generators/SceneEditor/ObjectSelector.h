@@ -53,8 +53,10 @@ namespace YoRigine {
         const std::set<int>& GetSelectedIds() const { return selectedObjectIds_; }
 
 #ifdef USE_IMGUI
+        /// クリック選択の更新。
+        /// クリックを受け付けるかは Editor::CanPickInGameView() (ゲームビューの絵の
+        /// IsItemHovered) だけで決める。呼び出し側から「選択してよいか」のフラグは渡さない。
         void Update(
-            bool          isMouseSelecting,
             const ImVec2& viewportPos,
             const ImVec2& viewportSize);
 
@@ -71,7 +73,6 @@ namespace YoRigine {
 
         std::set<int>  selectedObjectIds_;
         int            primaryId_ = -1;
-        bool           wasMouseDown_ = false;
 
         // 2フェーズ Pick 用
         bool hasPendingRead_ = false; // RequestPick 済み・ReadPickResult 待ち

@@ -1,11 +1,8 @@
 #pragma once
 // Engine
 #include <SceneSystems/BaseScene.h>
-#include <Systems/Camera/CameraMode.h>
 
-#include "Systems/Camera/CameraDirector.h"
-#include "Systems/Camera/CameraEditor.h"
-#include "Systems/Camera/Camera.h"
+#include "Systems/Camera/SceneCameraRig.h"
 
 #include "Motion/Editor/MotionEditor.h"
 
@@ -18,15 +15,10 @@ public:
 	void Initialize() override;
 	void Update() override;
 	void Draw() override;
-	void DrawNonOffscreen() override;
-	void DrawShadow() override;
 	void Finalize() override;
 
-	// BaseSceneインターフェース
-	Matrix4x4 GetViewProjection() override { return sceneCamera_->viewProjectionMatrix_; }
-
 	// PiP 用: シーンカメラ公開 + 3D オンリー描画パス
-	YoRigine::Camera* GetSceneCamera() override { return sceneCamera_.get(); }
+	YoRigine::Camera* GetSceneCamera() override { return cameraRig_.GetCamera(); }
 	void DrawScene3DOnly() override;
 
 private:
@@ -35,18 +27,11 @@ private:
 	void DrawObject();
 	void DrawLine();
 
-	void UpdateCamera();
-
 private:
 	///************************* メンバ変数 *************************///
 
-	// 出力用カメラ（実体）
-	std::unique_ptr<YoRigine::Camera> sceneCamera_;
-	CameraMode cameraMode_ = CameraMode::DEBUG;
-	std::unique_ptr<CameraEditor> cameraEditor_;
-
-	// デバッグフラグ
-	bool isDebugCamera_ = false;
+	// 出力カメラ一式（Develop は通常カメラ自体がデバッグカメラ）
+	SceneCameraRig cameraRig_;
 
 	std::unique_ptr<MotionEditor> motionEditor_ = nullptr;
 	std::unique_ptr<YoRigine::Line> line_;

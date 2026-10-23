@@ -1,59 +1,53 @@
 #pragma once
 #include "IMotionEditorPanel.h"
-#include "../MotionEditorContext.h"
+
 #include "Debugger/DopeSheet/DopeSheetEditor.h"
+
+#include <cstdint>
+#include <string>
 #include <vector>
-#include <Motion/Core/Motion.h>
 
-/// <summary>
-/// アニメーションのタイムライン（ドープシート）を描画・管理するパネル
-/// </summary>
-class TimelinePanel : public IMotionEditorPanel
-{
+class Motion;
+
+// ============================================================
+// タイムライン（ドープシート）パネル
+//
+// ・モーションのキーを DopeSheet のトラックに変換して表示する
+// ・キーの移動/削除/選択/シークは Session の関数に変換して渡す
+// ・DopeKey::value にはキーの元の時刻（秒）を入れておき、
+//   動かしていないキーの時刻をフレームに丸めないようにする
+// ============================================================
+class TimelinePanel : public IMotionEditorPanel {
 public:
-	void Initialize(MotionEditorContext* context) override;
-	void DrawImGui() override;
+  void DrawImGui() override;
 
-	// DopeSheetの再構築要求フラグ（外部からアニメーションが切り替わった時など）
-	void SetDirty() { tracksDirty_ = true; }
-
-private:
-	void RebuildTracks();
-	void ApplyTracksToMotion();
-
-	void BuildSummaryTrack();           // 全KFを集約した概要トラックを生成
-	void OnSummaryKeyMoved(int fromFrame, int delta); // 概要KF一括移動ハンドラ
-
-	void RegisterMoveCommand();
-
-	void RegisterSummaryMoveCommand();
+protected:
+  void OnInitialize() override;
 
 private:
-	MotionEditorContext* context_ = nullptr;
+  // トラック 1 行が何を表すか
+  struct TrackInfo {
+    std::string bone;
+    int channel = -1; // 0=T 1=R 2=S、-1=グループ見出し、-2=概要
+  };
 
-	// パネル内に完全に隠蔽されたタイムライン専用の変数
-	DopeSheet::DopeSheetEditor dopeSheet_;
-	std::vector<DopeSheet::DopeTrack> tracks_;
-	std::vector<std::pair<std::string, int>> trackBoneMap_;
+  void RebuildTracks(const Motion &motion);
+  // ドラッグで動いたトラックの時刻を確定する
+  void CommitMovedTrack(int trackIndex);
 
-	bool tracksDirty_ = false;
-	int fps_ = 60;
-	float timelineH_ = 240.0f;
+  DopeSheet::DopeSheetEditor dopeSheet_;
+  std::vector<DopeSheet::DopeTrack> tracks_;
+  std::vector<TrackInfo> trackInfos_;
 
-	// KF ドラッグ移動
-	bool  draggingKF_ = false;
+  // 再構築の判定
+  const Motion *builtMotion_ = nullptr;
+  uint64_t builtRevision_ = 0;
+  std::string builtForBone_;
+  bool builtSelectedOnly_ = true;
 
-	// 概要KFドラッグ用
-	bool summaryMovedThisFrame_ = false;
-	int  prevSummaryFromFrame_ = -1;
-	std::map<std::string, Motion::NodeAnimation> summaryDragSnapshot_;
+  // ドラッグ終了で動いたトラック（Draw 後に確定する）
+  int movedTrack_ = -1;
 
-	// ドラッグ判定用
-	// 前フレームのマウス状態を保持
-	bool wasMouseDown_ = false;
-	// マウスリリース時にApplyTracksを走らせる
-	bool pendingApply_ = false;
-	bool pendingSummaryApply_ = false; // 概要KF移動の確定待ちフラグ
-	std::map<std::string, Motion::NodeAnimation> preApplySnapshot_;
-	Motion* editingMotion_ = nullptr; // ドープシートで現在編集しているモーション（変更検知用）
+  // 選択ボーンのトラックだけを表示する
+  bool showSelectedOnly_ = true;
 };

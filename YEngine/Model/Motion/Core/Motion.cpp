@@ -380,7 +380,12 @@ void Motion::ApplyAnimation(std::vector<Joint>& joints, float animationtime)
 // ============================================================
 void Motion::PlayerAnimation(float animationTime, Node& node)
 {
-	NodeAnimation& rootNodeAnimation = animation_.nodeAnimations_[node.name_];
+	// operator[] だと未登録ノードに空トラックを作り、空配列のサンプリングで落ちるため find で引く
+	auto it = animation_.nodeAnimations_.find(node.name_);
+	if (it == animation_.nodeAnimations_.end()) {
+		return;
+	}
+	const NodeAnimation& rootNodeAnimation = it->second;
 
 	Vector3 translate = CalculateValue(rootNodeAnimation.translate.keyframes, animationTime, rootNodeAnimation.interpolationType);
 	Quaternion rotate = CalculateValue(rootNodeAnimation.rotate.keyframes, animationTime, rootNodeAnimation.interpolationType);
@@ -392,7 +397,7 @@ void Motion::PlayerAnimation(float animationTime, Node& node)
 // ============================================================
 // キーフレーム計算（Vector3）
 // ============================================================
-Vector3 Motion::CalculateValue(const std::vector<KeyframeVector3>& keyframes, float time, InterpolationType interpolationType) {
+Vector3 Motion::CalculateValue(const std::vector<KeyframeVector3>& keyframes, float time, InterpolationType interpolationType) const {
 	assert(!keyframes.empty());
 
 	if (keyframes.size() == 1 || time <= keyframes[0].time) {
@@ -403,7 +408,12 @@ Vector3 Motion::CalculateValue(const std::vector<KeyframeVector3>& keyframes, fl
 		size_t nextIndex = index + 1;
 
 		if (keyframes[index].time <= time && time <= keyframes[nextIndex].time) {
-			float t = (time - keyframes[index].time) / (keyframes[nextIndex].time - keyframes[index].time);
+			const float range = keyframes[nextIndex].time - keyframes[index].time;
+			// 同時刻のキーが並ぶと 0 除算で NaN になるため、後ろのキーの値を採用する
+			if (range <= 1e-6f) {
+				return keyframes[nextIndex].value;
+			}
+			float t = (time - keyframes[index].time) / range;
 
 			switch (interpolationType) {
 			case InterpolationType::Linear:
@@ -437,7 +447,7 @@ Vector3 Motion::CalculateValue(const std::vector<KeyframeVector3>& keyframes, fl
 // ============================================================
 // キーフレーム計算（float）
 // ============================================================
-float Motion::CalculateValue(const std::vector<KeyframeFloat>& keyframes, float time, InterpolationType interpolationType)
+float Motion::CalculateValue(const std::vector<KeyframeFloat>& keyframes, float time, InterpolationType interpolationType) const
 {
 	assert(!keyframes.empty());
 
@@ -449,7 +459,12 @@ float Motion::CalculateValue(const std::vector<KeyframeFloat>& keyframes, float 
 		size_t nextIndex = index + 1;
 
 		if (keyframes[index].time <= time && time <= keyframes[nextIndex].time) {
-			float t = (time - keyframes[index].time) / (keyframes[nextIndex].time - keyframes[index].time);
+			const float range = keyframes[nextIndex].time - keyframes[index].time;
+			// 同時刻のキーが並ぶと 0 除算で NaN になるため、後ろのキーの値を採用する
+			if (range <= 1e-6f) {
+				return keyframes[nextIndex].value;
+			}
+			float t = (time - keyframes[index].time) / range;
 
 			switch (interpolationType) {
 			case InterpolationType::Linear:
@@ -483,7 +498,7 @@ float Motion::CalculateValue(const std::vector<KeyframeFloat>& keyframes, float 
 // ============================================================
 // キーフレーム計算（Quaternion）
 // ============================================================
-Quaternion Motion::CalculateValue(const std::vector<KeyframeQuaternion>& keyframes, float time, InterpolationType interpolationType) {
+Quaternion Motion::CalculateValue(const std::vector<KeyframeQuaternion>& keyframes, float time, InterpolationType interpolationType) const {
 	assert(!keyframes.empty());
 
 	if (keyframes.size() == 1 || time <= keyframes[0].time) {
@@ -494,7 +509,12 @@ Quaternion Motion::CalculateValue(const std::vector<KeyframeQuaternion>& keyfram
 		size_t nextIndex = index + 1;
 
 		if (keyframes[index].time <= time && time <= keyframes[nextIndex].time) {
-			float t = (time - keyframes[index].time) / (keyframes[nextIndex].time - keyframes[index].time);
+			const float range = keyframes[nextIndex].time - keyframes[index].time;
+			// 同時刻のキーが並ぶと 0 除算で NaN になるため、後ろのキーの値を採用する
+			if (range <= 1e-6f) {
+				return keyframes[nextIndex].value;
+			}
+			float t = (time - keyframes[index].time) / range;
 
 			switch (interpolationType) {
 			case InterpolationType::Linear:

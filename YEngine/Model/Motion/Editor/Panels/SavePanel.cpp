@@ -1,568 +1,327 @@
 #include "SavePanel.h"
-#include "Model.h"
-#include "Object3D/ObjectManager.h"
-#include "../../Core/Motion.h"
-#include "../../Core/MotionSystem.h"
 
-#include <fstream>
-#include <json.hpp>
+#include "../../Authoring/MotionEditorSession.h"
+#include "../../Authoring/MotionFiles.h"
+#include "../MotionEditorUIState.h"
 
 #ifdef USE_IMGUI
 #include <imgui.h>
 #endif
 
-namespace fs = std::filesystem;
+#include <cstring>
+#include <exception>
 
 namespace {
-	std::string NormalizePathString(const fs::path& path)
-	{
-		return path.generic_string();
-	}
+#ifdef USE_IMGUI
+// std::string を ImGui::InputText で編集する（変更されたら true）
+bool InputString(const char *label, std::string &value, float width) {
+  char buffer[512];
+  strncpy_s(buffer, sizeof(buffer), value.c_str(), _TRUNCATE);
+  ImGui::SetNextItemWidth(width);
+  if (ImGui::InputText(label, buffer, sizeof(buffer))) {
+    value = buffer;
+    return true;
+  }
+  return false;
 }
 
-// -----------------------------------------------------------------------
-// Initialize
-// -----------------------------------------------------------------------
-void SavePanel::Initialize(MotionEditorContext* context)
-{
-	context_ = context;
+// 成功は緑、失敗は赤でメッセージを出す
+void DrawResultMessage(const std::string &message) {
+  if (message.empty()) {
+    return;
+  }
+  const bool isError = message.find("失敗") != std::string::npos ||
+                       message.find("見つかりません") != std::string::npos ||
+                       message.find("開けません") != std::string::npos;
+  ImGui::TextColored(isError ? ImVec4(1, 0.3f, 0.3f, 1)
+                             : ImVec4(0.3f, 1, 0.3f, 1),
+                     "%s", message.c_str());
+}
+#endif
+} // namespace
 
+void SavePanel::OnInitialize() {
 #ifdef USE_IMGUI
-	// FileBrowser を .anim フィルタ・リストモードで初期化
-	fileBrowser_ = YoRigine::FileBrowser(
-		"Resources/Binary",
-		{ ".anim" },
-		YoRigine::FileBrowser::DisplayMode::List
-	);
+  animBrowser_ = YoRigine::FileBrowser(MotionFiles::kAnimDirectory, {".anim"},
+                                       YoRigine::FileBrowser::DisplayMode::List);
+  // ダブルクリックで選んだら、そのまま読み込む
+  animBrowser_.SetOnFileSelected([this](const std::string &fullPath) {
+    animPath_ = fullPath;
+    animBrowserOpen_ = false;
+    session_->LoadAnimFile(fullPath);
+  });
 
-	// ファイル選択時: パスを反映 → 即読み込み → ブラウザを閉じる
-	fileBrowser_.SetOnFileSelected([this](const std::string& fullPath) {
-		savePath_ = fullPath;
-		browserOpen_ = false;
-		LoadBinary(fullPath);
-		});
-
-	sourceFileBrowser_ = YoRigine::FileBrowser(
-		"Resources/Models",
-		{ ".gltf" },
-		YoRigine::FileBrowser::DisplayMode::List
-	);
-	sourceFileBrowser_.SetOnFileSelected([this](const std::string& fullPath) {
-		SelectSourceModel(fullPath);
-		});
+  sourceBrowser_ = YoRigine::FileBrowser(MotionFiles::kModelDirectory, {".gltf"},
+                                         YoRigine::FileBrowser::DisplayMode::List);
+  sourceBrowser_.SetOnFileSelected([this](const std::string &fullPath) {
+    SelectSourceModel(fullPath);
+    sourceBrowserOpen_ = false;
+    ui_->showSourceDialog = true;
+  });
 #endif
 }
 
-// -----------------------------------------------------------------------
-// DrawImGui
-// -----------------------------------------------------------------------
-void SavePanel::DrawImGui()
-{
+void SavePanel::DrawImGui() {
 #ifdef USE_IMGUI
-	// ブラウザウィンドウが開いている間だけ描画
-	if (browserOpen_) {
-		DrawBrowserWindow();
-	}
-	if (sourceBrowserOpen_) {
-		DrawSourceBrowserWindow();
-	}
-
-	DrawSourceAnimationPopup();
-	DrawSaveLoadPopup();
+  if (animBrowserOpen_) {
+    DrawAnimBrowserWindow();
+  }
+  if (sourceBrowserOpen_) {
+    DrawSourceBrowserWindow();
+  }
+  DrawSourceDialog();
+  DrawFileDialog();
 #endif
 }
 
-// -----------------------------------------------------------------------
-// DrawBrowserWindow  (FileBrowser を独立ウィンドウとして表示)
-// -----------------------------------------------------------------------
-#ifdef USE_IMGUI
-void SavePanel::DrawBrowserWindow()
-{
-	ImGui::SetNextWindowSize(ImVec2(540, 420), ImGuiCond_FirstUseEver);
-	bool open = true;
-	if (!ImGui::Begin("バイナリファイルを選択##browser", &open)) {
-		ImGui::End();
-		if (!open) browserOpen_ = false;
-		return;
-	}
-
-	// FileBrowser 本体を描画（Child 枠付き、高さを残してボタン分を確保）
-	fileBrowser_.Draw("##animBrowser", ImVec2(0, -50));
-
-	ImGui::Separator();
-
-	// 現在の選択パスを表示
-	const std::string& sel = fileBrowser_.GetSelectedPath();
-	ImGui::TextUnformatted(sel.empty() ? "(ファイルが未選択です)" : sel.c_str());
-
-	float btnX = ImGui::GetContentRegionAvail().x - 120.0f;
-	ImGui::SameLine(btnX);
-
-	bool canOK = !sel.empty();
-	if (!canOK) ImGui::BeginDisabled();
-	if (ImGui::Button("OK", ImVec2(55, 0))) {
-		// OnFileSelected コールバックが既に savePath_ を更新しているが、
-		// ダブルクリックではなく OK ボタンで確定する場合はここで同期する
-		if (!sel.empty()) {
-			savePath_ = sel;
-			browserOpen_ = false;
-		}
-	}
-	if (!canOK) ImGui::EndDisabled();
-
-	ImGui::SameLine();
-	if (ImGui::Button("キャンセル", ImVec2(60, 0))) {
-		fileBrowser_.SetSelectedPath("");
-		browserOpen_ = false;
-	}
-
-	if (!open) browserOpen_ = false;
-	ImGui::End();
+void SavePanel::SelectSourceModel(const std::string &path) {
+  sourceModelPath_ = path;
+  sourceObjectPath_ = MotionFiles::ToObjectModelPath(path);
+  sourceAnimationNames_.clear();
+  sourceAnimationName_.clear();
+  try {
+    sourceAnimationNames_ = MotionFiles::ListGltfAnimationNames(path);
+    sourceAnimationName_ = sourceAnimationNames_.front();
+    sourceMessage_ =
+        "候補取得: " + std::to_string(sourceAnimationNames_.size()) + "件";
+  } catch (const std::exception &e) {
+    sourceMessage_ = std::string("候補取得失敗: ") + e.what();
+  }
 }
-#endif
 
+// ============================================================
+// .anim の保存 / 読み込み
+// ============================================================
+void SavePanel::DrawFileDialog() {
 #ifdef USE_IMGUI
-void SavePanel::DrawSourceBrowserWindow()
-{
-	ImGui::SetNextWindowSize(ImVec2(560, 430), ImGuiCond_FirstUseEver);
-	bool open = true;
-	if (!ImGui::Begin("元アニメーションファイルを選択##sourceBrowser", &open)) {
-		ImGui::End();
-		if (!open) sourceBrowserOpen_ = false;
-		return;
-	}
+  const char *popupId = ".anim の保存 / 読み込み##motionFile";
+  if (ui_->showFileDialog && !ImGui::IsPopupOpen(popupId)) {
+    ImGui::OpenPopup(popupId);
+  }
 
-	sourceFileBrowser_.Draw("##sourceAnimBrowser", ImVec2(0, -50));
+  ImGui::SetNextWindowSize(ImVec2(560, 300), ImGuiCond_Appearing);
+  if (!ImGui::BeginPopupModal(popupId, &ui_->showFileDialog)) {
+    return;
+  }
 
-	ImGui::Separator();
-	const std::string& sel = sourceFileBrowser_.GetSelectedPath();
-	ImGui::TextUnformatted(sel.empty() ? "(ファイルが未選択です)" : sel.c_str());
+  ImGui::Text("編集中: %s%s", session_->CurrentDisplayName().c_str(),
+              (session_->Document() && session_->Document()->IsDirty())
+                  ? "  (未保存の変更あり)"
+                  : "");
+  ImGui::Spacing();
 
-	float btnX = ImGui::GetContentRegionAvail().x - 120.0f;
-	ImGui::SameLine(btnX);
+  ImGui::Text("ファイル (.anim):");
+  InputString("##animPath", animPath_, ImGui::GetContentRegionAvail().x - 90);
+  ImGui::SameLine();
+  if (ImGui::Button("参照##anim")) {
+    animBrowser_.Scan();
+    animBrowser_.SetSelectedPath("");
+    animBrowserOpen_ = true;
+    ui_->showFileDialog = false;
+    ImGui::CloseCurrentPopup();
+  }
 
-	bool canOK = !sel.empty();
-	if (!canOK) ImGui::BeginDisabled();
-	if (ImGui::Button("OK", ImVec2(55, 0))) {
-		if (!sel.empty()) {
-			SelectSourceModel(sel);
-			sourceBrowserOpen_ = false;
-			context_->showSourceAnimationPopup = true;
-		}
-	}
-	if (!canOK) ImGui::EndDisabled();
+  // ランタイムが自動で読み込むファイル名を案内する
+  // （キャッシュキー "<glTFパス>#<アニメ名>" から Model::LoadMotionFile と同じ規則で作る）
+  const std::string &key = session_->CurrentKey();
+  if (const auto hash = key.find('#'); hash != std::string::npos) {
+    const std::string runtimePath = MotionFiles::RuntimeAnimPath(
+        key.substr(0, hash), key.substr(hash + 1));
+    ImGui::TextDisabled("ゲームが読む名前: %s", runtimePath.c_str());
+    ImGui::SameLine();
+    if (ImGui::SmallButton("これにする")) {
+      animPath_ = runtimePath;
+    }
+  }
 
-	ImGui::SameLine();
-	if (ImGui::Button("キャンセル", ImVec2(60, 0))) {
-		sourceFileBrowser_.SetSelectedPath("");
-		sourceBrowserOpen_ = false;
-		context_->showSourceAnimationPopup = true;
-	}
+  ImGui::Spacing();
+  ImGui::Checkbox("時間を反転して保存（逆再生版を書き出す）", &saveTimeReversed_);
+  ImGui::Spacing();
+  ImGui::Separator();
+  ImGui::Spacing();
 
-	if (!open) sourceBrowserOpen_ = false;
-	ImGui::End();
-}
-#endif
+  ImGui::BeginDisabled(session_->CurrentMotion() == nullptr);
+  if (ImGui::Button("保存", ImVec2(130, 0))) {
+    session_->SaveAnimFile(animPath_, saveTimeReversed_);
+  }
+  ImGui::EndDisabled();
+  ImGui::SameLine(0, 10);
+  if (ImGui::Button("読み込み", ImVec2(130, 0))) {
+    session_->LoadAnimFile(animPath_);
+  }
 
-// -----------------------------------------------------------------------
-// DrawSaveLoadPopup
-// -----------------------------------------------------------------------
-void SavePanel::DrawSaveLoadPopup()
-{
-#ifdef USE_IMGUI
-	if (context_->showSavePopup) ImGui::OpenPopup("保存 / 読み込み##popup");
+  ImGui::Spacing();
+  DrawResultMessage(session_->Status());
 
-	ImGui::SetNextWindowSize(ImVec2(500, 280), ImGuiCond_Appearing);
-	if (ImGui::BeginPopupModal("保存 / 読み込み##popup", &context_->showSavePopup)) {
-
-		ImGui::Text("バイナリファイル (.anim):");
-		{
-			char buf[512];
-			strncpy_s(buf, sizeof(buf), savePath_.c_str(), _TRUNCATE);
-			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 90);
-			if (ImGui::InputText("##savepath", buf, sizeof(buf))) savePath_ = buf;
-			ImGui::SameLine();
-			if (ImGui::Button("参照##b")) {
-				// ブラウザを開く前に最新スキャン & 選択状態をリセット
-				fileBrowser_.Scan();
-				fileBrowser_.SetSelectedPath("");
-				browserOpen_ = true;
-				context_->showSavePopup = false;
-				ImGui::CloseCurrentPopup();
-			}
-		}
-
-		ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
-
-		bool canSave = context_->currentMotion != nullptr;
-		if (!canSave) ImGui::BeginDisabled();
-		if (ImGui::Button("バイナリ保存", ImVec2(130, 0))) {
-			try {
-				if (context_->currentMotion) {
-					if (context_->isReverse) {
-						// 逆再生モード: キーフレームの時間を反転したコピーを保存
-						Motion reversed = *context_->currentMotion;
-						float duration = reversed.GetDuration();
-						for (auto& [name, na] : reversed.animation_.nodeAnimations_) {
-							for (auto& kf : na.translate.keyframes) kf.time = duration - kf.time;
-							for (auto& kf : na.rotate.keyframes)    kf.time = duration - kf.time;
-							for (auto& kf : na.scale.keyframes)     kf.time = duration - kf.time;
-							std::sort(na.translate.keyframes.begin(), na.translate.keyframes.end(), [](const auto& a, const auto& b) { return a.time < b.time; });
-							std::sort(na.rotate.keyframes.begin(), na.rotate.keyframes.end(), [](const auto& a, const auto& b) { return a.time < b.time; });
-							std::sort(na.scale.keyframes.begin(), na.scale.keyframes.end(), [](const auto& a, const auto& b) { return a.time < b.time; });
-						}
-						reversed.SaveBinary(reversed, AnimDisplayName(context_->selectedAnimKey), savePath_);
-						saveMsg_ = "保存成功 (逆再生): " + savePath_;
-					}
-					else {
-						context_->currentMotion->SaveBinary(
-							*context_->currentMotion,
-							AnimDisplayName(context_->selectedAnimKey),
-							savePath_
-						);
-						saveMsg_ = "保存成功: " + savePath_;
-					}
-					context_->statusMsg = saveMsg_;
-				}
-			}
-			catch (const std::exception& e) {
-				saveMsg_ = std::string("保存失敗: ") + e.what();
-			}
-		}
-		if (!canSave) ImGui::EndDisabled();
-
-		ImGui::SameLine(0, 10);
-
-		if (ImGui::Button("バイナリ読み込み", ImVec2(140, 0))) {
-			LoadBinary(savePath_);
-		}
-
-
-		if (!saveMsg_.empty()) {
-			ImGui::Spacing();
-			bool isError = saveMsg_.find("失敗") != std::string::npos;
-			ImGui::TextColored(
-				isError ? ImVec4(1, 0.3f, 0.3f, 1) : ImVec4(0.3f, 1, 0.3f, 1),
-				"%s", saveMsg_.c_str()
-			);
-		}
-
-		ImGui::Spacing(); ImGui::Separator();
-		if (ImGui::Button("閉じる", ImVec2(100, 0))) {
-			context_->showSavePopup = false;
-			saveMsg_ = "";
-			ImGui::CloseCurrentPopup();
-		}
-
-		ImGui::EndPopup();
-	}
-	if (!context_->showSavePopup) ImGui::CloseCurrentPopup();
+  ImGui::Spacing();
+  ImGui::Separator();
+  if (ImGui::Button("閉じる", ImVec2(100, 0))) {
+    ui_->showFileDialog = false;
+    ImGui::CloseCurrentPopup();
+  }
+  ImGui::EndPopup();
 #endif
 }
 
-void SavePanel::DrawSourceAnimationPopup()
-{
+// ============================================================
+// glTF からの読み込み
+// ============================================================
+void SavePanel::DrawSourceDialog() {
 #ifdef USE_IMGUI
-	if (context_->showSourceAnimationPopup) ImGui::OpenPopup("元アニメーション読み込み##popup");
+  const char *popupId = "glTF からアニメーションを読み込む##motionSource";
+  if (ui_->showSourceDialog && !ImGui::IsPopupOpen(popupId)) {
+    ImGui::OpenPopup(popupId);
+  }
 
-	ImGui::SetNextWindowSize(ImVec2(560, 330), ImGuiCond_Appearing);
-	if (ImGui::BeginPopupModal("元アニメーション読み込み##popup", &context_->showSourceAnimationPopup)) {
-		ImGui::Text("モデルファイル (.gltf):");
-		{
-			char buf[512];
-			strncpy_s(buf, sizeof(buf), sourceModelPath_.c_str(), _TRUNCATE);
-			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 90);
-			if (ImGui::InputText("##sourceModelPath", buf, sizeof(buf))) {
-				sourceModelPath_ = buf;
-				sourceObjectPath_ = ToObjectModelPath(sourceModelPath_);
-				sourceAnimationNames_.clear();
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("参照##source")) {
-				sourceFileBrowser_.Scan();
-				sourceFileBrowser_.SetSelectedPath("");
-				sourceBrowserOpen_ = true;
-				context_->showSourceAnimationPopup = false;
-				ImGui::CloseCurrentPopup();
-			}
-		}
+  ImGui::SetNextWindowSize(ImVec2(560, 330), ImGuiCond_Appearing);
+  if (!ImGui::BeginPopupModal(popupId, &ui_->showSourceDialog)) {
+    return;
+  }
 
-		ImGui::Spacing();
-		if (ImGui::Button("候補取得", ImVec2(100, 0))) {
-			SelectSourceModel(sourceModelPath_);
-		}
-		ImGui::SameLine();
-		ImGui::TextDisabled("%s", sourceObjectPath_.empty() ? "" : sourceObjectPath_.c_str());
+  ImGui::Text("モデルファイル (.gltf):");
+  if (InputString("##sourceModelPath", sourceModelPath_,
+                  ImGui::GetContentRegionAvail().x - 90)) {
+    sourceObjectPath_ = MotionFiles::ToObjectModelPath(sourceModelPath_);
+    sourceAnimationNames_.clear();
+  }
+  ImGui::SameLine();
+  if (ImGui::Button("参照##source")) {
+    sourceBrowser_.Scan();
+    sourceBrowser_.SetSelectedPath("");
+    sourceBrowserOpen_ = true;
+    ui_->showSourceDialog = false;
+    ImGui::CloseCurrentPopup();
+  }
 
-		ImGui::Spacing();
-		ImGui::Text("アニメーション:");
-		if (sourceAnimationNames_.empty()) {
-			ImGui::TextDisabled("候補なし");
-		}
-		else {
-			const char* preview = sourceAnimationName_.empty() ? "(未選択)" : sourceAnimationName_.c_str();
-			if (ImGui::BeginCombo("##sourceAnimationName", preview)) {
-				for (const auto& name : sourceAnimationNames_) {
-					bool selected = (name == sourceAnimationName_);
-					if (ImGui::Selectable(name.c_str(), selected)) sourceAnimationName_ = name;
-					if (selected) ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
-		}
+  ImGui::Spacing();
+  if (ImGui::Button("候補取得", ImVec2(100, 0))) {
+    SelectSourceModel(sourceModelPath_);
+  }
+  ImGui::SameLine();
+  ImGui::TextDisabled("%s", sourceObjectPath_.c_str());
 
-		char animBuf[256];
-		strncpy_s(animBuf, sizeof(animBuf), sourceAnimationName_.c_str(), _TRUNCATE);
-		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-		if (ImGui::InputText("名前を直接入力##sourceAnimInput", animBuf, sizeof(animBuf))) {
-			sourceAnimationName_ = animBuf;
-		}
+  ImGui::Spacing();
+  ImGui::Text("アニメーション:");
+  if (sourceAnimationNames_.empty()) {
+    ImGui::TextDisabled("候補なし");
+  } else {
+    const char *preview =
+        sourceAnimationName_.empty() ? "(未選択)" : sourceAnimationName_.c_str();
+    if (ImGui::BeginCombo("##sourceAnimationName", preview)) {
+      for (const auto &name : sourceAnimationNames_) {
+        const bool selected = (name == sourceAnimationName_);
+        if (ImGui::Selectable(name.c_str(), selected)) {
+          sourceAnimationName_ = name;
+        }
+        if (selected) {
+          ImGui::SetItemDefaultFocus();
+        }
+      }
+      ImGui::EndCombo();
+    }
+  }
+  InputString("名前を直接入力##sourceAnimInput", sourceAnimationName_,
+              ImGui::GetContentRegionAvail().x);
 
-		ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
+  ImGui::Spacing();
+  ImGui::Separator();
+  ImGui::Spacing();
 
-		const bool canLoad = !sourceObjectPath_.empty() && !sourceAnimationName_.empty() && context_->GetTargetObject();
-		if (!canLoad) ImGui::BeginDisabled();
-		if (ImGui::Button("読み込んで適用", ImVec2(140, 0))) {
-			LoadSourceAnimation();
-		}
-		if (!canLoad) ImGui::EndDisabled();
+  const bool hasTarget = session_->HasTarget();
+  ImGui::BeginDisabled(!hasTarget || sourceObjectPath_.empty() ||
+                       sourceAnimationName_.empty());
+  if (ImGui::Button("読み込んで適用", ImVec2(140, 0))) {
+    session_->LoadSourceAnimation(sourceObjectPath_, sourceAnimationName_);
+    sourceMessage_ = session_->Status();
+  }
+  ImGui::EndDisabled();
 
-		ImGui::SameLine();
-		const bool canLoadAll = !sourceObjectPath_.empty() && !sourceAnimationNames_.empty() && context_->GetTargetObject();
-		if (!canLoadAll) ImGui::BeginDisabled();
-		if (ImGui::Button("全て読み込む", ImVec2(120, 0))) {
-			LoadAllSourceAnimations();
-		}
-		if (!canLoadAll) ImGui::EndDisabled();
+  ImGui::SameLine();
+  ImGui::BeginDisabled(!hasTarget || sourceObjectPath_.empty() ||
+                       sourceAnimationNames_.empty());
+  if (ImGui::Button("全て読み込む", ImVec2(120, 0))) {
+    session_->LoadAllSourceAnimations(sourceObjectPath_, sourceAnimationNames_,
+                                      sourceAnimationName_);
+    sourceMessage_ = session_->Status();
+  }
+  ImGui::EndDisabled();
 
-		ImGui::SameLine();
-		if (ImGui::Button("閉じる", ImVec2(100, 0))) {
-			context_->showSourceAnimationPopup = false;
-			sourceMsg_ = "";
-			ImGui::CloseCurrentPopup();
-		}
+  ImGui::SameLine();
+  if (ImGui::Button("閉じる", ImVec2(100, 0))) {
+    ui_->showSourceDialog = false;
+    sourceMessage_.clear();
+    ImGui::CloseCurrentPopup();
+  }
 
-		if (!sourceMsg_.empty()) {
-			ImGui::Spacing();
-			bool isError = sourceMsg_.find("失敗") != std::string::npos;
-			ImGui::TextColored(
-				isError ? ImVec4(1, 0.3f, 0.3f, 1) : ImVec4(0.3f, 1, 0.3f, 1),
-				"%s", sourceMsg_.c_str()
-			);
-		}
-
-		ImGui::EndPopup();
-	}
-	if (!context_->showSourceAnimationPopup) ImGui::CloseCurrentPopup();
+  ImGui::Spacing();
+  DrawResultMessage(sourceMessage_);
+  ImGui::EndPopup();
 #endif
 }
 
-// -----------------------------------------------------------------------
-// AnimDisplayName
-// -----------------------------------------------------------------------
-std::string SavePanel::AnimDisplayName(const std::string& key)
-{
-	auto pos = key.find('#');
-	return (pos != std::string::npos) ? key.substr(pos + 1) : key;
+// ============================================================
+// ファイルブラウザ（独立ウィンドウ）
+// ============================================================
+void SavePanel::DrawAnimBrowserWindow() {
+#ifdef USE_IMGUI
+  ImGui::SetNextWindowSize(ImVec2(540, 420), ImGuiCond_FirstUseEver);
+  bool open = true;
+  if (ImGui::Begin(".anim を選択##animBrowser", &open)) {
+    animBrowser_.Draw("##animBrowserList", ImVec2(0, -50));
+    ImGui::Separator();
+
+    const std::string &selected = animBrowser_.GetSelectedPath();
+    ImGui::TextUnformatted(selected.empty() ? "(未選択)" : selected.c_str());
+    ImGui::SameLine(ImGui::GetContentRegionAvail().x - 120.0f);
+
+    ImGui::BeginDisabled(selected.empty());
+    if (ImGui::Button("OK", ImVec2(55, 0))) {
+      animPath_ = selected;
+      animBrowserOpen_ = false;
+      ui_->showFileDialog = true;
+    }
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    if (ImGui::Button("キャンセル", ImVec2(60, 0))) {
+      animBrowserOpen_ = false;
+      ui_->showFileDialog = true;
+    }
+  }
+  ImGui::End();
+  if (!open) {
+    animBrowserOpen_ = false;
+  }
+#endif
 }
 
-std::string SavePanel::ToObjectModelPath(const std::string& fullPath)
-{
-	fs::path path(fullPath);
-	fs::path rel = path;
+void SavePanel::DrawSourceBrowserWindow() {
+#ifdef USE_IMGUI
+  ImGui::SetNextWindowSize(ImVec2(560, 430), ImGuiCond_FirstUseEver);
+  bool open = true;
+  if (ImGui::Begin("glTF を選択##sourceBrowser", &open)) {
+    sourceBrowser_.Draw("##sourceBrowserList", ImVec2(0, -50));
+    ImGui::Separator();
 
-	if (path.is_absolute()) {
-		std::error_code ec;
-		rel = fs::relative(path, fs::absolute("Resources/Models", ec), ec);
-		if (ec) rel = path.filename();
-	}
-	else {
-		rel = path.lexically_normal();
-		auto it = rel.begin();
-		if (it != rel.end() && it->generic_string() == "Resources") {
-			++it;
-			if (it != rel.end() && it->generic_string() == "Models") {
-				fs::path stripped;
-				for (++it; it != rel.end(); ++it) stripped /= *it;
-				rel = stripped;
-			}
-		}
-	}
+    const std::string &selected = sourceBrowser_.GetSelectedPath();
+    ImGui::TextUnformatted(selected.empty() ? "(未選択)" : selected.c_str());
+    ImGui::SameLine(ImGui::GetContentRegionAvail().x - 120.0f);
 
-	if (rel.has_parent_path() && rel.parent_path().filename() == rel.stem()) {
-		rel = rel.parent_path().parent_path() / rel.filename();
-	}
-
-	return NormalizePathString(rel);
-}
-
-std::string SavePanel::ToModelFilePathFromObjectPath(const std::string& objectPath)
-{
-	fs::path objectRel(objectPath);
-	fs::path base = objectRel;
-	base.replace_extension("");
-	return NormalizePathString(fs::path("Resources/Models") / base / objectRel.filename());
-}
-
-// -----------------------------------------------------------------------
-// LoadBinary  (ファイル選択・ボタン共通の読み込み処理)
-// -----------------------------------------------------------------------
-void SavePanel::LoadBinary(const std::string& path)
-{
-	try {
-		Motion loaded = Motion().LoadBinary(path);
-		const std::string key = "Binary:" + path;
-		YoRigine::Model::animationCache_[key] = std::move(loaded);
-		context_->selectedAnimKey = key;
-		context_->currentMotion = &YoRigine::Model::animationCache_[key];
-
-		// MotionSystem のアニメーションポインタも同期
-		YoRigine::Object3d* target = context_->GetTargetObject();
-		if (target && target->GetModel() && target->GetModel()->GetMotionSystem()) {
-			auto* ms = target->GetModel()->GetMotionSystem();
-			ms->SetAnimation(context_->currentMotion);
-			ms->SetAnimationTime(0.0f);
-			ms->SetPlayMode(MotionPlayMode::Loop);
-		}
-
-		saveMsg_ = "読み込み成功: " + path;
-		context_->statusMsg = saveMsg_;
-		context_->requireTimelineRebuild = true;
-		context_->lastAppliedScrubTime = -1.0f;
-		context_->scrubTime = 0.0f;
-	}
-	catch (const std::exception& e) {
-		saveMsg_ = std::string("読み込み失敗: ") + e.what();
-	}
-}
-
-void SavePanel::SelectSourceModel(const std::string& path)
-{
-	sourceModelPath_ = path;
-	sourceObjectPath_ = ToObjectModelPath(path);
-	sourceAnimationNames_.clear();
-	sourceAnimationName_.clear();
-	std::string readPath = path;
-	if (!fs::exists(readPath)) {
-		readPath = ToModelFilePathFromObjectPath(sourceObjectPath_);
-	}
-
-	try {
-		std::ifstream file(readPath);
-		if (!file.is_open()) {
-			sourceMsg_ = "ファイルを開けません: " + readPath;
-			return;
-		}
-
-		nlohmann::json gltfJson;
-		file >> gltfJson;
-		if (!gltfJson.contains("animations") || gltfJson["animations"].empty()) {
-			sourceMsg_ = "アニメーションが見つかりません: " + readPath;
-			return;
-		}
-
-		const auto& animations = gltfJson["animations"];
-		sourceAnimationNames_.reserve(animations.size());
-		for (size_t i = 0; i < animations.size(); ++i) {
-			std::string name = animations[i].value("name", "");
-			if (name.empty()) name = "Animation" + std::to_string(i);
-			sourceAnimationNames_.push_back(name);
-		}
-
-		sourceAnimationName_ = sourceAnimationNames_.front();
-		sourceMsg_ = "候補取得: " + std::to_string(sourceAnimationNames_.size()) + "件";
-	}
-	catch (const std::exception& e) {
-		sourceMsg_ = std::string("候補取得失敗: ") + e.what();
-	}
-}
-
-void SavePanel::LoadSourceAnimation()
-{
-	try {
-		YoRigine::Object3d* target = context_->GetTargetObject();
-		if (!target || !target->GetModel()) {
-			sourceMsg_ = "読み込み失敗: 対象オブジェクトがありません";
-			return;
-		}
-
-		target->SetChangeMotion(sourceObjectPath_, MotionPlayMode::Loop, sourceAnimationName_);
-
-		auto* model = target->GetModel();
-		auto* ms = model ? model->GetMotionSystem() : nullptr;
-		if (!ms || !ms->GetAnimation()) {
-			sourceMsg_ = "読み込み失敗: MotionSystemに同期できません";
-			return;
-		}
-
-		context_->loadFileName = sourceObjectPath_;
-		context_->selectedAnimKey = ToModelFilePathFromObjectPath(sourceObjectPath_) + "#" + sourceAnimationName_;
-		context_->currentMotion = ms->GetAnimation();
-		context_->scrubTime = 0.0f;
-		context_->lastAppliedScrubTime = -1.0f;
-		context_->isPlaying = true;
-		context_->requireTimelineRebuild = true;
-		context_->selKF.Clear();
-
-		sourceMsg_ = "読み込み成功: " + sourceObjectPath_ + " / " + sourceAnimationName_;
-		context_->statusMsg = sourceMsg_;
-	}
-	catch (const std::exception& e) {
-		sourceMsg_ = std::string("読み込み失敗: ") + e.what();
-		context_->statusMsg = sourceMsg_;
-	}
-}
-
-void SavePanel::LoadAllSourceAnimations()
-{
-	try {
-		YoRigine::Object3d* target = context_->GetTargetObject();
-		if (!target || !target->GetModel()) {
-			sourceMsg_ = "一括読み込み失敗: 対象オブジェクトがありません";
-			context_->statusMsg = sourceMsg_;
-			return;
-		}
-		if (sourceAnimationNames_.empty()) {
-			sourceMsg_ = "一括読み込み失敗: アニメーション候補がありません";
-			context_->statusMsg = sourceMsg_;
-			return;
-		}
-
-		const std::string restoreName =
-			sourceAnimationName_.empty() ? sourceAnimationNames_.front() : sourceAnimationName_;
-
-		int loadedCount = 0;
-		for (const auto& name : sourceAnimationNames_) {
-			if (name.empty()) continue;
-			target->SetChangeMotion(sourceObjectPath_, MotionPlayMode::Loop, name);
-			++loadedCount;
-		}
-
-		sourceAnimationName_ = restoreName;
-		target->SetChangeMotion(sourceObjectPath_, MotionPlayMode::Loop, sourceAnimationName_);
-
-		auto* model = target->GetModel();
-		auto* ms = model ? model->GetMotionSystem() : nullptr;
-		if (!ms || !ms->GetAnimation()) {
-			sourceMsg_ = "一括読み込み失敗: MotionSystemに同期できません";
-			context_->statusMsg = sourceMsg_;
-			return;
-		}
-
-		context_->loadFileName = sourceObjectPath_;
-		context_->selectedAnimKey = ToModelFilePathFromObjectPath(sourceObjectPath_) + "#" + sourceAnimationName_;
-		context_->currentMotion = ms->GetAnimation();
-		context_->scrubTime = 0.0f;
-		context_->lastAppliedScrubTime = -1.0f;
-		context_->isPlaying = true;
-		context_->requireTimelineRebuild = true;
-		context_->selKF.Clear();
-
-		sourceMsg_ = "一括読み込み成功: " + std::to_string(loadedCount) + "件";
-		context_->statusMsg = sourceMsg_;
-	}
-	catch (const std::exception& e) {
-		sourceMsg_ = std::string("一括読み込み失敗: ") + e.what();
-		context_->statusMsg = sourceMsg_;
-	}
+    ImGui::BeginDisabled(selected.empty());
+    if (ImGui::Button("OK", ImVec2(55, 0))) {
+      SelectSourceModel(selected);
+      sourceBrowserOpen_ = false;
+      ui_->showSourceDialog = true;
+    }
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    if (ImGui::Button("キャンセル", ImVec2(60, 0))) {
+      sourceBrowserOpen_ = false;
+      ui_->showSourceDialog = true;
+    }
+  }
+  ImGui::End();
+  if (!open) {
+    sourceBrowserOpen_ = false;
+  }
+#endif
 }

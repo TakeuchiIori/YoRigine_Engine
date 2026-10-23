@@ -1,43 +1,77 @@
 #include "MenuBarPanel.h"
+
+#include "../../Authoring/MotionEditorSession.h"
+#include "../MotionEditorUIState.h"
+
 #ifdef USE_IMGUI
 #include <imgui.h>
 #endif
 
 void MenuBarPanel::DrawImGui() {
 #ifdef USE_IMGUI
-	if (!ImGui::BeginMenuBar()) return;
+  if (!ImGui::BeginMenuBar()) {
+    return;
+  }
 
-	if (ImGui::BeginMenu("ファイル (File)")) {
-		if (ImGui::MenuItem("元アニメーション読み込み", "")) context_->showSourceAnimationPopup = true;
-		if (ImGui::MenuItem("バイナリ保存/読込", ""))  context_->showSavePopup = true;
-		ImGui::EndMenu();
-	}
+  if (ImGui::BeginMenu("ファイル")) {
+    if (ImGui::MenuItem("glTF からアニメーションを読み込む...")) {
+      ui_->showSourceDialog = true;
+    }
+    if (ImGui::MenuItem(".anim の保存 / 読み込み...")) {
+      ui_->showFileDialog = true;
+    }
+    ImGui::EndMenu();
+  }
 
-	if (ImGui::BeginMenu("編集 (Edit)")) {
-		if (ImGui::MenuItem("元に戻す", "Ctrl+Z", false, context_->history.CanUndo())) context_->history.Undo();
-		if (ImGui::MenuItem("やり直す", "Ctrl+Y", false, context_->history.CanRedo())) context_->history.Redo();
-		ImGui::Separator();
-		if (ImGui::MenuItem("履歴をクリア")) context_->history.Clear();
-		ImGui::EndMenu();
-	}
+  if (ImGui::BeginMenu("編集")) {
+    if (ImGui::MenuItem("元に戻す", "Ctrl+Z", false, session_->CanUndo())) {
+      session_->Undo();
+    }
+    if (ImGui::MenuItem("やり直す", "Ctrl+Y", false, session_->CanRedo())) {
+      session_->Redo();
+    }
+    ImGui::Separator();
+    if (ImGui::MenuItem("選択ボーンにキーを打つ", "I", false,
+                        !session_->SelectedBone().empty())) {
+      session_->InsertKeyForSelectedBone();
+    }
+    if (ImGui::MenuItem("全ボーンにキーを打つ", "Shift+I", false,
+                        session_->CurrentMotion() != nullptr)) {
+      session_->InsertKeyForAllBones();
+    }
+    if (ImGui::MenuItem("キーを削除", "Del")) {
+      session_->DeleteSelectedKey();
+    }
+    ImGui::Separator();
+    if (ImGui::MenuItem("このモーションの履歴をクリア")) {
+      session_->ClearHistory();
+    }
+    ImGui::EndMenu();
+  }
 
-	if (ImGui::BeginMenu("表示 (View)")) {
-		ImGui::SliderFloat("タイムライン高さ", &context_->timelineH, 80.0f, 500.0f, "%.0f px");
-		ImGui::SliderFloat("ボーンリスト幅", &context_->bonePanelW, 80.0f, 450.0f, "%.0f px");
-		ImGui::SliderFloat("ズーム (px/秒)", &context_->timelineZoom, 20.0f, 400.0f, "%.0f");
-		ImGui::EndMenu();
-	}
+  if (ImGui::BeginMenu("表示")) {
+    ImGui::MenuItem("ボーンを表示", "B", &ui_->drawBones);
+    ImGui::SliderFloat("タイムライン高さ", &ui_->timelineHeight, 80.0f, 600.0f,
+                       "%.0f px");
+    ImGui::SliderFloat("ボーンリスト幅", &ui_->boneListWidth, 80.0f, 450.0f,
+                       "%.0f px");
+    ImGui::EndMenu();
+  }
 
-	ImGui::Separator();
-	if (!context_->history.CanUndo()) ImGui::BeginDisabled();
-	if (ImGui::SmallButton(" << ")) { context_->history.Undo(); context_->statusMsg = "元に戻す"; }
-	if (!context_->history.CanUndo()) ImGui::EndDisabled();
+  // メニューバー右側の Undo / Redo ボタン
+  ImGui::Separator();
+  ImGui::BeginDisabled(!session_->CanUndo());
+  if (ImGui::SmallButton(" << ")) {
+    session_->Undo();
+  }
+  ImGui::EndDisabled();
+  ImGui::SameLine(0, 2);
+  ImGui::BeginDisabled(!session_->CanRedo());
+  if (ImGui::SmallButton(" >> ")) {
+    session_->Redo();
+  }
+  ImGui::EndDisabled();
 
-	ImGui::SameLine(0, 2);
-	if (!context_->history.CanRedo()) ImGui::BeginDisabled();
-	if (ImGui::SmallButton(" >> ")) { context_->history.Redo(); context_->statusMsg = "やり直す"; }
-	if (!context_->history.CanRedo()) ImGui::EndDisabled();
-
-	ImGui::EndMenuBar();
+  ImGui::EndMenuBar();
 #endif
 }

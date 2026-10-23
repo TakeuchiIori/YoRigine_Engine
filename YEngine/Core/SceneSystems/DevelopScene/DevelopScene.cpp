@@ -28,6 +28,7 @@
 #include <WebAPI/YWebApiManager.h>
 
 // Camera
+#include "Systems/Camera/CameraDirector.h"
 #include "Systems/Camera/Virtuals/DebugCamera/DebugCamera.h"
 
 // C++
@@ -45,25 +46,17 @@ void DevelopScene::Initialize() {
   // カメラ初期化
   //------------------------------------------------------------
 
-  // 出力用カメラの実体を生成
-  sceneCamera_ = std::make_unique<YoRigine::Camera>();
-  auto director = CameraDirector::GetInstance();
-  director->Initialize();
-
-  // カメラエディタの登録
-  cameraEditor_ = std::make_unique<CameraEditor>();
-  cameraEditor_->Initialize();
-  cameraEditor_->SetFilePath(
-      "Resources/Json/VirtualCameraData/DevelopScene.json");
-  cameraEditor_->LoadFileOrDefault(cameraEditor_->GetFilePath(), "Develop");
-
-  // デバッグモード
-  cameraMode_ = CameraMode::DEBUG;
+  SceneCameraRig::Desc cameraDesc;
+  cameraDesc.editorFilePath = "Resources/Json/VirtualCameraData/DevelopScene.json";
+  cameraDesc.editorPresetName = "Develop";
+  cameraDesc.mainCameraId = SceneCameraRig::kDebugCameraId;
+  cameraRig_.Initialize(cameraDesc);
+  YoRigine::Camera *sceneCamera = cameraRig_.GetCamera();
 
   // ライン
   line_ = std::make_unique<YoRigine::Line>();
   line_->Initialize();
-  line_->SetCamera(sceneCamera_.get());
+  line_->SetCamera(sceneCamera);
 
   //------------------------------------------------------------
   // システム初期化
@@ -71,7 +64,7 @@ void DevelopScene::Initialize() {
   YWebApiManager::GetInstance().Initialize();
   YoRigine::GameTime::Initialize();
   YoRigine::JsonManager::SetCurrentScene("DevelopScene");
-  YParticleManager::GetInstance().SetCamera(sceneCamera_.get());
+  YParticleManager::GetInstance().SetCamera(sceneCamera);
   AreaManager::GetInstance()->Initialize();
   YoRigine::CollisionManager::GetInstance()->Initialize();
 
@@ -79,25 +72,25 @@ void DevelopScene::Initialize() {
   // の確認用）。 エディタ「ポストエフェクト」でしきい値/強度を調整できる。
   PostEffectManager::GetInstance()->LoadPreset("TD");
 #ifdef USE_IMGUI
-  YEmitterGroupEditor::GetInstance().SetCamera(sceneCamera_.get());
+  YEmitterGroupEditor::GetInstance().SetCamera(sceneCamera);
   YoRigine::VfxMeshEditor::GetInstance()->Initialize();
-  YoRigine::VfxMeshEditor::GetInstance()->SetCamera(sceneCamera_.get());
+  YoRigine::VfxMeshEditor::GetInstance()->SetCamera(sceneCamera);
 #endif
-  YoRigine::SceneEditor::GetInstance()->SetCamera(sceneCamera_.get());
+  YoRigine::SceneEditor::GetInstance()->SetCamera(sceneCamera);
   YoRigine::SceneEditor::GetInstance()->LoadScene("DevelopScene");
 
-  YoRigine::YGpuEmitManager::GetInstance()->SetCamera(sceneCamera_.get());
+  YoRigine::YGpuEmitManager::GetInstance()->SetCamera(sceneCamera);
   // 視錐台外コライダーは BroadPhase 登録をスキップする (個別オプトアウトは
   // BaseCollider::SetCheckOutsideCamera(false))
   YoRigine::CollisionManager::GetInstance()->SetCullingCamera(
-      sceneCamera_.get());
+      sceneCamera);
   YoRigine::CollisionManager::GetInstance()->SetEnableFrustumCulling(true);
 
   // エリア設定
   auto battleFieldArea = std::make_shared<CircleArea>();
   battleFieldArea->Initialize(Vector3(0, 0, 0), 50.0f);
   battleFieldArea->SetPurpose(AreaPurpose::Boundary); // 明示
-  battleFieldArea->SetCamera(sceneCamera_.get());
+  battleFieldArea->SetCamera(sceneCamera);
 
   auto *mgr = AreaManager::GetInstance();
   mgr->AddArea("FieldArea", battleFieldArea);
@@ -107,8 +100,7 @@ void DevelopScene::Initialize() {
   // エディター用GUI登録
   //------------------------------------------------------------
 #ifdef USE_IMGUI
-  Editor::GetInstance()->RegisterGameUI(
-      "カメラエディター", [this]() { cameraEditor_->Update(); }, "Develop");
+  cameraRig_.RegisterEditorPanels("Develop");
   Editor::GetInstance()->RegisterGameUI(
       "ライティング",
       [this]() { YoRigine::LightManager::GetInstance()->ShowLightingEditor(); },
@@ -126,10 +118,6 @@ void DevelopScene::Initialize() {
       [this]() { YParticleEditor::GetInstance().ShowEditorWindow(); },
       "Develop");
 
-  Editor::GetInstance()->RegisterGameUI(
-      "複合エフェクト(Composite)",
-      [this]() { CompositeEffectManager::GetInstance()->DrawImGui(); },
-      "Develop");
   Editor::GetInstance()->RegisterGameUI(
       "VFX", [this]() { YoRigine::VfxMeshEditor::GetInstance()->DrawImGui(); },
       "Develop");
@@ -154,8 +142,7 @@ void DevelopScene::Initialize() {
 // シーンの更新
 // ============================================================
 void DevelopScene::Update() {
-  YoRigine::GameTime::Update();
-  UpdateCamera();
+  cameraRig_.Update();
 
   // 非同期WebAPIリクエストの完了コールバックをメインスレッドで処理する
   YWebApiManager::GetInstance().Update();
@@ -167,17 +154,7 @@ void DevelopScene::Update() {
     YVfxHandle::PlayBolt("Lightning", Vector3{0, 50, 0}, Vector3{0, 0, 0},
                          /*loop*/ false);
   }
-  YoRigine::CollisionManager::GetInstance()->Update();
-  YoRigine::SceneEditor::GetInstance()->Update();
-  YParticleManager::GetInstance().Update(
-      YoRigine::GameTime::GetDeltaTime(YoRigine::TimeChannel::Vfx));
-  VfxMeshSpawner::GetInstance()->SetCamera(sceneCamera_.get());
-  VfxMeshSpawner::GetInstance()->Update(
-      YoRigine::GameTime::GetDeltaTime(YoRigine::TimeChannel::Vfx));
-  YoRigine::LightManager::GetInstance()->UpdateShadowMatrix(sceneCamera_.get());
-  YoRigine::YGpuEmitManager::GetInstance()->Update();
-  CompositeEffectManager::GetInstance()->Update(
-      YoRigine::GameTime::GetDeltaTime(YoRigine::TimeChannel::Vfx));
+  // 当たり判定・パーティクル・VFX などの共通更新は SceneManager が行う
 
 #ifdef USE_IMGUI
 
@@ -224,19 +201,10 @@ void DevelopScene::DrawScene3DOnly() {
 }
 
 // ============================================================
-// PostEffectを掛けたくないものを描画
-// ============================================================
-void DevelopScene::DrawNonOffscreen() {}
-
-// ============================================================
-// 影の描画
-// ============================================================
-void DevelopScene::DrawShadow() { DrawCommonShadow(); }
-
-// ============================================================
 // 終了の処理
 // ============================================================
 void DevelopScene::Finalize() {
+  cameraRig_.Finalize();
 
   YoRigine::JsonManager::ClearSceneInstances("DevelopScene");
   YWebApiManager::GetInstance().Finalize();
@@ -263,40 +231,4 @@ void DevelopScene::DrawLine() {
   AreaManager::GetInstance()->Draw(line_.get());
   line_->DrawLine();
   CameraDirector::GetInstance()->DrawDebug3D(*line_);
-}
-
-// ============================================================
-// カメラの更新処理
-// ============================================================
-void DevelopScene::UpdateCamera() {
-  auto director = CameraDirector::GetInstance();
-
-  if (YoRigine::GameTime::IsPause()) {
-    return;
-  }
-
-  // カメラの優先度
-  switch (cameraMode_) {
-  case CameraMode::DEBUG:
-    director->SetPriority("MainDebug", 10);
-    break;
-  }
-
-  //------------------------------------------------------------
-  // Directorの更新（VirtualCameraの計算 ＋ ブレンド処理）
-  //------------------------------------------------------------
-  director->Update(YoRigine::GameTime::GetDeltaTime());
-
-  //------------------------------------------------------------
-  // 出力用カメラ(sceneCamera_)への同期
-  //------------------------------------------------------------
-  // Directorが導き出した「理想の座標・回転・レンズ情報」をコピー
-  sceneCamera_->SetTranslate(director->GetActiveCameraPos());
-  sceneCamera_->SetRotate(director->GetActiveCameraRot());
-  sceneCamera_->SetFovY(director->GetFovY());
-  sceneCamera_->viewMatrix_ = director->GetViewMatrix();
-  // カメラ自体の更新（内部でのシェイク計算など）
-  sceneCamera_->Update();
-  // 最終的な行列の計算
-  sceneCamera_->UpdateMatrix();
 }

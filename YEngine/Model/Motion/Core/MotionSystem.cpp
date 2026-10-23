@@ -45,11 +45,11 @@ namespace {
 		}
 
 		QuaternionTransform transform{};
-		transform.translate = const_cast<Motion&>(motion).CalculateValue(
+		transform.translate = motion.CalculateValue(
 			nodeAnimation->translate.keyframes, time, nodeAnimation->interpolationType);
-		transform.rotate = const_cast<Motion&>(motion).CalculateValue(
+		transform.rotate = motion.CalculateValue(
 			nodeAnimation->rotate.keyframes, time, nodeAnimation->interpolationType);
-		transform.scale = const_cast<Motion&>(motion).CalculateValue(
+		transform.scale = motion.CalculateValue(
 			nodeAnimation->scale.keyframes, time, nodeAnimation->interpolationType);
 		return transform;
 	}
@@ -318,6 +318,12 @@ void MotionSystem::Resume()
 // ブレンド開始
 // ============================================================
 void MotionSystem::StartBlend(Motion& toAnimation, float blendDuration) {
+	// スケルトンを持たない（ノードのみの）初期化ではブレンドできないので即切り替える
+	if (!skeleton_) {
+		animation_ = &toAnimation;
+		animationTime_ = 0.0f;
+		return;
+	}
 
 	// ------------------------------------------------------------
 	// ブレンド先のアニメーション確認
@@ -349,7 +355,8 @@ void MotionSystem::StartBlend(Motion& toAnimation, float blendDuration) {
 	animationBlendState_.fromTime = animationTime_;
 	animationBlendState_.to = toAnimation;
 	animationBlendState_.toTime = 0.0f;
-	animationBlendState_.blendTime = blendDuration;
+	// 0秒指定は 0 除算になるため、極小時間のブレンドとして扱う
+	animationBlendState_.blendTime = std::max(blendDuration, 1e-4f);
 	animationBlendState_.currentTime = 0.0f;
 	animationBlendState_.isBlending = true;
 	animation_ = &animationBlendState_.to;
@@ -423,9 +430,9 @@ QuaternionTransform MotionSystem::GetTransformAnimation(const Motion& anim, cons
 
 	if (it != animMap.end()) {
 		const auto& nodeAnim = it->second;
-		qTransform.translate = const_cast<Motion&>(anim).CalculateValue(nodeAnim.translate.keyframes, time, nodeAnim.interpolationType);
-		qTransform.rotate = const_cast<Motion&>(anim).CalculateValue(nodeAnim.rotate.keyframes, time, nodeAnim.interpolationType);
-		qTransform.scale = const_cast<Motion&>(anim).CalculateValue(nodeAnim.scale.keyframes, time, nodeAnim.interpolationType);
+		qTransform.translate = anim.CalculateValue(nodeAnim.translate.keyframes, time, nodeAnim.interpolationType);
+		qTransform.rotate = anim.CalculateValue(nodeAnim.rotate.keyframes, time, nodeAnim.interpolationType);
+		qTransform.scale = anim.CalculateValue(nodeAnim.scale.keyframes, time, nodeAnim.interpolationType);
 	}
 	else {
 		qTransform.translate = { 0.0f, 0.0f, 0.0f };

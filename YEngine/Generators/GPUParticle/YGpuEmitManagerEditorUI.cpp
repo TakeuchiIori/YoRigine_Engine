@@ -1,4 +1,5 @@
 #include "YGpuEmitManagerEditorUI.h"
+#include "Debugger/ImGuiManager.h"
 #ifdef USE_IMGUI
 
 #include "YGpuEmitManager.h"
@@ -93,7 +94,7 @@ namespace YoRigine {
 			ImGui::Separator();
 
 			// 全削除ボタン（目立つように配置）
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.2f, 0.2f, 1.0f)); // 危険な操作なので赤くする
+			ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetDangerColor()); // 危険な操作なので赤くする
 			if (ImGui::Button("全削除", ImVec2(ImGui::GetContentRegionAvail().x, 0)) && !manager.groups_.empty()) {
 				manager.showDeleteDialog_ = true;
 				manager.selectedGroupName_.clear();
@@ -247,7 +248,7 @@ namespace YoRigine {
 	{
 		bool changed = false;
 
-		ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.7f, 0.3f, 0.3f, 0.8f));
+		ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyleColorVec4(ImGuiCol_Header));
 		if (ImGui::CollapsingHeader("生存時間"))
 		{
 			ImGui::PopStyleColor();
@@ -257,7 +258,7 @@ namespace YoRigine {
 			ImGui::Spacing();
 		} else { ImGui::PopStyleColor(); }
 
-		ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.3f, 0.7f, 0.3f, 0.8f));
+		ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyleColorVec4(ImGuiCol_Header));
 		if (ImGui::CollapsingHeader("スケール"))
 		{
 			ImGui::PopStyleColor();
@@ -267,7 +268,7 @@ namespace YoRigine {
 			ImGui::Spacing();
 		} else { ImGui::PopStyleColor(); }
 
-		ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.7f, 0.5f, 0.2f, 0.8f));
+		ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyleColorVec4(ImGuiCol_Header));
 		if (ImGui::CollapsingHeader("回転"))
 		{
 			ImGui::PopStyleColor();
@@ -277,7 +278,7 @@ namespace YoRigine {
 			ImGui::Spacing();
 		} else { ImGui::PopStyleColor(); }
 
-		ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.5f, 0.3f, 0.7f, 0.8f));
+		ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyleColorVec4(ImGuiCol_Header));
 		if (ImGui::CollapsingHeader("速度・重力"))
 		{
 			ImGui::PopStyleColor();
@@ -287,7 +288,7 @@ namespace YoRigine {
 			ImGui::Spacing();
 		} else { ImGui::PopStyleColor(); }
 
-		ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.7f, 0.7f, 0.2f, 0.8f));
+		ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyleColorVec4(ImGuiCol_Header));
 		if (ImGui::CollapsingHeader("色"))
 		{
 			ImGui::PopStyleColor();
@@ -297,7 +298,7 @@ namespace YoRigine {
 			ImGui::Spacing();
 		} else { ImGui::PopStyleColor(); }
 
-		ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyleColorVec4(ImGuiCol_Header));
 		if (ImGui::CollapsingHeader("トレイル（粒子が動いた軌跡に子パーティクルを生成）", ImGuiTreeNodeFlags_None))
 		{
 			ImGui::PopStyleColor();
@@ -334,42 +335,42 @@ namespace YoRigine {
 
 		const ExtModuleEntry entries[] = {
 			{ "発光（HDR輝度倍率。Bloomを乗せる）", "Emissive", &m.emissive.isEnable,
-			  ImVec4(0.8f, 0.7f, 0.2f, 0.8f),
+			  ImGui::GetStyleColorVec4(ImGuiCol_Header),
 			  [&] { return YEmissiveModule::DrawImGui(m.emissive); },
 			  [&] { m.emissive = EmissiveParams{}; } },
 
 			{ "フリップブック（爆発/炎のスプライトシート）", "Flipbook", &m.flipbook.isEnable,
-			  ImVec4(0.75f, 0.35f, 0.2f, 0.8f),
+			  ImGui::GetStyleColorVec4(ImGuiCol_Header),
 			  [&] { return YFlipbookModule::DrawImGui(m.flipbook); },
 			  [&] { m.flipbook = FlipbookParams{}; } },
 
 			{ "UVスクロール（炎/溶岩/エネルギー系の定番）", "UVScroll", &m.uvScroll.isEnable,
-			  ImVec4(0.2f, 0.6f, 0.6f, 0.8f),
+			  ImGui::GetStyleColorVec4(ImGuiCol_Header),
 			  [&] { return YUVScrollModule::DrawImGui(m.uvScroll); },
 			  [&] { m.uvScroll = UVScrollParams{}; } },
 
 			{ "スケール脈動（発光オーブ/鼓動の定番）", "ScalePulse", &m.scalePulse.isEnable,
-			  ImVec4(0.6f, 0.5f, 0.2f, 0.8f),
+			  ImGui::GetStyleColorVec4(ImGuiCol_Header),
 			  [&] { return YScalePulseModule::DrawImGui(m.scalePulse); },
 			  [&] { m.scalePulse = ScalePulseParams{}; } },
 
 			{ "色の明滅（炎/電撃/魔法の定番）", "ColorFlicker", &m.colorFlicker.isEnable,
-			  ImVec4(0.7f, 0.4f, 0.1f, 0.8f),
+			  ImGui::GetStyleColorVec4(ImGuiCol_Header),
 			  [&] { return YColorFlickerModule::DrawImGui(m.colorFlicker); },
 			  [&] { m.colorFlicker = ColorFlickerParams{}; } },
 
 			{ "空気抵抗（爆散した破片が失速する）", "Drag", &m.drag.isEnable,
-			  ImVec4(0.35f, 0.45f, 0.7f, 0.8f),
+			  ImGui::GetStyleColorVec4(ImGuiCol_Header),
 			  [&] { return YDragModule::DrawImGui(m.drag); },
 			  [&] { m.drag = DragParams{}; } },
 
 			{ "速度方向へ伸縮（火花/スピード線の定番）", "StretchByVelocity", &m.stretch.isEnable,
-			  ImVec4(0.7f, 0.25f, 0.5f, 0.8f),
+			  ImGui::GetStyleColorVec4(ImGuiCol_Header),
 			  [&] { return YStretchByVelocityModule::DrawImGui(m.stretch); },
 			  [&] { m.stretch = StretchByVelocityParams{}; } },
 
 			{ "床で跳ねる（破片のバウンド）", "Bounce", &m.bounce.isEnable,
-			  ImVec4(0.45f, 0.6f, 0.3f, 0.8f),
+			  ImGui::GetStyleColorVec4(ImGuiCol_Header),
 			  [&] { return YBounceModule::DrawImGui(m.bounce); },
 			  [&] { m.bounce = BounceParams{}; } },
 		};
@@ -379,7 +380,7 @@ namespace YoRigine {
 		// 追加しても何も出ないように見えるのを防ぐ）。
 		const char* justAddedId = nullptr;
 
-		ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.25f, 0.45f, 0.25f, 0.8f));
+		ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyleColorVec4(ImGuiCol_Header));
 		if (ImGui::TreeNodeEx("+ モジュールを追加", ImGuiTreeNodeFlags_Framed))
 		{
 			ImGui::PopStyleColor();
@@ -434,7 +435,7 @@ namespace YoRigine {
 				ImGui::Indent(16.0f);
 				changed |= e.drawBody();
 				ImGui::Spacing();
-				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.6f, 0.2f, 0.2f, 0.8f));
+				ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetDangerColor());
 				if (ImGui::Button("削除")) { e.reset(); changed = true; }
 				ImGui::PopStyleColor();
 				ImGui::Unindent(16.0f);
@@ -855,8 +856,8 @@ namespace YoRigine {
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(strlen(manager.newGroupName_) == 0);
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.25f, 0.6f, 0.3f, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.7f, 0.35f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetSuccessColor());
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGuiManager::Brighten(ImGuiManager::GetSuccessColor(), 1.3f));
 		if (ImGui::Button(ICON_FA_PLUS " 作成", ImVec2(140, 0))) {
 			if (manager.CreateEmitterGroup(manager.newGroupName_)) {
 				manager.selectedGroupName_ = manager.newGroupName_;
@@ -940,13 +941,13 @@ namespace YoRigine {
 				ImGui::TableSetColumnIndex(3);
 				ImGui::PushID((name + "_play").c_str());
 				if (groupData->isPlaying) {
-					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.3f, 0.3f, 1.0f));
+					ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetDangerColor());
 					if (ImGui::SmallButton(ICON_FA_PLAY)) {
 						manager.StopEmitterGroup(name);
 					}
 					ImGui::PopStyleColor();
 				} else {
-					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.8f, 0.3f, 1.0f));
+					ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetSuccessColor());
 					if (ImGui::SmallButton(ICON_FA_PLAY)) {
 						manager.PlayEmitterGroup(name);
 					}
@@ -1039,8 +1040,8 @@ namespace YoRigine {
 				currentGroup->sourceFilePath.empty() ? "(未設定→保存時に自動決定)" : currentGroup->sourceFilePath.c_str());
 
 			// グループ単位保存（主導線）
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.25f, 0.6f, 0.3f, 1.0f));
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.7f, 0.35f, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetSuccessColor());
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGuiManager::Brighten(ImGuiManager::GetSuccessColor(), 1.3f));
 			if (ImGui::Button(ICON_FA_SAVE " このグループを保存", ImVec2(-1, 32))) {
 				manager.SaveGroupToFile(manager.selectedGroupName_);
 			}
@@ -1049,7 +1050,7 @@ namespace YoRigine {
 			ImGui::Spacing();
 
 			// グループ操作ボタン
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.3f, 0.3f, 0.8f));
+			ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetDangerColor());
 			if (ImGui::Button("このグループを削除", ImVec2(-1, 0))) {
 				manager.showDeleteDialog_ = true;
 			}
@@ -1212,7 +1213,7 @@ namespace YoRigine {
 
 				// 操作列
 				ImGui::TableSetColumnIndex(3);
-				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.3f, 0.3f, 0.8f));
+				ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetDangerColor());
 				if (ImGui::SmallButton("削除")) {
 					if (manager.selectedEmitterName_ == name) {
 						manager.selectedEmitterName_.clear();
@@ -1291,7 +1292,7 @@ namespace YoRigine {
 			const std::string emitterName = manager.selectedEmitterName_;
 
 			ImGui::SameLine(ImGui::GetContentRegionAvail().x - 140.0f + ImGui::GetCursorPosX());
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.3f, 0.3f, 0.8f));
+			ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetDangerColor());
 			bool requestDelete = ImGui::Button(ICON_FA_TRASH " このエミッターを削除", ImVec2(140, 0));
 			ImGui::PopStyleColor();
 
@@ -1457,7 +1458,7 @@ namespace YoRigine {
 			ImGui::Spacing();
 
 			// 削除実行ボタン
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetDangerColor());
 			if (ImGui::Button("削除する", ImVec2(120, 0))) {
 				if (manager.selectedGroupName_.empty()) {
 					manager.DeleteAllEmitterGroups();

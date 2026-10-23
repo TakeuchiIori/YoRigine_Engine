@@ -35,15 +35,15 @@ bool FadeTransition::IsFinished() const {
 }
 
 /// <summary>
-/// フェードイン開始（トランジション開始）
+/// 明け始める（フェードイン）
 /// </summary>
-void FadeTransition::StartTransition() {
+void FadeTransition::StartReveal() {
 	fade_->Start(Fade::Status::FadeIn, FADE_DURATION);
 }
 
 /// <summary>
-/// フェードアウト開始（トランジション終了）
+/// 覆い始める（フェードアウト）
 /// </summary>
-void FadeTransition::EndTransition() {
+void FadeTransition::StartCover() {
 	fade_->Start(Fade::Status::FadeOut, FADE_DURATION);
 }

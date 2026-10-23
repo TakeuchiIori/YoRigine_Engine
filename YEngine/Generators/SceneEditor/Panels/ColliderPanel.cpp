@@ -1,6 +1,7 @@
 #ifdef USE_IMGUI
 
 #include "ColliderPanel.h"
+#include "Localization/Localization.h"
 
 // Engine
 #include <Collision/Core/CollisionTypeIdDef.h>
@@ -22,23 +23,23 @@ void ColliderPanel::DrawShapeFields(const ScenePanelContext &context,
 
   switch (obj.colliderShapeType) {
   case ColliderShapeType::kAABB:
-    ImGui::TextDisabled("AABB オフセット");
+    ImGui::TextDisabled(TR("AABB オフセット"));
     changed |= ImGui::DragFloat3("Max##aabb", &obj.colliderAabbOffset.max.x, 0.05f);
     changed |= ImGui::DragFloat3("Min##aabb", &obj.colliderAabbOffset.min.x, 0.05f);
     break;
 
   case ColliderShapeType::kOBB:
-    ImGui::TextDisabled("OBB オフセット");
-    changed |= ImGui::DragFloat3("中心##obb", &obj.colliderObbCenter.x, 0.05f);
-    changed |= ImGui::DragFloat3("サイズ##obb", &obj.colliderObbSize.x, 0.05f, 0.01f, 100.0f);
-    changed |= ImGui::DragFloat3("回転 (度)##obb", &obj.colliderObbEuler.x, 1.0f);
+    ImGui::TextDisabled(TR("OBB オフセット"));
+    changed |= ImGui::DragFloat3(TR("中心##obb"), &obj.colliderObbCenter.x, 0.05f);
+    changed |= ImGui::DragFloat3(TR("サイズ##obb"), &obj.colliderObbSize.x, 0.05f, 0.01f, 100.0f);
+    changed |= ImGui::DragFloat3(TR("回転 (度)##obb"), &obj.colliderObbEuler.x, 1.0f);
     break;
 
   case ColliderShapeType::kSphere:
   default:
-    ImGui::TextDisabled("Sphere オフセット");
-    changed |= ImGui::DragFloat3("中心##sph", &obj.colliderSphereCenter.x, 0.05f);
-    changed |= ImGui::DragFloat("半径##sph", &obj.colliderSphereRadius, 0.05f, 0.01f, 100.0f);
+    ImGui::TextDisabled(TR("Sphere オフセット"));
+    changed |= ImGui::DragFloat3(TR("中心##sph"), &obj.colliderSphereCenter.x, 0.05f);
+    changed |= ImGui::DragFloat(TR("半径##sph"), &obj.colliderSphereRadius, 0.05f, 0.01f, 100.0f);
     break;
   }
 }
@@ -51,20 +52,20 @@ void ColliderPanel::DrawInspectorSection(const ScenePanelContext &context,
   ObjectManager &objectManager = *context.scene->objectManager;
   bool changed = false;
 
-  if (ImGui::Checkbox("有効", &obj.colliderEnabled)) {
+  if (ImGui::Checkbox(TR("有効"), &obj.colliderEnabled)) {
     objectManager.ApplyColliderTemplate(obj);
   }
   ImGui::SameLine();
-  if (ImGui::Checkbox("カメラフェード", &obj.colliderCameraFade)) {
+  if (ImGui::Checkbox(TR("カメラフェード"), &obj.colliderCameraFade)) {
     objectManager.ApplyColliderTemplate(obj);
   }
   if (ImGui::IsItemHovered()) {
     ImGui::SetTooltip(
-        "カメラと重なったときにカメラを寄せず、オブジェクトを半透明にする");
+        TR("カメラと重なったときにカメラを寄せず、オブジェクトを半透明にする"));
   }
 
   // ── タイプ ──
-  if (ImGui::BeginCombo("種別", CollisionTypeIdToString(obj.colliderTypeId))) {
+  if (ImGui::BeginCombo(TR("種別"), CollisionTypeIdToString(obj.colliderTypeId))) {
     for (const auto typeId : kPlacedObjectColliderTypes) {
       const bool selected = (obj.colliderTypeId == typeId);
       if (ImGui::Selectable(CollisionTypeIdToString(typeId), selected)) {
@@ -80,7 +81,7 @@ void ColliderPanel::DrawInspectorSection(const ScenePanelContext &context,
 
   // ── シェイプ ──
   int currentShape = static_cast<int>(obj.colliderShapeType);
-  if (ImGui::Combo("形状", &currentShape, kShapeNames, kShapeCount)) {
+  if (ImGui::Combo(TR("形状"), &currentShape, kShapeNames, kShapeCount)) {
     obj.colliderShapeType = static_cast<ColliderShapeType>(currentShape);
     changed = true;
   }
@@ -95,30 +96,30 @@ void ColliderPanel::DrawInspectorSection(const ScenePanelContext &context,
   // ── モデル形状への自動フィット ──
   ImGui::Separator();
   ImGui::SetNextItemWidth(120.0f);
-  ImGui::DragFloat("マージン", &fitMargin_, 0.01f, 1.0f, 2.0f, "x %.2f");
+  ImGui::DragFloat(TR("マージン"), &fitMargin_, 0.01f, 1.0f, 2.0f, "x %.2f");
   ImGui::SameLine();
-  if (ImGui::Button("モデルに合わせる")) {
+  if (ImGui::Button(TR("モデルに合わせる"))) {
     if (!objectManager.FitColliderToModel(obj, fitMargin_)) {
       ImGui::OpenPopup("##fitFailed");
     }
   }
   if (ImGui::BeginPopup("##fitFailed")) {
-    ImGui::TextUnformatted("モデルの頂点を取得できませんでした。");
+    ImGui::TextUnformatted(TR("モデルの頂点を取得できませんでした。"));
     ImGui::EndPopup();
   }
 
   // ── 同名モデルへの一括操作 ──
   ImGui::Separator();
-  ImGui::TextDisabled("同じモデルのオブジェクトへ一括適用");
-  if (ImGui::SmallButton("設定をコピー")) {
+  ImGui::TextDisabled(TR("同じモデルのオブジェクトへ一括適用"));
+  if (ImGui::SmallButton(TR("設定をコピー"))) {
     objectManager.CopyColliderSettingsToAll(obj);
   }
   ImGui::SameLine();
-  if (ImGui::SmallButton("全て有効")) {
+  if (ImGui::SmallButton(TR("全て有効"))) {
     objectManager.SetColliderEnabledAll(obj.modelName, true);
   }
   ImGui::SameLine();
-  if (ImGui::SmallButton("全て無効")) {
+  if (ImGui::SmallButton(TR("全て無効"))) {
     objectManager.SetColliderEnabledAll(obj.modelName, false);
   }
 }
@@ -133,13 +134,13 @@ void ColliderPanel::DrawOverviewWindow(const ScenePanelContext &context,
   }
   ObjectManager &objectManager = *context.scene->objectManager;
 
-  ImGui::TextUnformatted("コライダー一覧 (オブジェクト個別設定)");
+  ImGui::TextUnformatted(TR("コライダー一覧 (オブジェクト個別設定)"));
   ImGui::Separator();
 
   auto objects = objectManager.GetAllActiveObjects();
   if (objects.empty()) {
-    ImGui::TextDisabled("オブジェクトがありません。");
-    if (ImGui::Button("閉じる") && isOpen) {
+    ImGui::TextDisabled(TR("オブジェクトがありません。"));
+    if (ImGui::Button(TR("閉じる")) && isOpen) {
       *isOpen = false;
     }
     return;
@@ -152,10 +153,10 @@ void ColliderPanel::DrawOverviewWindow(const ScenePanelContext &context,
                         ImVec2(0.0f, -30.0f))) {
     ImGui::TableSetupScrollFreeze(0, 1);
     ImGui::TableSetupColumn("ID", ImGuiTableColumnFlags_WidthFixed, 34.0f);
-    ImGui::TableSetupColumn("モデル", ImGuiTableColumnFlags_WidthStretch, 2.0f);
-    ImGui::TableSetupColumn("種別", ImGuiTableColumnFlags_WidthStretch, 1.5f);
-    ImGui::TableSetupColumn("有効", ImGuiTableColumnFlags_WidthFixed, 36.0f);
-    ImGui::TableSetupColumn("一括", ImGuiTableColumnFlags_WidthFixed, 76.0f);
+    ImGui::TableSetupColumn(TR("モデル"), ImGuiTableColumnFlags_WidthStretch, 2.0f);
+    ImGui::TableSetupColumn(TR("種別"), ImGuiTableColumnFlags_WidthStretch, 1.5f);
+    ImGui::TableSetupColumn(TR("有効"), ImGuiTableColumnFlags_WidthFixed, 36.0f);
+    ImGui::TableSetupColumn(TR("一括"), ImGuiTableColumnFlags_WidthFixed, 76.0f);
     ImGui::TableHeadersRow();
 
     for (auto *obj : objects) {
@@ -194,7 +195,7 @@ void ColliderPanel::DrawOverviewWindow(const ScenePanelContext &context,
       }
 
       ImGui::TableSetColumnIndex(4);
-      if (ImGui::SmallButton("同名コピー")) {
+      if (ImGui::SmallButton(TR("同名コピー"))) {
         objectManager.CopyColliderSettingsToAll(*obj);
       }
 
@@ -203,7 +204,7 @@ void ColliderPanel::DrawOverviewWindow(const ScenePanelContext &context,
     ImGui::EndTable();
   }
 
-  if (ImGui::Button("閉じる") && isOpen) {
+  if (ImGui::Button(TR("閉じる")) && isOpen) {
     *isOpen = false;
   }
 }

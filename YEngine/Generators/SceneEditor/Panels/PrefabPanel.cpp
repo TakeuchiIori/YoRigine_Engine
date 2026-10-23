@@ -1,6 +1,7 @@
 #ifdef USE_IMGUI
 
 #include "PrefabPanel.h"
+#include "Localization/Localization.h"
 
 // Engine
 #include "../ObjectSelector.h"
@@ -16,7 +17,7 @@ void PrefabPanel::DrawCreateSection(const ScenePanelContext &context) {
   ObjectSelector &selector = *context.scene->selector;
 
   ImGui::SetNextItemWidth(-1.0f);
-  ImGui::InputTextWithHint("##prefabName", "プレファブ名", newPrefabName_,
+  ImGui::InputTextWithHint("##prefabName", TR("プレファブ名"), newPrefabName_,
                            sizeof(newPrefabName_));
 
   const bool hasName = (std::strlen(newPrefabName_) > 0);
@@ -24,31 +25,31 @@ void PrefabPanel::DrawCreateSection(const ScenePanelContext &context) {
     ImGui::BeginDisabled();
   }
 
-  if (ImGui::Button("選択オブジェクトから作成")) {
+  if (ImGui::Button(TR("選択オブジェクトから作成"))) {
     prefabManager.CreatePrefabFromObject(newPrefabName_,
                                          selector.GetPrimaryId());
     std::memset(newPrefabName_, 0, sizeof(newPrefabName_));
   }
   ImGui::SameLine();
-  if (ImGui::Button("シーン全体から作成")) {
+  if (ImGui::Button(TR("シーン全体から作成"))) {
     prefabManager.CreatePrefabFromAllObjects(newPrefabName_);
     std::memset(newPrefabName_, 0, sizeof(newPrefabName_));
   }
 
   if (!hasName) {
     ImGui::EndDisabled();
-    ImGui::TextDisabled("名前を入力すると作成できる");
+    ImGui::TextDisabled(TR("名前を入力すると作成できる"));
   }
 }
 
 void PrefabPanel::DrawLibrarySection(const ScenePanelContext &context) {
   PrefabManager &prefabManager = *context.scene->prefabManager;
 
-  if (ImGui::Button("一覧を更新")) {
+  if (ImGui::Button(TR("一覧を更新"))) {
     prefabManager.ScanPrefabFolder();
   }
   ImGui::SameLine();
-  searchBox_.Draw("##prefabSearch", "絞り込み...", 180.0f);
+  searchBox_.Draw("##prefabSearch", TR("絞り込み..."), 180.0f);
 
   if (ImGui::BeginListBox("##prefabList", ImVec2(-1.0f, 180.0f))) {
     for (const auto &name : prefabManager.GetPrefabList()) {
@@ -63,26 +64,26 @@ void PrefabPanel::DrawLibrarySection(const ScenePanelContext &context) {
   }
 
   if (selectedPrefabName_.empty()) {
-    ImGui::TextDisabled("プレファブを選ぶと配置・削除できる");
+    ImGui::TextDisabled(TR("プレファブを選ぶと配置・削除できる"));
     return;
   }
 
-  if (ImGui::Button("シーンに配置")) {
+  if (ImGui::Button(TR("シーンに配置"))) {
     prefabManager.LoadPrefab(selectedPrefabName_);
   }
   ImGui::SameLine();
-  if (ImGui::Button("削除")) {
+  if (ImGui::Button(TR("削除"))) {
     ImGui::OpenPopup("##confirmPrefabDelete");
   }
   if (ImGui::BeginPopup("##confirmPrefabDelete")) {
-    ImGui::Text("%s を削除します。", selectedPrefabName_.c_str());
-    if (ImGui::Button("削除する")) {
+    ImGui::Text(TR("%s を削除します。"), selectedPrefabName_.c_str());
+    if (ImGui::Button(TR("削除する"))) {
       prefabManager.DeletePrefab(selectedPrefabName_);
       selectedPrefabName_.clear();
       ImGui::CloseCurrentPopup();
     }
     ImGui::SameLine();
-    if (ImGui::Button("やめる")) {
+    if (ImGui::Button(TR("やめる"))) {
       ImGui::CloseCurrentPopup();
     }
     ImGui::EndPopup();
@@ -95,18 +96,18 @@ void PrefabPanel::Draw(const ScenePanelContext &context, bool *isOpen) {
     return;
   }
 
-  ImGui::TextUnformatted("プレファブ");
+  ImGui::TextUnformatted(TR("プレファブ"));
   ImGui::Separator();
 
-  if (ImGui::CollapsingHeader("作成", ImGuiTreeNodeFlags_DefaultOpen)) {
+  if (ImGui::CollapsingHeader(loc::TrId("作成"), ImGuiTreeNodeFlags_DefaultOpen)) {
     DrawCreateSection(context);
   }
-  if (ImGui::CollapsingHeader("ライブラリ", ImGuiTreeNodeFlags_DefaultOpen)) {
+  if (ImGui::CollapsingHeader(loc::TrId("ライブラリ"), ImGuiTreeNodeFlags_DefaultOpen)) {
     DrawLibrarySection(context);
   }
 
   ImGui::Separator();
-  if (ImGui::Button("閉じる") && isOpen) {
+  if (ImGui::Button(TR("閉じる")) && isOpen) {
     *isOpen = false;
   }
 }

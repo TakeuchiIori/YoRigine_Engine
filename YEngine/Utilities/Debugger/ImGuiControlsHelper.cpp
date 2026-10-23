@@ -6,17 +6,25 @@
 
 #ifdef USE_IMGUI
 #include <IconsFontAwesome5.h>
+#include "ImGuiManager.h"
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  内部カラー定数
 // ─────────────────────────────────────────────────────────────────────────────
 namespace CtrlTheme
 {
-	// Black Gold アクセント
-	static inline ImVec4 Gold() { return ImVec4(0.852f, 0.682f, 0.196f, 1.00f); }
-	static inline ImVec4 GoldBg() { return ImVec4(0.852f, 0.682f, 0.196f, 0.16f); }
-	static inline ImVec4 GoldHov() { return ImVec4(0.852f, 0.682f, 0.196f, 0.38f); }
-	static inline ImVec4 GoldAct() { return ImVec4(0.852f, 0.682f, 0.196f, 0.60f); }
+	// アクセントはエディタ全体のテーマ (ImGuiManager) から引く。
+	// ここで RGB を直書きすると、テーマを変えたときにこのヘルパーだけ色が取り残される。
+	static inline ImVec4 AccentA(float a) {
+		ImVec4 c = ImGuiManager::GetAccentColor();
+		c.w = a;
+		return c;
+	}
+	// 文字用。暗い地の上でも読めるよう、アクセントを明るく寄せる
+	static inline ImVec4 Accent()    { return ImVec4(0.45f, 0.66f, 1.00f, 1.00f); }
+	static inline ImVec4 AccentBg()  { return AccentA(0.16f); }
+	static inline ImVec4 AccentHov() { return AccentA(0.38f); }
+	static inline ImVec4 AccentAct() { return AccentA(0.60f); }
 
 	// XYZ 軸色
 	static inline ImVec4 AxisX() { return ImVec4(0.95f, 0.30f, 0.25f, 1.00f); } // 赤
@@ -25,15 +33,15 @@ namespace CtrlTheme
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  内部マクロ: ゴールドカラーリセットボタンを右端に配置
+//  内部マクロ: アクセントカラーのリセットボタンを右端に配置
 // ─────────────────────────────────────────────────────────────────────────────
-#define GOLD_RESET_BUTTON(id, changed)                                 \
+#define ACCENT_RESET_BUTTON(id, changed)                                 \
 	do {                                                                \
 		ImGui::SameLine();                                              \
-		ImGui::PushStyleColor(ImGuiCol_Button,        CtrlTheme::GoldBg()); \
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());\
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive,  CtrlTheme::GoldAct());\
-		ImGui::PushStyleColor(ImGuiCol_Text,          CtrlTheme::Gold());   \
+		ImGui::PushStyleColor(ImGuiCol_Button,        CtrlTheme::AccentBg()); \
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());\
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive,  CtrlTheme::AccentAct());\
+		ImGui::PushStyleColor(ImGuiCol_Text,          CtrlTheme::Accent());   \
 		if (ImGui::SmallButton((std::string(ICON_FA_UNDO "##") + (id)).c_str())) \
 		{ (changed) = true; ImGui::PopStyleColor(4); return true; }     \
 		ImGui::PopStyleColor(4);                                        \
@@ -53,10 +61,10 @@ bool ImGuiControlsHelper::DragFloatWithReset(
 
 	std::string uid = GetUniqueID(label);
 	ImGui::SameLine();
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton((std::string(ICON_FA_UNDO "##") + uid).c_str())) {
 		*value = defaultValue;
 		changed = true;
@@ -77,10 +85,10 @@ bool ImGuiControlsHelper::DragFloat3WithReset(
 
 	std::string uid = GetUniqueID(label);
 	ImGui::SameLine();
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton((std::string(ICON_FA_UNDO "##") + uid).c_str())) {
 		*value = defaultValue;
 		changed = true;
@@ -100,10 +108,10 @@ bool ImGuiControlsHelper::DragFloat2WithReset(
 
 	std::string uid = GetUniqueID(label);
 	ImGui::SameLine();
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton((std::string(ICON_FA_UNDO "##") + uid).c_str())) {
 		*value = defaultValue;
 		changed = true;
@@ -121,10 +129,10 @@ bool ImGuiControlsHelper::DragIntWithReset(
 
 	std::string uid = GetUniqueID(label);
 	ImGui::SameLine();
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton((std::string(ICON_FA_UNDO "##") + uid).c_str())) {
 		*value = defaultValue;
 		changed = true;
@@ -146,10 +154,10 @@ bool ImGuiControlsHelper::InputFloatWithReset(
 
 	std::string uid = GetUniqueID(label);
 	ImGui::SameLine();
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton((std::string(ICON_FA_UNDO "##") + uid).c_str())) {
 		*value = defaultValue;
 		changed = true;
@@ -167,10 +175,10 @@ bool ImGuiControlsHelper::InputFloat3WithReset(
 
 	std::string uid = GetUniqueID(label);
 	ImGui::SameLine();
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton((std::string(ICON_FA_UNDO "##") + uid).c_str())) {
 		*value = defaultValue;
 		changed = true;
@@ -188,10 +196,10 @@ bool ImGuiControlsHelper::InputFloat2WithReset(
 
 	std::string uid = GetUniqueID(label);
 	ImGui::SameLine();
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton((std::string(ICON_FA_UNDO "##") + uid).c_str())) {
 		*value = defaultValue;
 		changed = true;
@@ -209,10 +217,10 @@ bool ImGuiControlsHelper::InputIntWithReset(
 
 	std::string uid = GetUniqueID(label);
 	ImGui::SameLine();
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton((std::string(ICON_FA_UNDO "##") + uid).c_str())) {
 		*value = defaultValue;
 		changed = true;
@@ -234,8 +242,8 @@ bool ImGuiControlsHelper::SmartSliderFloat(
 	float avail = ImGui::GetContentRegionAvail().x;
 
 	// スライダー
-	ImGui::PushStyleColor(ImGuiCol_SliderGrab, CtrlTheme::Gold());
-	ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, CtrlTheme::GoldAct());
+	ImGui::PushStyleColor(ImGuiCol_SliderGrab, CtrlTheme::Accent());
+	ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, CtrlTheme::AccentAct());
 	ImGui::PushItemWidth(avail * 0.50f);
 	if (ImGui::SliderFloat(("##sl_" + std::string(label)).c_str(),
 		value, rangeMin, rangeMax, format)) {
@@ -260,10 +268,10 @@ bool ImGuiControlsHelper::SmartSliderFloat(
 	// リセット
 	std::string uid = GetUniqueID(label);
 	ImGui::SameLine(0, 4);
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton((std::string(ICON_FA_UNDO "##") + uid).c_str())) {
 		*value = defaultValue;
 		changed = true;
@@ -303,8 +311,8 @@ bool ImGuiControlsHelper::SmartSliderInt(
 	bool changed = false;
 	float avail = ImGui::GetContentRegionAvail().x;
 
-	ImGui::PushStyleColor(ImGuiCol_SliderGrab, CtrlTheme::Gold());
-	ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, CtrlTheme::GoldAct());
+	ImGui::PushStyleColor(ImGuiCol_SliderGrab, CtrlTheme::Accent());
+	ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, CtrlTheme::AccentAct());
 	ImGui::PushItemWidth(avail * 0.50f);
 	if (ImGui::SliderInt(("##sl_" + std::string(label)).c_str(),
 		value, rangeMin, rangeMax)) {
@@ -325,10 +333,10 @@ bool ImGuiControlsHelper::SmartSliderInt(
 
 	std::string uid = GetUniqueID(label);
 	ImGui::SameLine(0, 4);
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton((std::string(ICON_FA_UNDO "##") + uid).c_str())) {
 		*value = defaultValue;
 		changed = true;
@@ -349,7 +357,7 @@ bool ImGuiControlsHelper::DragVec3Colored(
 	bool changed = false;
 
 	// ラベル行
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	ImGui::TextUnformatted(label);
 	ImGui::PopStyleColor();
 
@@ -405,10 +413,10 @@ bool ImGuiControlsHelper::DragVec3Colored(
 
 	// ----- リセット -----
 	ImGui::SameLine(0, spacing);
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton(ICON_FA_UNDO "##reset")) {
 		*value = defaultValue;
 		changed = true;
@@ -438,9 +446,9 @@ bool ImGuiControlsHelper::FloatWithPresets(
 		const int kPerRow = 4;
 		for (int i = 0; i < presetCount; ++i) {
 			ImGui::PushID(i);
-			ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-			ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+			ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+			ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 			if (ImGui::SmallButton(presetNames[i])) {
 				*value = presets[i];
 				changed = true;
@@ -469,9 +477,9 @@ bool ImGuiControlsHelper::Vector3WithPresets(
 		const int kPerRow = 4;
 		for (int i = 0; i < presetCount; ++i) {
 			ImGui::PushID(i);
-			ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-			ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+			ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+			ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 			if (ImGui::SmallButton(presetNames[i])) {
 				*value = presets[i];
 				changed = true;
@@ -495,8 +503,8 @@ bool ImGuiControlsHelper::LogSliderFloat(
 {
 	float logVal = ConvertToLog(*value, logMin, logMax);
 
-	ImGui::PushStyleColor(ImGuiCol_SliderGrab, CtrlTheme::Gold());
-	ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, CtrlTheme::GoldAct());
+	ImGui::PushStyleColor(ImGuiCol_SliderGrab, CtrlTheme::Accent());
+	ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, CtrlTheme::AccentAct());
 	bool changed = ImGui::SliderFloat(label, &logVal, 0.0f, 1.0f, "対数");
 	ImGui::PopStyleColor(2);
 
@@ -509,10 +517,10 @@ bool ImGuiControlsHelper::LogSliderFloat(
 
 	std::string uid = GetUniqueID(label);
 	ImGui::SameLine();
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton((std::string(ICON_FA_UNDO "##") + uid).c_str())) {
 		*value = defaultValue;
 		changed = true;
@@ -535,8 +543,8 @@ bool ImGuiControlsHelper::RangeSliderFloat(
 	bool changed = false;
 	ImGui::TextUnformatted(label);
 
-	ImGui::PushStyleColor(ImGuiCol_SliderGrab, CtrlTheme::Gold());
-	ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, CtrlTheme::GoldAct());
+	ImGui::PushStyleColor(ImGuiCol_SliderGrab, CtrlTheme::Accent());
+	ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, CtrlTheme::AccentAct());
 
 	float avail = ImGui::GetContentRegionAvail().x * 0.45f;
 	ImGui::PushItemWidth(avail);
@@ -555,10 +563,10 @@ bool ImGuiControlsHelper::RangeSliderFloat(
 	ImGui::PopStyleColor(2);
 
 	ImGui::SameLine();
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton((std::string(ICON_FA_UNDO "##rng") + label).c_str())) {
 		*minValue = defaultMin;
 		*maxValue = defaultMax;
@@ -593,10 +601,10 @@ bool ImGuiControlsHelper::RangeInputFloat(
 	ImGui::PopItemWidth();
 
 	ImGui::SameLine();
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton((std::string(ICON_FA_UNDO "##rngi") + label).c_str())) {
 		*minValue = defaultMin;
 		*maxValue = defaultMax;
@@ -664,7 +672,7 @@ bool ImGuiControlsHelper::DirectionVector(
 {
 	bool changed = false;
 
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	ImGui::TextUnformatted(label);
 	ImGui::PopStyleColor();
 
@@ -684,11 +692,11 @@ bool ImGuiControlsHelper::DirectionVector(
 		changed = true;
 	}
 
-	// プリセット方向ボタン (ゴールド)
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	// プリセット方向ボタン (アクセント色)
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 
 	auto presetBtn = [&](const char* name, Vector3 v) {
 		if (ImGui::SmallButton(name)) { *direction = v; changed = true; }
@@ -719,10 +727,10 @@ bool ImGuiControlsHelper::ScaleVector(
 
 	// 統一スケールボタン
 	ImGui::SameLine();
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton((std::string(ICON_FA_ARROWS_ALT "##uni") + label).c_str())) {
 		float avg = (scale->x + scale->y + scale->z) / 3.0f;
 		scale->x = scale->y = scale->z = avg;
@@ -750,10 +758,10 @@ bool ImGuiControlsHelper::ColorEdit4WithReset(
 
 	std::string uid = GetUniqueID(label);
 	ImGui::SameLine();
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton((std::string(ICON_FA_UNDO "##") + uid).c_str())) {
 		*color = defaultValue;
 		changed = true;
@@ -769,10 +777,10 @@ bool ImGuiControlsHelper::ColorPicker4WithReset(
 	bool changed = ImGui::ColorPicker4(label, &color->x,
 		ImGuiColorEditFlags_AlphaBar);
 
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::Button((std::string(ICON_FA_UNDO "  リセット##") + label).c_str())) {
 		*color = defaultValue;
 		changed = true;
@@ -792,7 +800,7 @@ bool ImGuiControlsHelper::ColorPresets(
 		changed = true;
 	}
 
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	ImGui::TextUnformatted("プリセット:");
 	ImGui::PopStyleColor();
 
@@ -827,10 +835,10 @@ bool ImGuiControlsHelper::ColorPresets(
 	}
 
 	// リセット
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton((std::string(ICON_FA_UNDO "##cprst") + label).c_str())) {
 		*color = defaultValue;
 		changed = true;
@@ -847,16 +855,16 @@ bool ImGuiControlsHelper::ColorPresets(
 bool ImGuiControlsHelper::CheckboxWithReset(
 	const char* label, bool* value, bool defaultValue)
 {
-	ImGui::PushStyleColor(ImGuiCol_CheckMark, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_CheckMark, CtrlTheme::Accent());
 	bool changed = ImGui::Checkbox(label, value);
 	ImGui::PopStyleColor();
 
 	std::string uid = GetUniqueID(label);
 	ImGui::SameLine();
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	if (ImGui::SmallButton((std::string(ICON_FA_UNDO "##") + uid).c_str())) {
 		*value = defaultValue;
 		changed = true;
@@ -867,17 +875,17 @@ bool ImGuiControlsHelper::CheckboxWithReset(
 }
 
 // =============================================================================
-//  "Black Gold" テーマ ヘルパー  ← NEW
+//  テーマ ヘルパー (アクセント色)
 // =============================================================================
 
-bool ImGuiControlsHelper::GoldCollapsingHeader(
+bool ImGuiControlsHelper::AccentCollapsingHeader(
 	const char* label, ImGuiTreeNodeFlags flags)
 {
-	// CollapsingHeader をゴールドでカラーリング
-	ImGui::PushStyleColor(ImGuiCol_Header, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_HeaderHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_HeaderActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	// CollapsingHeader をアクセント色でカラーリング
+	ImGui::PushStyleColor(ImGuiCol_Header, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_HeaderHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_HeaderActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 	bool open = ImGui::CollapsingHeader(label, flags);
 	ImGui::PopStyleColor(4);
 	return open;
@@ -909,10 +917,10 @@ void ImGuiControlsHelper::ShowTooltip(const char* text)
 
 bool ImGuiControlsHelper::ShowResetButton(const char* id, bool* changed)
 {
-	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::GoldBg());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::GoldHov());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::GoldAct());
-	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Gold());
+	ImGui::PushStyleColor(ImGuiCol_Button, CtrlTheme::AccentBg());
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CtrlTheme::AccentHov());
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, CtrlTheme::AccentAct());
+	ImGui::PushStyleColor(ImGuiCol_Text, CtrlTheme::Accent());
 
 	bool clicked = ImGui::SmallButton((std::string(ICON_FA_UNDO "##rst") + id).c_str());
 	ImGui::PopStyleColor(4);

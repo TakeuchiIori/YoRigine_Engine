@@ -1,8 +1,6 @@
 #include "ObjectSelector.h"
 #include "PickBuffer.h"
 
-#include "Systems/Input/Input.h"
-
 #ifdef USE_IMGUI
 #include "imgui.h"
 #include "ImGuizmo.h"
@@ -54,34 +52,28 @@ namespace YoRigine {
     // =============================================================================
 #ifdef USE_IMGUI
     void ObjectSelector::Update(
-        bool          isMouseSelecting,
         const ImVec2& viewportPos,
         const ImVec2& viewportSize)
     {
-        if (!isMouseSelecting || !camera_ || !objectManager_) return;
-        if (!Editor::GetInstance()->GetShowEditor())           return;
-        // ImGuizmo のハンドルにホバー/操作中はクリックを通さない。
-        // 入口での WantCaptureMouse チェックはゲームビュー自体が ImGui ウィンドウ内のため
-        // 常に true になってしまい、オブジェクトクリックが全部弾かれてしまうので使えない。
-        // 代わりに「フェーズ2 の pick 結果適用時」に再度 IsUsing/IsOver を見ることで、
-        // クリック→結果到着の 1 フレーム間にギズモへ移動したケースを救う (下を参照)。
-        if (ImGuizmo::IsUsing() || ImGuizmo::IsOver())         return;
-
-        ImVec2 mouse = ImGui::GetMousePos();
-
-        // ビューポート外はスキップ
-        if (mouse.x < viewportPos.x || mouse.x > viewportPos.x + viewportSize.x ||
-            mouse.y < viewportPos.y || mouse.y > viewportPos.y + viewportSize.y) {
-            wasMouseDown_ = false;
-            pendingMultiSelect_ = false;
-            return;
-        }
-
-        bool clicked = Input::GetInstance()->IsTriggerMouse(0);
+        if (!camera_ || !objectManager_) return;
 
         // ── フェーズ1: クリックされた瞬間 → RequestPick で座標を登録 ──────────
-        if (!wasMouseDown_ && clicked) {
+        //
+        // 受け付けるのは「ゲームビューの絵がホバーされている」ときだけ。
+        // 以前はビューポートの矩形とマウス座標の内外判定だけで決めていたため、
+        // ゲームビューの上に浮いた ImGui ウィンドウをクリックすると、その奥の
+        // オブジェクトまで選択されていた。ホバー判定は ImGui の前後関係を知っているので、
+        // 手前のウィンドウ・ポップアップ・ギズモのハンドルの上では自動的に弾かれる。
+        //
+        // クリックも ImGui の入力から取る。ホバーと同じ入力源で判定しないと、
+        // 片方だけ 1 フレームずれた時にすり抜けが起きる。
+        const bool clicked =
+            Editor::GetInstance()->CanPickInGameView() &&
+            ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+
+        if (clicked) {
             if (pickBuffer_) {
+                const ImVec2 mouse = ImGui::GetMousePos();
                 // ゲームビュー左上を原点とした相対座標に変換して渡す。
                 // PickBuffer のビューポートは SetViewport() でゲームビューサイズに
                 // 合わせているため、ここもゲームビュー相対座標で渡す必要がある。
@@ -100,6 +92,8 @@ namespace YoRigine {
         }
 
         // ── フェーズ2: 前フレームのクリックの結果を読み取る ───────────────────
+        // マウスがビューポートの外へ出ていても読む。読まずに返すと、
+        // 古い結果が次のクリックの結果として適用されてしまう。
         if (hasPendingRead_ && pickBuffer_) {
             int pickedId = pickBuffer_->ReadPickResult();
             if (pickedId != -1) {
@@ -118,8 +112,6 @@ namespace YoRigine {
                 // ここでは何フレームか -1 が続いても待つだけでよい
             }
         }
-
-        wasMouseDown_ = clicked;
     }
 #endif
 

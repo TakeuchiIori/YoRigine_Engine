@@ -8,8 +8,11 @@
 #include "WinApp/WinApp.h"
 #include "Debugger/Logger.h"
 #include <SceneSystems/SceneManager.h>
+#include <SceneEditor/SceneEditor.h>
 #include <Debugger/ImGuiManager.h>
 #include <IconsFontAwesome5.h>
+#include "Localization/Localization.h"
+#include "ImGuizmo.h"
 #include <array>
 
 namespace {
@@ -50,12 +53,14 @@ std::string InferEditorCategory(const std::string& name)
 } // namespace
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  内部カラー定数 (ImGuiManager::GetAccentColor() と同値)
+//  レイアウト定数 (配色は ImGuiManager::CustomizeColor が一元管理する)
 // ─────────────────────────────────────────────────────────────────────────────
 namespace EditorTheme
 {
 	// ステータスバーの高さ
-	static constexpr float kStatusBarH = 22.0f;
+	static constexpr float kStatusBarH = 24.0f;
+	// 言語表 (en.json) の置き場所
+	static constexpr const char* kLangDir = "Resources/Lang/";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -86,6 +91,8 @@ void Editor::Initialize()
 		currentScene_ = current;
 	}
 
+	// 言語表の場所だけ先に教える。どの言語にするかは LoadSettings が決める。
+	YoRigine::loc::Initialize(EditorTheme::kLangDir);
 	LoadSettings();
 	ApplySettings();
 }
@@ -107,6 +114,26 @@ void Editor::Draw()
 	// F1 でエディタ表示トグル
 	if (ImGui::IsKeyPressed(ImGuiKey_F1)) {
 		showEditor_ = !showEditor_;
+	}
+
+	// 言語の切り替えはフレームの頭でだけ行う。
+	// メニューの途中で切り替えると、同じフレームの前半と後半で表示言語が混ざる。
+	if (reloadLanguageRequested_) {
+		YoRigine::loc::Reload();
+		reloadLanguageRequested_ = false;
+	}
+	if (pendingLanguage_ >= 0) {
+		YoRigine::loc::SetLanguage(static_cast<YoRigine::loc::Language>(pendingLanguage_));
+		pendingLanguage_ = -1;
+		SaveSettings();
+	}
+
+	// ホバー・フォーカスは毎フレーム ImGui から取り直す。
+	// エディタを閉じている間に前の値が残ると、全画面のゲームへのクリックが選択に化ける。
+	gameViewHovered_ = false;
+	gameViewFocused_ = false;
+	for (auto& [name, ui] : gameUIs_) {
+		ui.focused = false;
 	}
 	if (!showEditor_) return;
 
@@ -189,9 +216,10 @@ void Editor::SetupDefaultDockLayout(ImGuiID dockspaceID)
 	// ゲームビューを中央に配置
 	ImGui::DockBuilderDockWindow(
 		SceneManager::GetInstance()->GetCurrentSceneName().c_str(), dockMainID_);
-	ImGui::DockBuilderDockWindow("オブジェクト一覧", dockLeftID_);
-	ImGui::DockBuilderDockWindow("モデル操作", dockRightID_);
-	ImGui::DockBuilderDockWindow("ログ", dockBottomID_);
+	// 登録パネルは «訳###名前» で開くので、ドッキング先も ID ("###名前") で指定する
+	ImGui::DockBuilderDockWindow(YoRigine::loc::StableId("オブジェクト一覧").c_str(), dockLeftID_);
+	ImGui::DockBuilderDockWindow(YoRigine::loc::StableId("モデル操作").c_str(), dockRightID_);
+	ImGui::DockBuilderDockWindow(YoRigine::loc::StableId("ログ").c_str(), dockBottomID_);
 
 	ImGui::DockBuilderFinish(dockspaceID);
 }
@@ -201,9 +229,7 @@ void Editor::SetupDefaultDockLayout(ImGuiID dockspaceID)
 // =============================================================================
 void Editor::DrawMenuBar()
 {
-	// メニューバー背景をわずかにゴールドがかった黒に
-	ImGui::PushStyleColor(ImGuiCol_MenuBarBg,
-		ImVec4(0.045f, 0.034f, 0.024f, 1.0f));
+	using YoRigine::loc::Language;
 
 	if (ImGui::BeginMenuBar()) {
 
@@ -216,8 +242,8 @@ void Editor::DrawMenuBar()
 		ImGui::SameLine(0, 6);
 
 		// ---- シーン切り替え ----
-		if (ImGui::BeginMenu(ICON_FA_BARS "  シーン")) {
-			ImGui::SeparatorText("シーン一覧");
+		if (ImGui::BeginMenu(TR(ICON_FA_BARS "  シーン"))) {
+			ImGui::SeparatorText(TR("シーン一覧"));
 			for (const auto& sceneName : sceneNames_) {
 				bool selected = (currentScene_ == sceneName);
 				if (selected) {
@@ -237,11 +263,12 @@ void Editor::DrawMenuBar()
 		}
 
 		// ---- Unity / Unreal 風のカテゴリ別パネルメニュー ----
-		if (ImGui::BeginMenu(ICON_FA_LAYER_GROUP "  ウィンドウ")) {
-			if (ImGui::MenuItem("標準レイアウトに戻す")) {
+		if (ImGui::BeginMenu(TR(ICON_FA_LAYER_GROUP "  ウィンドウ"))) {
+			if (ImGui::MenuItem(TR("標準レイアウトに戻す"))) {
 				workspaceResetRequested_ = true;
+				userResetRequested_ = true;
 			}
-			if (ImGui::MenuItem("全パネルを閉じる")) {
+			if (ImGui::MenuItem(TR("全パネルを閉じる"))) {
 				for (auto& [name, ui] : gameUIs_) {
 					ui.visible = false;
 				}
@@ -268,9 +295,10 @@ void Editor::DrawMenuBar()
 						return a->name < b->name;
 					});
 
-				if (ImGui::BeginMenu(category)) {
+				// カテゴリ名・パネル名は内部では日本語のまま持ち、表示だけ訳す
+				if (ImGui::BeginMenu(TR(category))) {
 					for (auto* panel : panels) {
-						ImGui::MenuItem(panel->name.c_str(), nullptr, &panel->visible);
+						ImGui::MenuItem(TR(panel->name), nullptr, &panel->visible);
 					}
 					ImGui::EndMenu();
 				}
@@ -279,16 +307,32 @@ void Editor::DrawMenuBar()
 		}
 
 		// ---- 表示 ----
-		if (ImGui::BeginMenu(ICON_FA_PAINT_BRUSH "  表示")) {
-			ImGui::SeparatorText("ビュー");
-			if (ImGui::MenuItem(ICON_FA_EYE_SLASH "  エディターを非表示", "F1")) {
+		if (ImGui::BeginMenu(TR(ICON_FA_PAINT_BRUSH "  表示"))) {
+			ImGui::SeparatorText(TR("ビュー"));
+			if (ImGui::MenuItem(TR(ICON_FA_EYE_SLASH "  エディターを非表示"), "F1")) {
 				showEditor_ = false;
 			}
-			ImGui::Separator();
-			ImGui::SeparatorText("設定");
-			if (ImGui::MenuItem(ICON_FA_SAVE "  設定をセーブ")) {
+			ImGui::SeparatorText(TR("設定"));
+			if (ImGui::MenuItem(TR(ICON_FA_SAVE "  設定をセーブ"))) {
 				SaveSettings();
 			}
+			ImGui::EndMenu();
+		}
+
+		// ---- 言語 ----
+		// 見出しは両言語を併記する。読めない言語に切り替えてしまっても戻れるように。
+		if (ImGui::BeginMenu(ICON_FA_LANGUAGE "  言語 / Language")) {
+			for (Language lang : { Language::Japanese, Language::English }) {
+				const bool selected = YoRigine::loc::Current() == lang;
+				if (ImGui::MenuItem(YoRigine::loc::LanguageName(lang), nullptr, selected) && !selected) {
+					pendingLanguage_ = static_cast<int>(lang);
+				}
+			}
+			ImGui::Separator();
+			if (ImGui::MenuItem(TR("翻訳表を読み直す"))) {
+				reloadLanguageRequested_ = true;
+			}
+			ImGui::SetItemTooltip("%s", TR("Resources/Lang/en.json を書き足したあと、再起動せずに反映する"));
 			ImGui::EndMenu();
 		}
 
@@ -306,8 +350,6 @@ void Editor::DrawMenuBar()
 
 		ImGui::EndMenuBar();
 	}
-
-	ImGui::PopStyleColor(); // MenuBarBg
 }
 
 // =============================================================================
@@ -317,9 +359,10 @@ void Editor::DrawGameWindow()
 {
 	auto sceneName = SceneManager::GetInstance()->GetCurrentSceneName();
 
-	// ゲームウィンドウは枠線なし・パディングなしで最大限広く
+	// ゲームウィンドウは枠線なし・パディングなしで最大限広く。
+	// 縦横比を合わせた余白 (レターボックス) は暗い色で塗り、絵の範囲を分かりやすくする。
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.055f, 0.055f, 0.060f, 1.0f));
 
 	if (ImGui::Begin(
 		sceneName.c_str(), nullptr,
@@ -364,6 +407,14 @@ void Editor::DrawGameWindow()
 
 			ImGui::Image(textureID, imageSize);
 
+			// ── ビューポートのマウス状態 ──
+			// クリックで物を選ぶ・置く処理はすべてここで取った値だけを見る。
+			// IsItemHovered は「ImGui が最前面と判断したウィンドウの、このアイテム」でしか
+			// true にならないので、手前に浮いたパネル・開いたポップアップ・ドラッグ中の
+			// スライダーがあれば自動的に false になる (矩形判定では防げなかった貫通の原因)。
+			gameViewHovered_ = ImGui::IsItemHovered();
+			gameViewFocused_ = ImGui::IsWindowFocused();
+
 			if (gizmoDrawCallback_) {
 				gizmoDrawCallback_();
 			}
@@ -400,22 +451,16 @@ void Editor::DrawGameUIs()
 		if (!ui.drawFunc)                     continue;
 		if (ui.sceneName != "AllScene" && ui.sceneName != currentScene) continue;
 
-		// ウィンドウタイトルバーをゴールドで強調
-		ImGui::PushStyleColor(ImGuiCol_TitleBgActive,
-			ImVec4(0.105f, 0.082f, 0.058f, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_BorderShadow,
-			ImVec4(0.852f, 0.682f, 0.196f, 0.10f));
-
 		const ImGuiID defaultDock = GetDefaultDockForCategory(ui.category);
 		if (defaultDock != 0) {
 			ImGui::SetNextWindowDockID(defaultDock, ImGuiCond_FirstUseEver);
 		}
-		if (ImGui::Begin(name.c_str(), &ui.visible)) {
+		// 表示名は訳し、ID は元の名前で固定する (言語を変えても配置が崩れない)
+		if (ImGui::Begin(YoRigine::loc::TrId(name), &ui.visible)) {
+			ui.focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
 			ui.drawFunc();
 		}
 		ImGui::End();
-
-		ImGui::PopStyleColor(2);
 	}
 }
 
@@ -442,11 +487,11 @@ void Editor::DrawStatusBar()
 		ImGuiWindowFlags_NoSavedSettings |
 		ImGuiWindowFlags_NoBringToFrontOnFocus;
 
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 2));
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 4));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	ImGui::PushStyleColor(ImGuiCol_WindowBg,
-		ImVec4(0.052f, 0.038f, 0.022f, 1.0f)); // ゴールドがかったバー背景
+	// メニューバーと同じ色で上下を締める
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::GetStyleColorVec4(ImGuiCol_MenuBarBg));
 
 	ImGui::Begin("##StatusBar", nullptr, kBarFlags);
 
@@ -458,7 +503,15 @@ void Editor::DrawStatusBar()
 	ImGui::SameLine(0, 16);
 	ImGui::PushFont(ImGuiManager::GetInstance()->GetFontSmall());
 
-	ImGui::TextDisabled("F1: エディタ表示切替");
+	ImGui::TextDisabled("%s", TR("F1: エディタ表示切替"));
+	// いまクリックがどこへ届くかを出しておく。«押したのに選べない» の原因がすぐ分かる。
+	ImGui::SameLine(0, 16);
+	if (CanPickInGameView()) {
+		ImGui::TextDisabled("%s", TR(ICON_FA_MOUSE_POINTER "  ビューポート"));
+	}
+	else if (gameViewHovered_) {
+		ImGui::TextDisabled("%s", TR(ICON_FA_ARROWS_ALT "  ギズモ"));
+	}
 	ImGui::PopFont();
 
 	// --- 右: FPS ---
@@ -470,7 +523,7 @@ void Editor::DrawStatusBar()
 	float fpsWidth = ImGui::CalcTextSize(fpsBuf).x + 10.0f;
 	ImGui::SameLine(barSize.x - fpsWidth - 8.0f);
 
-	// 30fps 以下は赤、60fps 以下はオレンジ、それ以上はゴールド
+	// 30fps 以下は赤、60fps 以下はオレンジ、それ以上はアクセント色
 	ImVec4 fpsColor;
 	if (io.Framerate < 30.0f)       fpsColor = ImVec4(0.90f, 0.30f, 0.20f, 1.0f); // 赤
 	else if (io.Framerate < 60.0f)  fpsColor = ImVec4(0.95f, 0.65f, 0.10f, 1.0f); // 橙
@@ -564,7 +617,8 @@ void Editor::SaveSettings()
 	file << "[Editor]\n";
 	file << "LayoutVersion=" << kLayoutVersion << "\n";
 	file << "ShowEditor=" << (showEditor_ ? "1" : "0") << "\n";
-	file << "CurrentScene=" << currentScene_ << "\n\n";
+	file << "CurrentScene=" << currentScene_ << "\n";
+	file << "Language=" << YoRigine::loc::LanguageCode(YoRigine::loc::Current()) << "\n\n";
 
 	file << "[GameUI]\n";
 	for (const auto& [name, ui] : gameUIs_) {
@@ -603,6 +657,7 @@ void Editor::LoadSettings()
 			if (key == "LayoutVersion")  loadedLayoutVersion = std::stoi(value);
 			else if (key == "ShowEditor")     showEditor_ = (value == "1");
 			else if (key == "CurrentScene")   currentScene_ = value;
+			else if (key == "Language")       YoRigine::loc::SetLanguage(YoRigine::loc::LanguageFromCode(value));
 		}
 		else if (section == "GameUI") {
 			size_t under = key.rfind('_');
@@ -621,9 +676,13 @@ void Editor::LoadSettings()
 		}
 	}
 
-	// 旧形式は全パネルが初期表示だったため、その可視状態は引き継がない。
-	if (loadedLayoutVersion != kLayoutVersion) {
+	// v1 は全パネルが初期表示だったため、その可視状態は引き継がない。
+	if (loadedLayoutVersion < 2) {
 		savedSettings_.clear();
+	}
+	// v3 でパネルのウィンドウ ID を «###名前» に変えた。旧 ID のドッキング情報は
+	// 新しいウィンドウに当たらないので、配置だけ標準レイアウトから組み直す (可視状態は残す)。
+	if (loadedLayoutVersion != kLayoutVersion) {
 		workspaceResetRequested_ = true;
 	}
 
@@ -647,9 +706,14 @@ void Editor::ResetWorkspace()
 	// 現在の標準ワークスペースを同じ状態から再構築する。
 	ImGui::ClearIniSettings();
 
+	// メニューからのリセットは可視状態も初期値に戻す。
+	// 版上げによる自動リセットでは、利用者が開け閉めした状態を尊重する。
 	for (auto& [name, ui] : gameUIs_) {
-		ui.visible = ui.defaultVisible;
+		auto it = savedSettings_.find(name);
+		const bool keep = !userResetRequested_ && it != savedSettings_.end() && it->second.hasSettings;
+		ui.visible = keep ? it->second.visible : ui.defaultVisible;
 	}
+	userResetRequested_ = false;
 
 	SetupDefaultDockLayout(dockspaceID_);
 	dockLayoutDone_ = true;
@@ -665,20 +729,34 @@ ImGuiID Editor::GetDefaultDockForCategory(const std::string& category) const
 }
 
 // =============================================================================
+//  ビューポートへのクリックを選択に使ってよいか
+//
+//  判定材料は ImGui が毎フレーム出す状態だけ。呼び出し側で「今は選択可」などの
+//  フラグを持ち回らない (どこかで戻し忘れると、選べない・勝手に選ばれるが起きる)。
+// =============================================================================
+bool Editor::CanPickInGameView() const
+{
+	if (!IsGameViewHovered()) return false;
+	// ギズモのハンドル上 / 操作中のクリックはギズモのもの
+	if (ImGuizmo::IsUsingAny() || ImGuizmo::IsOver()) return false;
+	return true;
+}
+
+// =============================================================================
 //  ログ描画
 // =============================================================================
 void Editor::DrawLog()
 {
 	// --- ツールバー ---
-	SeparatorText(ICON_FA_COMMENTS "  ログ");
+	SeparatorText(TR(ICON_FA_COMMENTS "  ログ"));
 
 	// フィルタ (1.87+ InputTextWithHint)
 	static char filterBuf[128] = {};
 	ImGui::SetNextItemWidth(-1);
-	ImGui::InputTextWithHint("##logfilter", ICON_FA_SEARCH "  フィルタ...", filterBuf, sizeof(filterBuf));
+	ImGui::InputTextWithHint("##logfilter", TR(ICON_FA_SEARCH "  フィルタ..."), filterBuf, sizeof(filterBuf));
 
 	ImGui::SameLine();
-	if (ImGui::SmallButton(ICON_FA_ERASER "  クリア")) {
+	if (ImGui::SmallButton(TR(ICON_FA_ERASER "  クリア"))) {
 		LogSystem::Get().Clear(); // ※ Clear() メソッドがある前提
 	}
 
@@ -726,7 +804,7 @@ void Editor::DrawLog()
 }
 
 // =============================================================================
-//  "Black Gold" スタイルヘルパー実装
+//  スタイルヘルパー実装
 // =============================================================================
 
 void Editor::SeparatorText(const char* label)
@@ -738,10 +816,12 @@ void Editor::SeparatorText(const char* label)
 
 bool Editor::Button(const char* label, ImVec2 size)
 {
-	ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetAccentColor());
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGuiManager::GetAccentColor());
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGuiManager::GetAccentColor());
-	ImGui::PushStyleColor(ImGuiCol_Text, ImGuiManager::GetAccentColor());
+	// 地をアクセント色で塗る。文字まで同じ色にすると読めないので白にする
+	const ImVec4 accent = ImGuiManager::GetAccentColor();
+	ImGui::PushStyleColor(ImGuiCol_Button, accent);
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(accent.x * 1.15f, accent.y * 1.15f, accent.z * 1.10f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(accent.x * 0.80f, accent.y * 0.80f, accent.z * 0.85f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
 	bool result = ImGui::Button(label, size);
 	ImGui::PopStyleColor(4);
 	return result;
@@ -749,10 +829,11 @@ bool Editor::Button(const char* label, ImVec2 size)
 
 bool Editor::IconButton(const char* icon, const char* tooltip)
 {
+	// 普段は透明・ホバーでアクセント色の地が出る。ホバー中は文字を白に戻して読めるようにする
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGuiManager::GetAccentColor());
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGuiManager::GetAccentColor());
-	ImGui::PushStyleColor(ImGuiCol_Text, ImGuiManager::GetAccentColor());
+	ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_Text));
 
 	bool result = ImGui::Button(icon, ImVec2(24, 24));
 
@@ -781,7 +862,7 @@ bool Editor::ToggleButton(const char* label, bool* value)
 {
 	// オン/オフで色を切り替えるトグル
 	ImVec4 btnColor = *value ? ImGuiManager::GetAccentColor() : ImGuiManager::GetBgDeep();
-	ImVec4 textColor = *value ? ImGuiManager::GetAccentColor() : ImVec4(0.55f, 0.50f, 0.42f, 1.0f);
+	ImVec4 textColor = *value ? ImVec4(1.0f, 1.0f, 1.0f, 1.0f) : ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
 
 	ImGui::PushStyleColor(ImGuiCol_Button, btnColor);
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGuiManager::GetAccentColor());
@@ -797,8 +878,9 @@ bool Editor::ToggleButton(const char* label, bool* value)
 
 void Editor::ProgressBar(float fraction, ImVec2 size, const char* overlay)
 {
+	// 地と棒が同じ色だと進み具合が見えないので、地は入力欄の色にする
 	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImGuiManager::GetAccentColor());
-	ImGui::PushStyleColor(ImGuiCol_FrameBg, ImGuiManager::GetAccentColor());
+	ImGui::PushStyleColor(ImGuiCol_FrameBg, ImGuiManager::GetBgDeep());
 	ImGui::ProgressBar(fraction, size, overlay);
 	ImGui::PopStyleColor(2);
 }

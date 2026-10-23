@@ -191,16 +191,23 @@ void SceneEditor::FocusSelection() {
 }
 
 //=============================================================================
-// シーンエディタが有効か
+// キーボードショートカットの受け口か
+//
+// 以前は「モデル操作」ウィンドウが開いているかどうかで選択・ギズモ・ショートカットを
+// まとめて有効/無効にしていた。ウィンドウを閉じただけでビューポートの選択が
+// 効かなくなる一方、開いていれば他のパネルで打った Delete まで拾ってしまっていた。
+//
+// いまは «入力がどこへ向いているか» を ImGui に聞くだけにしている。
+//   ・マウス : Editor::CanPickInGameView() (ObjectSelector が直接見る)
+//   ・キー   : ここ。ゲームビューかシーンのパネルが操作対象のときだけ受ける
 //
 // 宣言 (ヘッダ) と呼び出し元はすべて USE_IMGUI ガード内に閉じているため、
 // Release ビルド (USE_IMGUI 未定義) ではこの関数は存在しない。
 //=============================================================================
-bool SceneEditor::IsSceneEditorActive() const {
-  // 「モデル操作」ウィンドウ (MyGame で RegisterGameUI 登録された名前) が
-  // 開かれているときのみ、選択・ギズモを有効化する。
-  return Editor::GetInstance()->GetShowEditor() &&
-         Editor::GetInstance()->IsGameUIVisible("モデル操作");
+bool SceneEditor::IsSceneKeyboardTarget() const {
+  const Editor *editor = Editor::GetInstance();
+  return editor->IsGameViewHovered() || editor->IsGameViewFocused() ||
+         editor->IsGameUIFocused("モデル操作");
 }
 #endif // USE_IMGUI
 
@@ -241,10 +248,10 @@ void SceneEditor::Update() {
   }
 
 #ifdef USE_IMGUI
-  const bool editorActive = IsSceneEditorActive();
   const bool stamping = stampMode_.IsActive();
 
-  shortcuts_.Update(editorActive, selector_.HasSelection(), stamping);
+  shortcuts_.Update(IsSceneKeyboardTarget(), selector_.HasSelection(),
+                    stamping);
 
   // モーションエディタは「使う」と明示したときだけ選択に追従させる
   if (motionEditor_.IsEnabled()) {
@@ -255,9 +262,12 @@ void SceneEditor::Update() {
   const ImVec2 viewPos = Editor::GetInstance()->GetGameViewPos();
   const ImVec2 viewSize = Editor::GetInstance()->GetGameViewSize();
 
-  // スタンプモード中はクリックを StampMode が消費するので選択処理は抑制する
+  // スタンプモード中の左クリックは「配置」なので、選択には回さない。
+  // (受け付けるかどうか自体は ObjectSelector がゲームビューのホバーで判定する)
   selector_.SetCamera(camera_);
-  selector_.Update(editorActive && !stamping, viewPos, viewSize);
+  if (!stamping) {
+    selector_.Update(viewPos, viewSize);
+  }
 
   stampMode_.Update(viewPos, viewSize);
 #endif
@@ -335,7 +345,9 @@ void SceneEditor::DrawImGui() {
 
 void SceneEditor::DrawGizmo() {
 #ifdef USE_IMGUI
-  if (!isInitialized_ || !IsSceneEditorActive()) {
+  // 選択があればギズモを出す。«モデル操作» パネルの開閉とは切り離した。
+  // (このコールバック自体がエディタ表示中にしか呼ばれない)
+  if (!isInitialized_) {
     return;
   }
   gizmoLayer_.Draw(Editor::GetInstance()->GetGameViewPos(),

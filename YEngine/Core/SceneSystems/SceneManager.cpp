@@ -4,6 +4,12 @@
 #include <Object3D/BaseObjectManager.h>
 #include "Particle/YParticleManager.h"
 #include "GPUParticle/YGpuEmitManager.h"
+#include "Collision/Core/CollisionManager.h"
+#include "Composite/CompositeEffectManager.h"
+#include "LightManager/LightManager.h"
+#include "SceneEditor/SceneEditor.h"
+#include "Systems/GameTime/GameTime.h"
+#include <Vfx/VfxMesh/Runtime/VfxMeshSpawner.h>
 #include <assert.h>
 
 std::unique_ptr<SceneManager> SceneManager::instance = nullptr;
@@ -53,7 +59,10 @@ void SceneManager::Update() {
 	// 現在のシーン更新
 	//------------------------------------------------------------
 	if (scene_) {
+		YoRigine::GameTime::Update();
 		scene_->Update();
+		// シーンが動かした結果をもとに、エンジン共通システムを更新する
+		UpdateEngineSystems(scene_->GetSceneCamera());
 	}
 
 	//------------------------------------------------------------
@@ -70,7 +79,7 @@ void SceneManager::Update() {
 				PerformSceneTransition();
 
 				// フェードイン開始
-				transition_->StartTransition();
+				transition_->StartReveal();
 				transitionState_ = TransitionState::FadeIn;
 			}
 			break;
@@ -85,11 +94,33 @@ void SceneManager::Update() {
 		case TransitionState::None:
 			// 次のシーン予約があればフェードアウト開始
 			if (nextScene_) {
-				transition_->EndTransition();
+				transition_->StartCover();
 				transitionState_ = TransitionState::FadeOut;
 			}
 			break;
 		}
+	}
+}
+
+/// <summary>
+/// エンジン共通システムの更新
+/// 全シーンで同じ処理なので、シーン側に書かせず必ずここを通す。
+/// </summary>
+void SceneManager::UpdateEngineSystems(YoRigine::Camera* camera) {
+	const float vfxDt = YoRigine::GameTime::GetDeltaTime(YoRigine::TimeChannel::Vfx);
+
+	YoRigine::SceneEditor::GetInstance()->Update();
+	YoRigine::CollisionManager::GetInstance()->Update();
+	YParticleManager::GetInstance().Update(vfxDt);
+
+	VfxMeshSpawner::GetInstance()->SetCamera(camera);
+	VfxMeshSpawner::GetInstance()->Update(vfxDt);
+	YoRigine::YGpuEmitManager::GetInstance()->Update();
+	CompositeEffectManager::GetInstance()->Update(vfxDt);
+
+	// 影行列はカメラ視錐台からカスケードを切るため、カメラ確定後に更新する
+	if (camera) {
+		YoRigine::LightManager::GetInstance()->UpdateShadowMatrix(camera);
 	}
 }
 
@@ -185,7 +216,7 @@ void SceneManager::ChangeScene(const std::string& sceneName) {
 
 		// 初回のみフェードイン開始
 		if (transition_) {
-			transition_->StartTransition();
+			transition_->StartReveal();
 			transitionState_ = TransitionState::FadeIn;
 		}
 	}

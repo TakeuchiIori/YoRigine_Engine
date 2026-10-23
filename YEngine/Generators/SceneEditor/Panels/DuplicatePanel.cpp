@@ -1,6 +1,7 @@
 #ifdef USE_IMGUI
 
 #include "DuplicatePanel.h"
+#include "Localization/Localization.h"
 
 // Engine
 #include "../ObjectSelector.h"
@@ -39,33 +40,33 @@ void DuplicatePanel::Draw(const ScenePanelContext &context, bool *isOpen) {
     return;
   }
 
-  ImGui::TextUnformatted("オブジェクト複製");
+  ImGui::TextUnformatted(TR("オブジェクト複製"));
   ImGui::Separator();
 
   auto *obj = context.scene->objectManager->GetObjectById(
       context.scene->selector->GetPrimaryId());
   if (!obj) {
-    ImGui::TextDisabled("オブジェクトを選択してください");
-    if (ImGui::Button("閉じる") && isOpen) {
+    ImGui::TextDisabled(TR("オブジェクトを選択してください"));
+    if (ImGui::Button(TR("閉じる")) && isOpen) {
       *isOpen = false;
     }
     return;
   }
 
-  ImGui::Text("複製対象: %s (ID %d)", obj->modelName.c_str(), obj->id);
+  ImGui::Text(TR("複製対象: %s (ID %d)"), obj->modelName.c_str(), obj->id);
   ImGui::Separator();
 
-  ImGui::DragInt("個数", &count_, 1, 1, 50);
-  ImGui::DragFloat3("1 個あたりのオフセット", &offset_.x, 0.1f);
-  ImGui::Checkbox("親子関係を保持", &keepParent_);
-  ImGui::Checkbox("選択中すべてを複製", &applyToAllSelected_);
+  ImGui::DragInt(TR("個数"), &count_, 1, 1, 50);
+  ImGui::DragFloat3(TR("1 個あたりのオフセット"), &offset_.x, 0.1f);
+  ImGui::Checkbox(TR("親子関係を保持"), &keepParent_);
+  ImGui::Checkbox(TR("選択中すべてを複製"), &applyToAllSelected_);
 
   ImGui::Separator();
-  if (ImGui::Button("複製する")) {
+  if (ImGui::Button(TR("複製する"))) {
     Execute(context);
   }
   ImGui::SameLine();
-  if (ImGui::Button("閉じる") && isOpen) {
+  if (ImGui::Button(TR("閉じる")) && isOpen) {
     *isOpen = false;
   }
 }

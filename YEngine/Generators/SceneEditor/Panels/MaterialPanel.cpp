@@ -1,6 +1,7 @@
 #ifdef USE_IMGUI
 
 #include "MaterialPanel.h"
+#include "Localization/Localization.h"
 
 // Engine
 #include "../ObjectSelector.h"
@@ -10,6 +11,7 @@
 #include <Loaders/Texture/TextureManager.h>
 
 // C++
+#include <cstdio>
 #include <string>
 
 namespace YoRigine {
@@ -78,7 +80,7 @@ void MaterialPanel::DrawSourceInfo(const ObjectManager::PlacedObject &obj) {
     return;
   }
 
-  ImGui::TextDisabled("モデル: %s   メッシュ %d / マテリアル %d",
+  ImGui::TextDisabled(TR("モデル: %s   メッシュ %d / マテリアル %d"),
                       obj.modelName.c_str(),
                       static_cast<int>(model->GetMeshes().size()),
                       static_cast<int>(model->GetMaterialCount()));
@@ -96,12 +98,16 @@ void MaterialPanel::DrawSlot(const ScenePanelContext &context,
   const std::string slotName =
       baseMaterial && !baseMaterial->GetName().empty()
           ? baseMaterial->GetName()
-          : ("スロット " + std::to_string(slotIndex));
+          : (std::string(TR("スロット")) + " " + std::to_string(slotIndex));
   const int meshCount =
       CountMeshesUsingSlot(*model, static_cast<uint32_t>(slotIndex));
 
-  const std::string header =
-      slotName + "  (メッシュ " + std::to_string(meshCount) + " 枚)";
+  // 表示部分は訳し、ID はスロット番号で固定する
+  // (言語を切り替えても開閉状態が引き継がれるように)
+  char meshInfo[64];
+  std::snprintf(meshInfo, sizeof(meshInfo), TR("(メッシュ %d 枚)"), meshCount);
+  const std::string header = slotName + "  " + meshInfo + "###slot" +
+                             std::to_string(slotIndex);
 
   if (!ImGui::CollapsingHeader(header.c_str(),
                                slotIndex == 0 ? ImGuiTreeNodeFlags_DefaultOpen
@@ -142,7 +148,7 @@ void MaterialPanel::DrawSlot(const ScenePanelContext &context,
   }
 
   if (slot->IsActive()) {
-    if (ImGui::SmallButton("このスロットの上書きを解除")) {
+    if (ImGui::SmallButton(TR("このスロットの上書きを解除"))) {
       *slot = MeshMaterialOverride{};
       overrides->MarkDirty();
     }
@@ -166,11 +172,11 @@ void MaterialPanel::DrawTextureBrowser(const ScenePanelContext &context,
   if (ImGui::BeginPopupModal("##materialTexBrowser", &showTextureBrowser_,
                              ImGuiWindowFlags_NoTitleBar |
                                  ImGuiWindowFlags_NoResize)) {
-    ImGui::Text("テクスチャを選択 (スロット %d)", browserTargetSlot_);
+    ImGui::Text(TR("テクスチャを選択 (スロット %d)"), browserTargetSlot_);
     ImGui::Separator();
     textureBrowser_->Draw("##materialTexChild", ImVec2(0, 360));
     ImGui::Separator();
-    if (ImGui::Button("キャンセル", ImVec2(-1, 0))) {
+    if (ImGui::Button(TR("キャンセル"), ImVec2(-1, 0))) {
       showTextureBrowser_ = false;
       ImGui::CloseCurrentPopup();
     }
@@ -205,13 +211,13 @@ void MaterialPanel::Draw(const ScenePanelContext &context) {
   auto *obj = context.scene->objectManager->GetObjectById(
       context.scene->selector->GetPrimaryId());
   if (!obj || !obj->object) {
-    ImGui::TextDisabled("オブジェクトを選択してください");
+    ImGui::TextDisabled(TR("オブジェクトを選択してください"));
     return;
   }
 
   Model *model = obj->object->GetModel();
   if (!model) {
-    ImGui::TextDisabled("モデルが読み込まれていません");
+    ImGui::TextDisabled(TR("モデルが読み込まれていません"));
     return;
   }
 
@@ -220,7 +226,7 @@ void MaterialPanel::Draw(const ScenePanelContext &context) {
 
   const size_t slotCount = model->GetMaterialCount();
   if (slotCount == 0) {
-    ImGui::TextDisabled("マテリアルがありません");
+    ImGui::TextDisabled(TR("マテリアルがありません"));
     return;
   }
 
@@ -237,13 +243,13 @@ void MaterialPanel::Draw(const ScenePanelContext &context) {
   MaterialOverrideSet *overrides =
       context.scene->objectManager->GetMaterialOverrides(*obj);
   if (overrides && overrides->HasAnyOverride()) {
-    if (ImGui::Button("すべての上書きを解除")) {
+    if (ImGui::Button(TR("すべての上書きを解除"))) {
       overrides->ClearAll();
     }
     ImGui::SameLine();
-    ImGui::TextDisabled("解除するとモデル本来の値 (Blender の設定) に戻る");
+    ImGui::TextDisabled(TR("解除するとモデル本来の値 (Blender の設定) に戻る"));
   } else {
-    ImGui::TextDisabled("上書きなし: Blender で設定した値で描画されている");
+    ImGui::TextDisabled(TR("上書きなし: Blender で設定した値で描画されている"));
   }
 }
 

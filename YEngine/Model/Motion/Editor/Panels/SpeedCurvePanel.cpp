@@ -1,611 +1,331 @@
 #include "SpeedCurvePanel.h"
 
-#ifdef USE_IMGUI
-#include <imgui.h>
-#include <imgui_internal.h>
-#include <IconsFontAwesome5.h>
-#endif
-
-#include "../MotionEditorContext.h"
+#include "../../Authoring/MotionEditorSession.h"
 #include "../../Core/Motion.h"
 
+#ifdef USE_IMGUI
+#include <IconsFontAwesome5.h>
+#include <imgui.h>
+#endif
+
+#include <algorithm>
 #include <cmath>
+#include <cstdio>
 
 namespace {
-constexpr float kSpeedStep = 0.1f;
+constexpr float kSpeedStep = 0.1f;   // 速度倍率のスナップ幅
+constexpr float kMinGapX = 0.001f;   // 隣接点どうしの最小間隔
+constexpr float kDuplicateX = 0.03f; // 追加時に「同じ位置」とみなす幅
+constexpr float kHitRadius = 8.0f;   // 制御点のヒット判定半径(px)
 
-float SnapSpeedValue(float value)
-{
-    return std::round(value / kSpeedStep) * kSpeedStep;
-}
+float SnapSpeed(float value) { return std::round(value / kSpeedStep) * kSpeedStep; }
+} // namespace
+
+// ============================================================
+// 制御点の操作
+// ============================================================
+void SpeedCurvePanel::PullFromMotion(const Motion *motion) {
+  points_.clear();
+  if (motion) {
+    for (const auto &kf : motion->GetSpeedCurve().curve.keyframes) {
+      points_.push_back({kf.time, kf.value});
+    }
+  }
+  // 端点（x=0, x=1）は常に存在させる
+  if (points_.empty()) {
+    points_ = {{0.0f, 1.0f}, {1.0f, 1.0f}};
+  }
+  std::sort(points_.begin(), points_.end(),
+            [](const CurvePoint &a, const CurvePoint &b) { return a.x < b.x; });
+  points_.front().x = 0.0f;
+  points_.back().x = 1.0f;
+  isDirty_ = false;
 }
 
-// -----------------------------------------------------------------------
-// Initialize
-// -----------------------------------------------------------------------
-void SpeedCurvePanel::Initialize(MotionEditorContext* context)
-{
-    context_ = context;
+std::vector<std::pair<float, float>> SpeedCurvePanel::ToPairs() const {
+  std::vector<std::pair<float, float>> pairs;
+  pairs.reserve(points_.size());
+  for (const auto &p : points_) {
+    pairs.emplace_back(p.x, p.y);
+  }
+  return pairs;
 }
 
-// -----------------------------------------------------------------------
-// DrawCurveEditor  カスタムカーブエディタ（戻り値: dirty になったか）
-//
-// 操作:
-//   ・左ドラッグ     : 点を移動（端点は X 固定）
-//   ・右クリック(空白): 点を追加
-//   ・右クリック(点上): コンテキストメニュー → 削除
-// -----------------------------------------------------------------------
+bool SpeedCurvePanel::AddPoint(CurvePoint point) {
+  point.x = std::clamp(point.x, 0.0f, 1.0f);
+  point.y = std::clamp(point.y, 0.0f, maxSpeed_);
+  for (const auto &p : points_) {
+    if (std::abs(p.x - point.x) < kDuplicateX) {
+      return false;
+    }
+  }
+  points_.push_back(point);
+  std::sort(points_.begin(), points_.end(),
+            [](const CurvePoint &a, const CurvePoint &b) { return a.x < b.x; });
+  return true;
+}
+
+void SpeedCurvePanel::RemovePoint(int index) {
+  // 端点は消さない
+  if (index <= 0 || index >= static_cast<int>(points_.size()) - 1) {
+    return;
+  }
+  points_.erase(points_.begin() + index);
+}
+
+float SpeedCurvePanel::Evaluate(float x) const {
+  if (points_.size() < 2) return 1.0f;
+  if (x <= points_.front().x) return points_.front().y;
+  if (x >= points_.back().x) return points_.back().y;
+  for (size_t i = 0; i + 1 < points_.size(); ++i) {
+    if (x <= points_[i + 1].x) {
+      const float range = points_[i + 1].x - points_[i].x;
+      const float t = range > 1e-6f ? (x - points_[i].x) / range : 0.0f;
+      return points_[i].y + t * (points_[i + 1].y - points_[i].y);
+    }
+  }
+  return 1.0f;
+}
+
+// ============================================================
+// カーブエディタ
+// ============================================================
+bool SpeedCurvePanel::DrawCurveEditor(float width, float height) {
 #ifdef USE_IMGUI
-bool SpeedCurvePanel::DrawCurveEditor(ImVec2 size)
-{
-    bool dirty = false;
+  bool changed = false;
 
-    ImDrawList* dl = ImGui::GetWindowDrawList();
-    ImVec2      rMin = ImGui::GetCursorScreenPos();
-    ImVec2      rMax = { rMin.x + size.x, rMin.y + size.y };
-    float       w = size.x;
-    float       h = size.y;
+  ImDrawList *dl = ImGui::GetWindowDrawList();
+  const ImVec2 rMin = ImGui::GetCursorScreenPos();
+  const ImVec2 rMax = {rMin.x + width, rMin.y + height};
+  const float yRange = maxSpeed_;
 
-    // 不可視のヒットエリア（マウスイベント取得用）
-    ImGui::InvisibleButton("##curve_area", size,
-        ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
-    const bool hovered = ImGui::IsItemHovered();
-    const bool leftDown = ImGui::IsMouseDown(ImGuiMouseButton_Left);
-    const bool leftClick = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
-    ImVec2 mousePos = ImGui::GetMousePos();
-
-    // ================================================================
-    // 背景
-    // ================================================================
-    dl->AddRectFilled(rMin, rMax, IM_COL32(28, 28, 32, 255), 4.0f);
-    dl->AddRect(rMin, rMax, IM_COL32(80, 80, 90, 200), 4.0f);
-
-    float yMin = delegate_.boundsMinY;
-    float yMax = delegate_.boundsMaxY;
-    float yRange = yMax - yMin;
-
-    // ================================================================
-    // グリッド描画
-    // ================================================================
-    {
-        // --- 縦グリッド（X軸方向: 0.25刻み） ---
-        const float xSteps[] = { 0.25f, 0.5f, 0.75f };
-        for (float xs : xSteps) {
-            float px = rMin.x + xs * w;
-            dl->AddLine({ px, rMin.y }, { px, rMax.y },
-                (xs == 0.5f) ? IM_COL32(90, 90, 110, 180)
-                : IM_COL32(60, 60, 70, 140),
-                (xs == 0.5f) ? 1.0f : 0.8f);
-        }
-
-        // --- 横グリッド（Y軸方向: 0.5 刻み, 1.0 は強調） ---
-        float yStep = 0.5f;
-        for (float y = yMin; y <= yMax + 1e-4f; y += yStep) {
-            float py = rMax.y - (y - yMin) / yRange * h;
-            bool  is1 = (std::abs(y - 1.0f) < 0.01f);
-            dl->AddLine({ rMin.x, py }, { rMax.x, py },
-                is1 ? IM_COL32(120, 220, 120, 160)   // Y=1.0 は緑で強調
-                : IM_COL32(60, 60, 70, 130),
-                is1 ? 1.2f : 0.8f);
-
-            // Y軸ラベル
-            char buf[8];
-            snprintf(buf, sizeof(buf), "%.1f", y);
-            dl->AddText({ rMin.x + 3.f, py - 10.f },
-                is1 ? IM_COL32(140, 230, 140, 200)
-                : IM_COL32(120, 120, 140, 160),
-                buf);
-        }
+  // カーブ空間 ⇔ スクリーン座標
+  auto toScreen = [&](CurvePoint p) {
+    return ImVec2{rMin.x + std::clamp(p.x, 0.0f, 1.0f) * width,
+                  rMax.y - std::clamp(p.y, 0.0f, maxSpeed_) / yRange * height};
+  };
+  auto toLocal = [&](ImVec2 s) {
+    return CurvePoint{(s.x - rMin.x) / width,
+                      maxSpeed_ - (s.y - rMin.y) / height * yRange};
+  };
+  auto hitTest = [&](ImVec2 s) {
+    int best = -1;
+    float bestD2 = kHitRadius * kHitRadius;
+    for (int i = 0; i < static_cast<int>(points_.size()); ++i) {
+      const ImVec2 p = toScreen(points_[i]);
+      const float d2 = (p.x - s.x) * (p.x - s.x) + (p.y - s.y) * (p.y - s.y);
+      if (d2 < bestD2) {
+        bestD2 = d2;
+        best = i;
+      }
     }
+    return best;
+  };
 
-    // ================================================================
-    // 現在のスクラブ位置の縦線
-    // ================================================================
-    Motion* motion = context_ ? context_->currentMotion : nullptr;
-    if (motion && motion->GetDuration() > 0.0f) {
-        float nt = std::clamp(context_->scrubTime / motion->GetDuration(), 0.0f, 1.0f);
-        float spx = rMin.x + nt * w;
-        dl->AddLine({ spx, rMin.y }, { spx, rMax.y },
-            IM_COL32(80, 200, 255, 100), 1.0f);
+  ImGui::InvisibleButton("##curveArea", {width, height},
+                         ImGuiButtonFlags_MouseButtonLeft |
+                             ImGuiButtonFlags_MouseButtonRight);
+  const bool hovered = ImGui::IsItemHovered();
+  const ImVec2 mouse = ImGui::GetMousePos();
+
+  // 背景とグリッド
+  dl->AddRectFilled(rMin, rMax, IM_COL32(27, 27, 34, 255), 4.0f);
+  dl->AddRect(rMin, rMax, IM_COL32(80, 80, 90, 200), 4.0f);
+  for (float xs : {0.25f, 0.5f, 0.75f}) {
+    const float px = rMin.x + xs * width;
+    dl->AddLine({px, rMin.y}, {px, rMax.y}, IM_COL32(60, 60, 70, 140), 0.8f);
+  }
+  for (float y = 0.0f; y <= maxSpeed_ + 1e-4f; y += 0.5f) {
+    const float py = rMax.y - y / yRange * height;
+    const bool isOne = std::abs(y - 1.0f) < 0.01f; // 等速の線を強調
+    dl->AddLine({rMin.x, py}, {rMax.x, py},
+                isOne ? IM_COL32(120, 220, 120, 160) : IM_COL32(60, 60, 70, 130),
+                isOne ? 1.2f : 0.8f);
+    char label[8];
+    std::snprintf(label, sizeof(label), "%.1f", y);
+    dl->AddText({rMin.x + 3.0f, py - 10.0f}, IM_COL32(120, 120, 140, 160), label);
+  }
+
+  // 現在の再生位置
+  if (const Motion *motion = session_->CurrentMotion();
+      motion && motion->GetDuration() > 0.0f) {
+    const float nt =
+        std::clamp(session_->Playback().Time() / motion->GetDuration(), 0.0f, 1.0f);
+    const float sx = rMin.x + nt * width;
+    dl->AddLine({sx, rMin.y}, {sx, rMax.y}, IM_COL32(80, 200, 255, 100), 1.0f);
+  }
+
+  // カーブ（1px ごとに評価して折れ線で描く）
+  const int segments = std::max(1, static_cast<int>(width));
+  ImVec2 prev = toScreen({0.0f, Evaluate(0.0f)});
+  for (int i = 1; i <= segments; ++i) {
+    const float x = static_cast<float>(i) / segments;
+    const ImVec2 cur = toScreen({x, Evaluate(x)});
+    dl->AddLine(prev, cur, IM_COL32(68, 210, 255, 230), 2.0f);
+    prev = cur;
+  }
+
+  // 左ドラッグ: 点の移動（端点は X 固定、隣の点は追い越さない）
+  if (hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+    dragIndex_ = hitTest(mouse);
+  }
+  if (dragIndex_ >= 0) {
+    if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+      CurvePoint local = toLocal(mouse);
+      const int last = static_cast<int>(points_.size()) - 1;
+      if (dragIndex_ == 0) {
+        local.x = 0.0f;
+      } else if (dragIndex_ == last) {
+        local.x = 1.0f;
+      } else {
+        local.x = std::clamp(local.x, points_[dragIndex_ - 1].x + kMinGapX,
+                             points_[dragIndex_ + 1].x - kMinGapX);
+      }
+      local.y = std::clamp(SnapSpeed(local.y), 0.0f, maxSpeed_);
+      if (local.x != points_[dragIndex_].x || local.y != points_[dragIndex_].y) {
+        points_[dragIndex_] = local;
+        changed = true;
+      }
+    } else {
+      dragIndex_ = -1;
     }
+  }
 
-    // ================================================================
-    // カーブ描画（折れ線）
-    // ================================================================
-    {
-        const int segs = static_cast<int>(w);  // ピクセル単位で補間
-        if (delegate_.points.size() >= 2) {
-            ImVec2 prev = delegate_.ToScreen(delegate_.points.front(), rMin, rMax);
-            for (int i = 1; i <= segs; ++i) {
-                float x = static_cast<float>(i) / segs;
-                float y = delegate_.Evaluate(x);
-                ImVec2 cur = delegate_.ToScreen({ x, y }, rMin, rMax);
-                dl->AddLine(prev, cur, IM_COL32(68, 210, 255, 230), 2.0f);
-                prev = cur;
-            }
-        }
+  // 右クリック: 空白なら点を追加、点の上ならメニュー
+  if (hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+    contextIndex_ = hitTest(mouse);
+    if (contextIndex_ >= 0) {
+      ImGui::OpenPopup("##curveContext");
+    } else {
+      CurvePoint local = toLocal(mouse);
+      local.y = SnapSpeed(local.y);
+      changed |= AddPoint(local);
     }
-
-    // ================================================================
-    // 焼き込み前スナップショットオーバーレイ
-    // ================================================================
-    if (hasBakedSnapshot_ && showBakedPreview_) {
-        DrawBakedPreviewOverlay(rMin, rMax);
+  }
+  if (ImGui::BeginPopup("##curveContext")) {
+    const int last = static_cast<int>(points_.size()) - 1;
+    if (contextIndex_ >= 0 && contextIndex_ <= last) {
+      if (contextIndex_ == 0 || contextIndex_ == last) {
+        ImGui::TextDisabled("端点は削除できません");
+      } else if (ImGui::MenuItem(ICON_FA_TIMES "  この点を削除")) {
+        RemovePoint(contextIndex_);
+        contextIndex_ = -1;
+        changed = true;
+      }
     }
-
-    // ================================================================
-    // ドラッグ操作（左ボタン）
-    // ================================================================
-    if (hovered && leftClick && !ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-        int hit = delegate_.HitTest(mousePos, rMin, rMax);
-        if (hit >= 0) {
-            dragIndex_ = hit;
-            dragging_ = true;
-        }
+    if (contextIndex_ >= 0 && contextIndex_ <= static_cast<int>(points_.size()) - 1) {
+      ImGui::Separator();
+      ImGui::Text("t = %.3f", points_[contextIndex_].x);
+      float y = points_[contextIndex_].y;
+      ImGui::SetNextItemWidth(100.0f);
+      if (ImGui::DragFloat("倍率##ctxY", &y, kSpeedStep, 0.0f, maxSpeed_, "%.1fx")) {
+        points_[contextIndex_].y = SnapSpeed(y);
+        changed = true;
+      }
     }
-    if (dragging_) {
-        if (leftDown) {
-            ImVec2 local = delegate_.ToLocal(mousePos, rMin, rMax);
-            local = delegate_.Clamp(local);
+    ImGui::EndPopup();
+  }
 
-            // 端点は X を固定
-            if (dragIndex_ == 0)
-                local.x = 0.0f;
-            else if (dragIndex_ == static_cast<int>(delegate_.points.size()) - 1)
-                local.x = 1.0f;
-            else {
-                // 隣接点を追い越さないよう X をクランプ
-                float xPrev = delegate_.points[dragIndex_ - 1].x + 0.001f;
-                float xNext = delegate_.points[dragIndex_ + 1].x - 0.001f;
-                local.x = std::clamp(local.x, xPrev, xNext);
-            }
-            local.y = SnapSpeedValue(local.y);
-            local = delegate_.Clamp(local);
-            delegate_.points[dragIndex_] = local;
-            dirty = true;
-        }
-        else {
-            dragging_ = false;
-            dragIndex_ = -1;
-        }
+  // 制御点
+  for (int i = 0; i < static_cast<int>(points_.size()); ++i) {
+    const ImVec2 sp = toScreen(points_[i]);
+    const bool isEnd = (i == 0 || i == static_cast<int>(points_.size()) - 1);
+    const bool isDrag = (i == dragIndex_);
+    dl->AddCircleFilled(sp, 7.5f, IM_COL32(0, 0, 0, 120));
+    dl->AddCircleFilled(sp, 6.0f,
+                        isDrag  ? IM_COL32(255, 230, 80, 255)
+                        : isEnd ? IM_COL32(80, 200, 255, 255)
+                                : IM_COL32(240, 240, 240, 255));
+    if (hovered) {
+      const float dx = mouse.x - sp.x;
+      const float dy = mouse.y - sp.y;
+      if (dx * dx + dy * dy < kHitRadius * kHitRadius) {
+        ImGui::SetTooltip("t=%.3f  speed=%.1fx", points_[i].x, points_[i].y);
+      }
     }
+  }
 
-    // ================================================================
-    // 右クリック処理
-    // ================================================================
-    if (hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
-        rightClickIdx_ = delegate_.HitTest(mousePos, rMin, rMax);
-        rightClickLocalPos_ = delegate_.ToLocal(mousePos, rMin, rMax);
-
-        // 点の上ならコンテキストメニュー、空白なら即追加
-        if (rightClickIdx_ >= 0) {
-            ImGui::OpenPopup("##CurveCtx");
-        }
-        else {
-            // 空白クリック → 点を追加
-            rightClickLocalPos_.y = SnapSpeedValue(rightClickLocalPos_.y);
-            rightClickLocalPos_ = delegate_.Clamp(rightClickLocalPos_);
-            if (delegate_.AddPoint(rightClickLocalPos_)) {
-                dirty = true;
-            }
-        }
-    }
-
-    if (ImGui::BeginPopup("##CurveCtx")) {
-        // 端点は削除不可
-        bool isEndpoint = (rightClickIdx_ == 0 ||
-            rightClickIdx_ == static_cast<int>(delegate_.points.size()) - 1);
-
-        if (isEndpoint) {
-            ImGui::TextDisabled("端点は削除できません");
-        }
-        else {
-            if (ImGui::MenuItem(ICON_FA_TIMES "  この点を削除")) {
-                delegate_.RemovePoint(rightClickIdx_);
-                dirty = true;
-                rightClickIdx_ = -1;
-            }
-        }
-
-        // 値の手動入力欄
-        if (rightClickIdx_ >= 0 && rightClickIdx_ < static_cast<int>(delegate_.points.size())) {
-            ImGui::Separator();
-            ImGui::Text("X = %.3f", delegate_.points[rightClickIdx_].x);
-            ImGui::SetNextItemWidth(100.f);
-            float editY = delegate_.points[rightClickIdx_].y;
-            if (ImGui::DragFloat("倍率##ctxY", &editY, kSpeedStep,
-                delegate_.boundsMinY, delegate_.boundsMaxY, "%.1fx")) {
-                delegate_.points[rightClickIdx_].y = SnapSpeedValue(editY);
-                dirty = true;
-            }
-        }
-        ImGui::EndPopup();
-    }
-
-    // ================================================================
-    // 制御点描画
-    // ================================================================
-    for (int i = 0; i < static_cast<int>(delegate_.points.size()); ++i) {
-        ImVec2 sp = delegate_.ToScreen(delegate_.points[i], rMin, rMax);
-        bool   isEnd = (i == 0 || i == static_cast<int>(delegate_.points.size()) - 1);
-        bool   isDrag = (dragging_ && dragIndex_ == i);
-
-        // 影（立体感）
-        dl->AddCircleFilled(sp, 7.5f, IM_COL32(0, 0, 0, 120));
-
-        // 本体
-        ImU32 fillCol = isDrag ? IM_COL32(255, 230, 80, 255) :
-            isEnd ? IM_COL32(80, 200, 255, 255) :
-            IM_COL32(240, 240, 240, 255);
-        dl->AddCircleFilled(sp, 6.0f, fillCol);
-
-        // 枠線
-        dl->AddCircle(sp, 6.0f,
-            isDrag ? IM_COL32(255, 255, 100, 255)
-            : IM_COL32(60, 160, 220, 200),
-            0, 1.5f);
-
-        // ホバー時の値ツールチップ
-        if (hovered) {
-            float dx = mousePos.x - sp.x, dy = mousePos.y - sp.y;
-            if (dx * dx + dy * dy < 10.f * 10.f) {
-                ImGui::SetTooltip("t=%.3f  speed=%.1f x",
-                    delegate_.points[i].x, delegate_.points[i].y);
-            }
-        }
-    }
-
-    // ================================================================
-    // X軸ラベル（下端）
-    // ================================================================
-    {
-        const float yLabelY = rMax.y + 3.0f;
-        const ImU32 lblCol = IM_COL32(160, 160, 180, 200);
-        dl->AddText({ rMin.x,              yLabelY }, lblCol, "0");
-        dl->AddText({ rMin.x + w * 0.25f - 4,  yLabelY }, lblCol, "0.25");
-        dl->AddText({ rMin.x + w * 0.5f - 6, yLabelY }, lblCol, "0.5");
-        dl->AddText({ rMin.x + w * 0.75f - 4,  yLabelY }, lblCol, "0.75");
-        dl->AddText({ rMin.x + w - 8,      yLabelY }, lblCol, "1");
-    }
-
-    // X軸ラベル分のスペース確保
-    ImGui::Dummy({ 0, 14.0f });
-
-    return dirty;
-}
+  return changed;
+#else
+  (void)width;
+  (void)height;
+  return false;
 #endif
+}
 
-// -----------------------------------------------------------------------
-// DrawImGui
-// -----------------------------------------------------------------------
-void SpeedCurvePanel::DrawImGui()
-{
+// ============================================================
+// パネル
+// ============================================================
+void SpeedCurvePanel::DrawImGui() {
 #ifdef USE_IMGUI
-    if (!context_) return;
+  const Motion *motion = session_->CurrentMotion();
+  const uint64_t revision =
+      session_->Document() ? session_->Document()->Revision() : 0;
 
-    Motion* motion = context_->currentMotion;
+  // モーションが切り替わった / Undo などで中身が変わった（未編集時）なら読み直す
+  if (motion != pulledMotion_ || (!isDirty_ && revision != pulledRevision_)) {
+    PullFromMotion(motion);
+    pulledMotion_ = motion;
+    pulledRevision_ = revision;
+  }
 
-    // モーションが切り替わったら制御点を再取得
-    if (motion != lastMotion_) {
-        lastMotion_ = motion;
-        hasBakedSnapshot_ = false;
-        showBakedPreview_ = false;
-        PullFromMotion();
-        isDirty_ = false;
-    }
-
-    ImGui::PushID("SpeedCurvePanel");
-
-    // ============================================================
-    // CollapsingHeader
-    // ============================================================
-    char headerLabel[128];
-    if (hasBakedSnapshot_)
-        snprintf(headerLabel, sizeof(headerLabel),
-            ICON_FA_BOLT " タイムスケールカーブ  [焼込済]###SpeedCurveHeader");
-    else if (isDirty_)
-        snprintf(headerLabel, sizeof(headerLabel),
-            ICON_FA_BOLT " タイムスケールカーブ  *###SpeedCurveHeader");
-    else
-        snprintf(headerLabel, sizeof(headerLabel),
-            ICON_FA_BOLT " タイムスケールカーブ###SpeedCurveHeader");
-
-    bool open = ImGui::CollapsingHeader(headerLabel, ImGuiTreeNodeFlags_DefaultOpen);
-
-    if (!open) {
-        if (motion && motion->GetDuration() > 0.0f && ImGui::IsItemHovered()) {
-            float nt = std::clamp(context_->scrubTime / motion->GetDuration(), 0.0f, 1.0f);
-            float spd = motion->EvaluateSpeedCurve(nt);
-            ImGui::SetTooltip("現在速度倍率: %.2f x", spd);
-        }
-        ImGui::PopID();
-        return;
-    }
-
-    // ============================================================
-    // モーション未選択
-    // ============================================================
-    if (!motion) {
-        ImGui::TextDisabled("モーションが選択されていません");
-        ImGui::PopID();
-        return;
-    }
-
-    // ============================================================
-    // 速度上限スライダ
-    // ============================================================
-    ImGui::SetNextItemWidth(160.0f);
-    if (ImGui::SliderFloat("速度上限##maxspd", &maxSpeedEdit_, 1.0f, 8.0f, "%.1fx")) {
-        delegate_.SetMaxSpeed(maxSpeedEdit_);
-    }
-    ImGui::SameLine();
-    ImGui::TextDisabled("(1.0=等速)");
-
-    if (hasBakedSnapshot_) {
-        ImGui::SameLine();
-        ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x - 130.0f);
-        ImGui::Checkbox(ICON_FA_SAVE " 焼込前を表示##bkprev", &showBakedPreview_);
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("焼き込む前のカーブをオレンジ色で重ねて表示します");
-    }
-
-    // ============================================================
-    // 操作ヒント（エディタ上部に1行）
-    // ============================================================
-    ImGui::TextDisabled("右クリック(空白):点を追加  右クリック(点上):削除メニュー  左ドラッグ:移動");
-
-    // ============================================================
-    // カスタムカーブエディタ本体
-    // ============================================================
-    ImVec2 curveSize = { ImGui::GetContentRegionAvail().x, 180.0f };
-    if (DrawCurveEditor(curveSize)) {
-        isDirty_ = true;
-    }
-
-    ImGui::Separator();
-
-    // ============================================================
-    // ボタン行
-    // ============================================================
-
-    // --- ランタイム適用 ---
-    {
-        const bool dis = !isDirty_;
-        if (dis) ImGui::BeginDisabled();
-        if (ImGui::Button(ICON_FA_BOLT " 適用##apply", ImVec2(80, 0))) {
-            PushToMotion();
-            isDirty_ = false;
-            context_->statusMsg = "スピードカーブをランタイム適用しました";
-        }
-        if (dis) ImGui::EndDisabled();
-        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-            ImGui::SetTooltip("カーブをMotionに反映します（キーフレームは変更しません）");
-    }
-
-    ImGui::SameLine(0, 6);
-
-    // --- 焼き込み ---
-    if (ImGui::Button(ICON_FA_SAVE " Bake##bake", ImVec2(80, 0))) {
-        bakeConfirmPending_ = true;
-    }
-    if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("カーブをキーフレーム時間軸に積分して焼き込みます\n（不可逆操作）");
-
-    if (bakeConfirmPending_) {
-        ImGui::OpenPopup("##BakeConfirm");
-        bakeConfirmPending_ = false;
-    }
-    if (ImGui::BeginPopupModal("##BakeConfirm", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::TextUnformatted("カーブをキーフレームに焼き込みます。");
-        ImGui::TextColored(ImVec4(1.f, 0.6f, 0.2f, 1.f), "この操作は元に戻せません。");
-        ImGui::Spacing();
-        if (ImGui::Button("実行##bakeok", ImVec2(80, 0))) {
-            bakedSnapshot_ = delegate_.points;
-            hasBakedSnapshot_ = true;
-            showBakedPreview_ = true;
-
-            PushToMotion();
-            BakeSpeedCurve();
-            PullFromMotion();
-            isDirty_ = false;
-            context_->statusMsg = "スピードカーブを焼き込みました";
-            context_->requireTimelineRebuild = true;
-            context_->lastAppliedScrubTime = -1.0f;
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::SameLine(0, 8);
-        if (ImGui::Button("キャンセル##bakecancel", ImVec2(80, 0)))
-            ImGui::CloseCurrentPopup();
-        ImGui::EndPopup();
-    }
-
-    ImGui::SameLine(0, 6);
-
-    // --- リセット ---
-    if (ImGui::Button(ICON_FA_UNDO " リセット##reset", ImVec2(80, 0))) {
-        motion->ClearSpeedCurve();
-        PullFromMotion();
-        isDirty_ = false;
-        hasBakedSnapshot_ = false;
-        showBakedPreview_ = false;
-        context_->statusMsg = "スピードカーブをリセットしました";
-    }
-    if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("カーブを等速（直線）に戻します");
-
-    // ============================================================
-    // 現在位置の速度プレビュー（右寄せ）
-    // ============================================================
-    if (motion->GetDuration() > 0.0f) {
-        float nt = std::clamp(context_->scrubTime / motion->GetDuration(), 0.0f, 1.0f);
-        float spd = motion->EvaluateSpeedCurve(nt);
-        ImGui::SameLine();
-        ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x - 140.0f);
-        ImGui::TextColored(ImVec4(0.3f, 0.9f, 1.0f, 1.0f),
-            "現在: %.2fx  (t=%.2f)", spd, nt);
-    }
-
+  ImGui::PushID("SpeedCurvePanel");
+  const char *header = isDirty_ ? ICON_FA_BOLT " タイムスケールカーブ *###speedCurve"
+                                : ICON_FA_BOLT " タイムスケールカーブ###speedCurve";
+  if (!ImGui::CollapsingHeader(header)) {
     ImGui::PopID();
+    return;
+  }
+  if (!motion) {
+    ImGui::TextDisabled("モーションが選択されていません");
+    ImGui::PopID();
+    return;
+  }
+
+  ImGui::SetNextItemWidth(160.0f);
+  ImGui::SliderFloat("速度上限##maxSpeed", &maxSpeed_, 1.0f, 8.0f, "%.1fx");
+  ImGui::SameLine();
+  ImGui::TextDisabled("右クリック(空白): 点を追加 / 右クリック(点): メニュー / 左ドラッグ: 移動");
+
+  if (DrawCurveEditor(ImGui::GetContentRegionAvail().x, 160.0f)) {
+    isDirty_ = true;
+  }
+
+  ImGui::BeginDisabled(!isDirty_);
+  if (ImGui::Button(ICON_FA_BOLT " 適用", ImVec2(80, 0))) {
+    session_->ApplySpeedCurve(ToPairs());
+    isDirty_ = false;
+  }
+  ImGui::EndDisabled();
+  if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+    ImGui::SetTooltip("カーブを再生速度として反映します（キーは変更しません）");
+  }
+
+  ImGui::SameLine(0, 6);
+  if (ImGui::Button(ICON_FA_SAVE " 焼き込み", ImVec2(90, 0))) {
+    session_->BakeSpeedCurve(ToPairs());
+    isDirty_ = false;
+  }
+  if (ImGui::IsItemHovered()) {
+    ImGui::SetTooltip("カーブをキー時刻に積分して焼き込み、等速に戻します\n"
+                      ".anim は SpeedCurve を保存しないので、保存前に焼き込んでください\n"
+                      "（Ctrl+Z で戻せます）");
+  }
+
+  ImGui::SameLine(0, 6);
+  if (ImGui::Button(ICON_FA_UNDO " リセット", ImVec2(90, 0))) {
+    session_->ResetSpeedCurve();
+    isDirty_ = false;
+  }
+
+  if (motion->GetDuration() > 0.0f) {
+    const float nt = std::clamp(session_->Playback().Time() / motion->GetDuration(),
+                                0.0f, 1.0f);
+    ImGui::SameLine();
+    ImGui::TextColored(ImVec4(0.3f, 0.9f, 1.0f, 1.0f), "現在: %.2fx (t=%.2f)",
+                       Evaluate(nt), nt);
+  }
+
+  ImGui::PopID();
 #endif
-}
-
-// -----------------------------------------------------------------------
-// DrawBakedPreviewOverlay
-// -----------------------------------------------------------------------
-#ifdef USE_IMGUI
-void SpeedCurvePanel::DrawBakedPreviewOverlay(ImVec2 rMin, ImVec2 rMax) const
-{
-    if (bakedSnapshot_.size() < 2) return;
-
-    float w = rMax.x - rMin.x;
-    float h = rMax.y - rMin.y;
-    float yMin = delegate_.boundsMinY;
-    float yMax = delegate_.boundsMaxY;
-    float yRange = yMax - yMin;
-    if (yRange < 1e-6f || w < 1.0f || h < 1.0f) return;
-
-    auto toScreen = [&](ImVec2 p) -> ImVec2 {
-        return {
-            rMin.x + std::clamp(p.x, 0.0f, 1.0f) * w,
-            rMax.y - (std::clamp(p.y, yMin, yMax) - yMin) / yRange * h
-        };
-        };
-
-    auto* dl = ImGui::GetWindowDrawList();
-    const ImU32 lineCol = IM_COL32(255, 160, 40, 200);
-    const ImU32 dotCol = IM_COL32(255, 200, 80, 220);
-
-    // スナップショットを線形補間で描画
-    const int segs = static_cast<int>(w);
-    auto evalSnap = [&](float x) -> float {
-        if (bakedSnapshot_.size() < 2) return 1.0f;
-        if (x <= bakedSnapshot_.front().x) return bakedSnapshot_.front().y;
-        if (x >= bakedSnapshot_.back().x)  return bakedSnapshot_.back().y;
-        for (int i = 0; i + 1 < static_cast<int>(bakedSnapshot_.size()); ++i) {
-            if (x <= bakedSnapshot_[i + 1].x) {
-                float t = (x - bakedSnapshot_[i].x) /
-                    (bakedSnapshot_[i + 1].x - bakedSnapshot_[i].x);
-                return bakedSnapshot_[i].y + t * (bakedSnapshot_[i + 1].y - bakedSnapshot_[i].y);
-            }
-        }
-        return 1.0f;
-        };
-
-    ImVec2 prev = toScreen({ 0.0f, evalSnap(0.0f) });
-    for (int i = 1; i <= segs; ++i) {
-        float x = static_cast<float>(i) / segs;
-        ImVec2 cur = toScreen({ x, evalSnap(x) });
-        dl->AddLine(prev, cur, lineCol, 1.5f);
-        prev = cur;
-    }
-
-    // 制御点マーカー
-    for (const auto& p : bakedSnapshot_)
-        dl->AddCircleFilled(toScreen(p), 3.5f, dotCol);
-
-    // 凡例
-    dl->AddRectFilled({ rMin.x + 6, rMax.y - 20 },
-        { rMin.x + 90, rMax.y - 6 },
-        IM_COL32(30, 30, 30, 180), 3.f);
-    dl->AddText({ rMin.x + 8, rMax.y - 18 }, dotCol, "Bake\xe5\x89\x8d"); // "Bake前"
-}
-#endif
-
-// -----------------------------------------------------------------------
-// PullFromMotion
-// -----------------------------------------------------------------------
-#ifdef USE_IMGUI
-void SpeedCurvePanel::PullFromMotion()
-{
-    delegate_.points.clear();
-    Motion* motion = context_ ? context_->currentMotion : nullptr;
-    if (!motion) return;
-
-    const auto& kfs = motion->GetSpeedCurve().curve.keyframes;
-    if (kfs.empty()) {
-        delegate_.points = { { 0.0f, 1.0f }, { 1.0f, 1.0f } };
-    }
-    else {
-        for (const auto& kf : kfs)
-            delegate_.points.push_back({ kf.time, kf.value });
-        delegate_.Sort();
-    }
-    delegate_.EnsureEndpoints();
-}
-#endif
-
-// -----------------------------------------------------------------------
-// PushToMotion
-// -----------------------------------------------------------------------
-#ifdef USE_IMGUI
-void SpeedCurvePanel::PushToMotion()
-{
-    Motion* motion = context_ ? context_->currentMotion : nullptr;
-    if (!motion) return;
-
-    auto& kfs = motion->GetSpeedCurve().curve.keyframes;
-    kfs.clear();
-    for (const auto& p : delegate_.points)
-        kfs.push_back({ p.x, p.y });
-
-    std::sort(kfs.begin(), kfs.end(),
-        [](const Motion::Keyframe<float>& a, const Motion::Keyframe<float>& b) {
-            return a.time < b.time;
-        });
-}
-#endif
-
-// -----------------------------------------------------------------------
-// BakeSpeedCurve
-// -----------------------------------------------------------------------
-void SpeedCurvePanel::BakeSpeedCurve()
-{
-    Motion* motion = context_ ? context_->currentMotion : nullptr;
-    if (!motion || !motion->HasSpeedCurve()) return;
-
-    const float duration = motion->GetDuration();
-    if (duration <= 0.0f) return;
-
-    constexpr int   kSamples = 512;
-    constexpr float kMinSpeed = 0.05f;
-
-    std::vector<float> invLut(kSamples + 1);
-    invLut[0] = 0.0f;
-    for (int i = 1; i <= kSamples; ++i) {
-        float t0 = static_cast<float>(i - 1) / kSamples;
-        float t1 = static_cast<float>(i) / kSamples;
-        float s0 = std::max(motion->EvaluateSpeedCurve(t0), kMinSpeed);
-        float s1 = std::max(motion->EvaluateSpeedCurve(t1), kMinSpeed);
-
-		// 速度の逆数を台形積分して時間を再マッピングするためのルックアップテーブルを作成
-        invLut[i] = invLut[i - 1] + (1.0f / s0 + 1.0f / s1) * 0.5f / kSamples;
-    }
-
-    const float newDurationNorm = invLut[kSamples];
-    if (newDurationNorm < 1e-6f) return;
-    const float newDuration = newDurationNorm * duration;
-
-    auto remapTime = [&](float T) -> float {
-        float normT = std::clamp(T / duration, 0.0f, 1.0f);
-        float fIdx = normT * static_cast<float>(kSamples);
-        int   lo = static_cast<int>(fIdx);
-        int   hi = std::min(lo + 1, kSamples);
-        float frac = fIdx - static_cast<float>(lo);
-        float newNormT = invLut[lo] + frac * (invLut[hi] - invLut[lo]);
-        return newNormT * duration;
-        };
-
-    for (auto& [boneName, nodeAnim] : motion->animation_.nodeAnimations_) {
-        auto remap = [&](auto& track) {
-            for (auto& kf : track.keyframes)
-                kf.time = remapTime(kf.time);
-            };
-        remap(nodeAnim.translate);
-        remap(nodeAnim.rotate);
-        remap(nodeAnim.scale);
-    }
-
-    motion->SetDuration(newDuration);
-    motion->ClearSpeedCurve();
 }

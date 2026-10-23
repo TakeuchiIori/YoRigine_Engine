@@ -1,4 +1,5 @@
 #include "UIManager.h"
+#include "Debugger/ImGuiManager.h"
 #include "UIBase.h"
 
 #ifdef USE_IMGUI
@@ -257,7 +258,7 @@ namespace YoRigine {
 					}
 
 					for (auto& [layer, uis] : uiByLayer) {
-						ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.3f, 0.4f, 0.6f, 0.8f));
+						ImGui::PushStyleColor(ImGuiCol_Header, ImGuiManager::WithAlpha(ImGuiManager::GetAccentColor(), 0.55f));
 						bool layerOpen = ImGui::TreeNodeEx((void*)(intptr_t)layer,
 							ImGuiTreeNodeFlags_DefaultOpen, "レイヤー %d (%zu個)", layer, uis.size());
 						ImGui::PopStyleColor();
@@ -596,7 +597,7 @@ namespace YoRigine {
 					ImVec2 pos = ImVec2(mousePos.x + 12.0f, mousePos.y + 12.0f);
 					ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
 					ImVec2 rectMax = ImVec2(pos.x + textSize.x + 12.0f, pos.y + textSize.y + 8.0f);
-					fg->AddRectFilled(pos, rectMax, IM_COL32(30, 30, 30, 220), 4.0f);
+					fg->AddRectFilled(pos, rectMax, IM_COL32(27, 27, 34, 220), 4.0f);
 					fg->AddText(ImVec2(pos.x + 6.0f, pos.y + 4.0f), IM_COL32(255, 255, 255, 255), label.c_str());
 					ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
 				}
@@ -676,7 +677,7 @@ namespace YoRigine {
 				if (!currentSceneName_.empty()) {
 
 					// ボタンを少し目立たせる（薄い緑色など）
-					ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(40, 120, 40));
+					ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetSuccessColor());
 
 					// 「(現在のシーン名) を上書き保存」というボタンを表示
 					std::string overwriteLabel = "「" + currentSceneName_ + "」を上書き保存";
@@ -882,7 +883,7 @@ namespace YoRigine {
 							if (isSelected)
 							{
 								ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
-								ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.2f, 0.5f, 0.2f, 0.5f));
+								ImGui::PushStyleColor(ImGuiCol_Header, ImGuiManager::WithAlpha(ImGuiManager::GetSuccessColor(), 0.55f));
 							}
 
 							if (ImGui::Selectable(name.c_str(), isSelected))
@@ -976,7 +977,7 @@ namespace YoRigine {
 
 			if (isSelected) {
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 1.0f, 0.3f, 1.0f));
-				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.5f, 0.2f, 0.5f));
+				ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::WithAlpha(ImGuiManager::GetSuccessColor(), 0.55f));
 			}
 
 			// ファイル拡張子アイコン

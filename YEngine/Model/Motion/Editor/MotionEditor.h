@@ -8,9 +8,9 @@
 #include "Debugger/Gizmo/GizmoController.h"
 #endif
 
-// App
-#include "MotionEditorContext.h"
-#include "Panels/IMotionEditorPanel.h"
+// Motion
+#include "../Authoring/MotionEditorSession.h"
+#include "MotionEditorUIState.h"
 
 // Standard
 #include <memory>
@@ -23,19 +23,27 @@
 namespace YoRigine {
 class Camera;
 }
-class Joint;
+class MenuBarPanel;
+class SavePanel;
+class ToolbarPanel;
+class BoneListPanel;
+class PropertyPanel;
+class TimelinePanel;
+class SpeedCurvePanel;
+class StatusBarPanel;
 #ifdef USE_IMGUI
 class BoneGizmable;
 #endif
 
 // ============================================================
-// モーションエディタクラス
+// モーションエディタ
+//
+// ・編集処理はすべて MotionEditorSession が持つ
+// ・このクラスはウィンドウの組み立て、ショートカット、3D ビューでの
+//   ボーン表示・ピッキング・ギズモだけを担当する
 // ============================================================
 class MotionEditor {
 public:
-  // ============================================================
-  // 基本関数
-  // ============================================================
   MotionEditor();
   ~MotionEditor();
 
@@ -46,70 +54,52 @@ public:
   void DrawBone();
   void ShowEditor();
 
-  // ============================================================
-  // 公開関数
-  // ============================================================
   // シーンエディタ側から「このエディタを使うかどうか」を切り替える。
   // 無効にすると UI・ボーン描画・ギズモを止め、編集対象を手放す。
   void SetEnabled(bool enabled);
   bool IsEnabled() const { return isEnabled_; }
 
-  void SetTargetObjectId(int id);
-  int GetTargetObjectId() const { return context_.targetObjectId; }
-  void SetCamera(YoRigine::Camera *camera) {
-    context_.camera = camera;
-    if (lineDrawer_) {
-      lineDrawer_->SetCamera(camera);
-    }
-  }
-  bool IsDrawBone() const { return isEnabled_ && context_.isDrawBone; }
+  void SetTargetObjectId(int id) { session_.SetTargetObjectId(id); }
+  int GetTargetObjectId() const { return session_.TargetObjectId(); }
+  void SetCamera(YoRigine::Camera *camera);
+  bool IsDrawBone() const { return isEnabled_ && ui_.drawBones; }
 
+  // BoneGizmable から呼ばれる
   Matrix4x4 GetJointWorldMatrix(const std::string &boneName) const;
   void ApplyBoneGizmoTransform(const std::string &boneName,
                                const Matrix4x4 &newWorldMat);
 
-  void RegisterPanel(std::unique_ptr<IMotionEditorPanel> panel);
-
 private:
-  // ============================================================
-  // 内部処理関数
-  // ============================================================
-  void SavePose(float time);
-  void InsertKeyframeFromTransform(const std::string &bone, float time,
-                                   const QuaternionTransform &tr);
+  void HandleShortcuts();
+  void HandleBonePicking();
+  void DrawLayout();
 
-  void SetJointTransform(const std::string &bone,
-                         const QuaternionTransform &tr);
-  Joint *FindJoint(const std::string &name) const;
-  QuaternionTransform BufferToTransform() const;
-  void SyncJointToBuffer(const std::string &bone);
-  void SyncBufferToJoint();
-  void RestoreLiveBoneOriginal();
+  MotionEditorSession session_;
+  MotionEditorUIState ui_;
 
-  Matrix4x4 GetTargetWorldMatrix() const;
+  // パネル（描画順に意味があるので名前で持つ）
+  std::unique_ptr<MenuBarPanel> menuBar_;
+  std::unique_ptr<SavePanel> filePanel_;
+  std::unique_ptr<ToolbarPanel> toolbar_;
+  std::unique_ptr<SpeedCurvePanel> speedCurve_;
+  std::unique_ptr<BoneListPanel> boneList_;
+  std::unique_ptr<PropertyPanel> property_;
+  std::unique_ptr<TimelinePanel> timeline_;
+  std::unique_ptr<StatusBarPanel> statusBar_;
 
-private:
-  // ============================================================
-  // メンバ変数
-  // ============================================================
-  static constexpr float kPi = 3.14159265f;
-
-  MotionEditorContext context_;
-  std::vector<std::unique_ptr<IMotionEditorPanel>> panels_;
-
-  YoRigine::WorldTransform previewTransform_;
+  YoRigine::Camera *camera_ = nullptr;
   std::unique_ptr<YoRigine::Line> lineDrawer_;
 
 #ifdef USE_IMGUI
   std::unique_ptr<YoRigine::Object3d> boneObj_;
   GizmoController gizmoCtrl_;
-  std::vector<std::unique_ptr<BoneGizmable>> boneGizmables_;
+  // ピッキング候補（クリックのたびに作り直す）
+  std::vector<std::unique_ptr<BoneGizmable>> pickables_;
+  // 選択ボーンのギズモ
+  std::unique_ptr<BoneGizmable> selectedGizmo_;
   std::vector<YoRigine::WorldTransform> boneWorldTransforms_;
 #endif
 
   // シーンエディタから明示的に有効化されるまで何もしない
   bool isEnabled_ = false;
-
-  bool draggingBone_ = false;
-  QuaternionTransform boneSnap_ = {};
 };

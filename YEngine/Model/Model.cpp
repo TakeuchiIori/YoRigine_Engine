@@ -78,6 +78,7 @@ void Model::Initialize(ModelCommon* modelCommon, const std::string& directorypat
 	// アニメーションをするならtrue
 	if (isMotion_) {
 		LoadMotionFile(directorypath, filename, animationName);
+		SetBaseMotionCacheKey(directorypath, filename, animationName);
 
 
 		if (hasBones_) {
@@ -408,20 +409,16 @@ void Model::LoadMotionFile(const std::string& directoryPath, const std::string& 
 }
 
 void Model::AddToCache(const std::string& key, const Motion& motion) {
-	// キャッシュサイズが上限に達している場合、古いものを削除
-	while (animationCache_.size() >= MAX_CACHE_SIZE) {
-		std::string oldestKey = cacheOrder_.back();
-		cacheOrder_.pop_back();
-		cacheIterators_.erase(oldestKey);
-		animationCache_.erase(oldestKey);
-
-		std::cout << "Cache evicted: " << oldestKey << std::endl;
-	}
-
-	// 新しいエントリを追加
+	// 追い出しは行わない。
+	// MotionSystem の上半身レイヤーやモーションエディタがキャッシュ要素を生ポインタで
+	// 直接指しているため、erase するとダングリングになる。また新規ロード経路は
+	// cacheOrder_ に積まれないので、空リストへの back() で未定義動作にもなっていた。
 	animationCache_[key] = motion;
-	cacheOrder_.push_front(key);
-	cacheIterators_[key] = cacheOrder_.begin();
+}
+
+void Model::SetBaseMotionCacheKey(const std::string& directoryPath, const std::string& filename, const std::string& animationName)
+{
+	baseMotionCacheKey_ = directoryPath + "/" + filename + "#" + animationName;
 }
 
 // キャッシュクリア用の静的メソッドも追加
@@ -473,6 +470,7 @@ void Model::SetChangeMotion(const std::string& directoryPath, const std::string&
 	}
 
 	currentMotionCacheKey_ = newCacheKey;
+	baseMotionCacheKey_ = newCacheKey;
 
 	// 新しいアニメーションファイルを読み込む
 	LoadMotionFile(directoryPath, filename, animationName);

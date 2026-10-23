@@ -102,8 +102,10 @@ namespace {
 	// ============================================================
 	// グリフ輪郭ジオメトリ方式のテキストレンダラー
 	//   IDWriteTextLayout::Draw から各グリフランごとに呼ばれ、
-	//   影 → アウトライン → 塗り の順でジオメトリを描く。
+	//   影 → アウトライン → 塗り の順に描く。
 	//   アウトラインはストローク幅を 2 倍にして塗りで内側を潰す＝外側に縁が残る。
+	//   影と塗りは DrawGlyphRun（ヒンティング＋ピクセルスナップ有効）で描き、小さい文字でも
+	//   縦横の線がピクセル境界に乗るようにする。ジオメトリはヒンティングが効かないため縁専用。
 	// ============================================================
 	class OutlineTextRenderer : public IDWriteTextRenderer {
 	public:
@@ -116,14 +118,27 @@ namespace {
 
 		// ---- IDWriteTextRenderer ----
 		HRESULT STDMETHODCALLTYPE DrawGlyphRun(void*, FLOAT baselineX, FLOAT baselineY,
-			DWRITE_MEASURING_MODE, const DWRITE_GLYPH_RUN* run,
+			DWRITE_MEASURING_MODE measuringMode, const DWRITE_GLYPH_RUN* run,
 			const DWRITE_GLYPH_RUN_DESCRIPTION*, IUnknown*) override {
 			if (!run || !run->fontFace) return S_OK;
 
+			if (useShadow_ && shadow_) {
+				rt_->DrawGlyphRun(D2D1::Point2F(baselineX + shadowOffset_.x, baselineY + shadowOffset_.y),
+					run, shadow_, measuringMode);
+			}
+			if (outlineWidth_ > 0.0f && outline_) {
+				DrawOutline(baselineX, baselineY, run);
+			}
+			rt_->DrawGlyphRun(D2D1::Point2F(baselineX, baselineY), run, fill_, measuringMode);
+			return S_OK;
+		}
+
+		// グリフ輪郭ジオメトリをストロークして縁取りを描く
+		void DrawOutline(FLOAT baselineX, FLOAT baselineY, const DWRITE_GLYPH_RUN* run) {
 			ComPtr<ID2D1PathGeometry> geo;
-			if (FAILED(d2d_->CreatePathGeometry(&geo))) return S_OK;
+			if (FAILED(d2d_->CreatePathGeometry(&geo))) return;
 			ComPtr<ID2D1GeometrySink> sink;
-			if (FAILED(geo->Open(&sink))) return S_OK;
+			if (FAILED(geo->Open(&sink))) return;
 			run->fontFace->GetGlyphRunOutline(run->fontEmSize, run->glyphIndices,
 				run->glyphAdvances, run->glyphOffsets, run->glyphCount,
 				run->isSideways, (run->bidiLevel & 1) != 0, sink.Get());
@@ -133,25 +148,14 @@ namespace {
 			ComPtr<ID2D1TransformedGeometry> tg;
 			d2d_->CreateTransformedGeometry(geo.Get(),
 				D2D1::Matrix3x2F::Translation(baselineX, baselineY), &tg);
-
-			if (useShadow_ && shadow_) {
-				ComPtr<ID2D1TransformedGeometry> sg;
-				d2d_->CreateTransformedGeometry(geo.Get(),
-					D2D1::Matrix3x2F::Translation(baselineX + shadowOffset_.x, baselineY + shadowOffset_.y), &sg);
-				rt_->FillGeometry(sg.Get(), shadow_);
-			}
-			if (outlineWidth_ > 0.0f && outline_) {
-				rt_->DrawGeometry(tg.Get(), outline_, outlineWidth_ * 2.0f);
-			}
-			rt_->FillGeometry(tg.Get(), fill_);
-			return S_OK;
+			rt_->DrawGeometry(tg.Get(), outline_, outlineWidth_ * 2.0f);
 		}
 		HRESULT STDMETHODCALLTYPE DrawUnderline(void*, FLOAT, FLOAT, const DWRITE_UNDERLINE*, IUnknown*) override { return S_OK; }
 		HRESULT STDMETHODCALLTYPE DrawStrikethrough(void*, FLOAT, FLOAT, const DWRITE_STRIKETHROUGH*, IUnknown*) override { return S_OK; }
 		HRESULT STDMETHODCALLTYPE DrawInlineObject(void*, FLOAT, FLOAT, IDWriteInlineObject*, BOOL, BOOL, IUnknown*) override { return S_OK; }
 
 		// ---- IDWritePixelSnapping ----
-		HRESULT STDMETHODCALLTYPE IsPixelSnappingDisabled(void*, BOOL* d) override { *d = TRUE; return S_OK; }
+		HRESULT STDMETHODCALLTYPE IsPixelSnappingDisabled(void*, BOOL* d) override { *d = FALSE; return S_OK; }
 		HRESULT STDMETHODCALLTYPE GetCurrentTransform(void*, DWRITE_MATRIX* m) override {
 			*m = DWRITE_MATRIX{ 1,0,0,1,0,0 }; return S_OK;
 		}
@@ -380,7 +384,8 @@ namespace YoRigine {
 
 		const float shadowExtent = params.shadow
 			? std::max(std::fabs(params.shadowOffset.x), std::fabs(params.shadowOffset.y)) : 0.0f;
-		const float margin = params.padding + params.outlineWidth + shadowExtent;
+		// 整数に切り上げて描画原点をピクセル境界に揃える
+		const float margin = std::ceil(params.padding + params.outlineWidth + shadowExtent);
 
 		const float contentW = (params.maxWidth > 0.0f ? params.maxWidth : m.widthIncludingTrailingWhitespace);
 		const UINT  bmpW = (UINT)std::ceil(contentW + margin * 2.0f);
@@ -411,12 +416,17 @@ namespace YoRigine {
 			outlineBrush.Get(), shadowBrush.Get(),
 			params.outlineWidth, params.shadow, params.shadowOffset);
 
+		// 透明背景に焼いて後で合成するので ClearType（サブピクセル色付き）ではなくグレースケール AA
+		rt->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+
 		rt->BeginDraw();
 		rt->Clear(D2D1::ColorF(0, 0, 0, 0));   // 透明背景
 		layout->Draw(nullptr, &renderer, margin, margin);
 		if (FAILED(rt->EndDraw())) return false;
 
 		if (!SaveWicBitmapToPng(f.wic.Get(), wicBmp.Get(), bmpW, bmpH, outPngPath)) return false;
+		// 1:1 表示前提の画像なのでミップは作らない（縮小サンプルでにじむのを防ぐ）
+		TextureManager::MarkNoMips(outPngPath);
 		if (saveMetadata) {
 			SaveParamsSidecar(params, outPngPath);  // 再編集用にパラメータも保存
 		}
