@@ -327,9 +327,12 @@ void MotionEditor::HandleBonePicking() {
   if (!ui_.drawBones || !skeleton || !camera_) {
     return;
   }
-  // ギズモやエディタの UI の上でのクリックは無視する
-  if (!ImGui::IsMouseClicked(0) || ImGuizmo::IsOver() ||
-      ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)) {
+  // ゲームビューの絵の上でのクリックだけを受ける
+  // (手前のパネル・ギズモの上は除く)。 以前の IsWindowHovered(AnyWindow)
+  // はゲームビュー自身もウィンドウなので 常に true
+  // になり、ボーンをクリックで選べなかった。
+  if (!ImGui::IsMouseClicked(ImGuiMouseButton_Left) ||
+      !Editor::GetInstance()->CanPickInGameView()) {
     return;
   }
 

@@ -9,7 +9,7 @@
 void StatusBarPanel::DrawImGui() {
 #ifdef USE_IMGUI
   constexpr float kBarHeight = 20.0f;
-  ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.12f, 0.12f, 0.12f, 1.0f));
+  ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetStyleColorVec4(ImGuiCol_MenuBarBg));
   ImGui::BeginChild("##status", ImVec2(0, kBarHeight), false);
 
   ImGui::SetCursorPosY(3);

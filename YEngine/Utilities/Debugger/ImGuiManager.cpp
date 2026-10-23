@@ -29,7 +29,7 @@ void ImGuiManager::Initialize(
   // フォント / IO 設定を先に（フォントビルド前に色設定は不要）
   CustomizeEditor();
 
-  // "Black Gold" テーマ適用
+  // エディタテーマ適用
   CustomizeColor();
 
   // DirectX12 バックエンド初期化
@@ -87,14 +87,16 @@ void ImGuiManager::InitialzeDX12() {
 }
 
 // =============================================================================
-//  "Black Gold" テーマ
+//  エディタテーマ ― Unreal 風の落ち着いたダークテーマ
 //
-//  コンセプト:
-//    ・漆黒 (#080604) ベース ― Unreal Editor の深み を参考
-//    ・アクセントは 18kt 金色 (Hue≈43°, S≈80%, V≈85%)
-//    ・ウィジェット枠線に 極細ゴールドライン でラグジュアリー感
-//    ・タブ/タイトルは ダークブラウン でレイヤーを演出
-//    ・ホバー/アクティブは 金の明度変化 のみで色相一致を保つ
+//  コンセプト (AIGameEngine の EditorTheme と同じ考え方):
+//    ・背景は真っ黒にしない。0.11 前後のグレーにして、パネル (0.16) との
+//      明度差だけで「どこが入力欄か」が分かるようにする。
+//    ・アクセントは青 1 色だけ。ホバー・選択・チェック・スライダーを
+//      同じ色で揃えると、「押せる場所」が一目で拾える。
+//    ・枠線は描かず、境界は黒の半透明で締める。線が多いと情報より線が目立つ。
+//  色は GetAccentColor() など外部からも引けるので、パネル側で
+//  直接 RGB を書かずにここを参照すること。
 // =============================================================================
 void ImGuiManager::CustomizeColor() {
 #ifdef USE_IMGUI
@@ -103,96 +105,198 @@ void ImGuiManager::CustomizeColor() {
   ImGuiStyle &s = ImGui::GetStyle();
   ImVec4 *c = s.Colors;
 
-  // -------------------------------------------------------------------------
-  //  極限の黒 (Deep Ebony) パレット
-  // -------------------------------------------------------------------------
-  // 背景は 0.03f〜0.05f に設定。真っ黒(0.0)にすると逆に奥行きが消えるため、
-  // わずかに質感を残した「墨色」を採用します。
-  const ImVec4 kBgBlack = ImVec4(0.035f, 0.035f, 0.035f, 1.00f); // メイン背景
-  const ImVec4 kBgPanel =
-      ImVec4(0.055f, 0.055f, 0.055f, 1.00f); // タイトル・パネル
-  const ImVec4 kBgInput =
-      ImVec4(0.090f, 0.090f, 0.090f, 1.00f); // 入力フィールド
+  // ── パレット ────────────────────────────────────────────────────────────
+  const ImVec4 kBg = ImVec4(0.11f, 0.11f, 0.12f, 1.00f);     // ウィンドウ背景
+  const ImVec4 kBgDark = ImVec4(0.08f, 0.08f, 0.09f, 1.00f); // タイトル・タブ列
+  const ImVec4 kBgBar = ImVec4(0.10f, 0.10f, 0.11f, 1.00f);  // メニューバー
+  const ImVec4 kPanel = ImVec4(0.16f, 0.16f, 0.18f, 1.00f);  // 入力欄・ボタン
+  const ImVec4 kPanelHi = ImVec4(0.22f, 0.22f, 0.25f, 1.00f);   // 入力欄ホバー
+  const ImVec4 kPanelAct = ImVec4(0.26f, 0.26f, 0.30f, 1.00f);  // 入力欄操作中
+  const ImVec4 kAccent = GetAccentColor();                      // 青
+  const ImVec4 kAccentAct = ImVec4(0.16f, 0.38f, 0.74f, 1.00f); // 押し込み
+  const ImVec4 kAccentDim = GetAccentColorDim();                // 薄い青
+  const ImVec4 kText = ImVec4(0.90f, 0.90f, 0.92f, 1.00f);
+  const ImVec4 kTextDim = ImVec4(0.50f, 0.50f, 0.54f, 1.00f);
+  const ImVec4 kLine = ImVec4(0.00f, 0.00f, 0.00f, 0.40f);
 
-  // アクセントカラー：テック・ブルー
-  const ImVec4 kAccentBlue =
-      ImVec4(0.120f, 0.450f, 0.880f, 1.00f); // Blenderの選択色に近い青
-  const ImVec4 kAccentLight = ImVec4(0.200f, 0.550f, 0.980f, 1.00f); // ホバー用
-  const ImVec4 kAccentDim = ImVec4(0.120f, 0.450f, 0.880f, 0.25f);   // 薄い塗り
-
-  const ImVec4 kText = ImVec4(0.920f, 0.920f, 0.920f, 1.00f);    // ほぼ白
-  const ImVec4 kTextDim = ImVec4(0.450f, 0.450f, 0.450f, 1.00f); // 非活性
-
-  // =========================================================================
-  //  色設定
-  // =========================================================================
-
-  // --- テキスト ---
+  // ── テキスト ────────────────────────────────────────────────────────────
   c[ImGuiCol_Text] = kText;
   c[ImGuiCol_TextDisabled] = kTextDim;
   c[ImGuiCol_TextSelectedBg] = kAccentDim;
 
-  // --- ウィンドウ / 背景 (徹底的に黒く) ---
-  c[ImGuiCol_WindowBg] = kBgBlack;
-  c[ImGuiCol_ChildBg] = kBgBlack;
-  c[ImGuiCol_PopupBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.96f);
-  c[ImGuiCol_MenuBarBg] = kBgPanel;
-  c[ImGuiCol_TitleBg] = kBgPanel;
-  c[ImGuiCol_TitleBgActive] = kBgPanel;
-  c[ImGuiCol_TitleBgCollapsed] = kBgBlack;
+  // ── ウィンドウ / 背景 ───────────────────────────────────────────────────
+  c[ImGuiCol_WindowBg] = kBg;
+  c[ImGuiCol_ChildBg] = kBg;
+  c[ImGuiCol_PopupBg] = ImVec4(0.13f, 0.13f, 0.15f, 0.98f);
+  c[ImGuiCol_MenuBarBg] = kBgBar;
+  c[ImGuiCol_TitleBg] = kBgDark;
+  c[ImGuiCol_TitleBgActive] = ImVec4(0.10f, 0.10f, 0.12f, 1.00f);
+  c[ImGuiCol_TitleBgCollapsed] = kBgDark;
+  c[ImGuiCol_Border] = kLine;
+  c[ImGuiCol_BorderShadow] = ImVec4(0, 0, 0, 0);
+  c[ImGuiCol_ModalWindowDimBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.55f);
 
-  // --- フレーム (InputText, Checkbox等) ---
-  c[ImGuiCol_FrameBg] = kBgInput;
-  c[ImGuiCol_FrameBgHovered] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
-  c[ImGuiCol_FrameBgActive] = kAccentDim;
+  // ── 入力欄 (InputText / Checkbox / Slider の地) ─────────────────────────
+  c[ImGuiCol_FrameBg] = kPanel;
+  c[ImGuiCol_FrameBgHovered] = kPanelHi;
+  c[ImGuiCol_FrameBgActive] = kPanelAct;
 
-  // --- ボタン ---
-  c[ImGuiCol_Button] = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
-  c[ImGuiCol_ButtonHovered] = ImVec4(0.25f, 0.25f, 0.25f, 1.00f);
-  c[ImGuiCol_ButtonActive] = kAccentBlue;
+  // ── ボタン ──────────────────────────────────────────────────────────────
+  c[ImGuiCol_Button] = kPanel;
+  c[ImGuiCol_ButtonHovered] = kAccent;
+  c[ImGuiCol_ButtonActive] = kAccentAct;
 
-  // --- タブ ---
-  c[ImGuiCol_Tab] = kBgBlack;
-  c[ImGuiCol_TabHovered] = kBgInput;
-  c[ImGuiCol_TabActive] = kBgInput;
-  c[ImGuiCol_TabUnfocused] = kBgBlack;
-  c[ImGuiCol_TabUnfocusedActive] = kBgBlack;
+  // ── ヘッダ (TreeNode / Selectable / CollapsingHeader) ───────────────────
+  c[ImGuiCol_Header] = ImVec4(0.20f, 0.20f, 0.24f, 1.00f);
+  c[ImGuiCol_HeaderHovered] = kAccent;
+  c[ImGuiCol_HeaderActive] = kAccent;
 
-  // --- ヘッダ (TreeNode / Selectable) ---
-  c[ImGuiCol_Header] = kAccentDim;
-  c[ImGuiCol_HeaderHovered] = kAccentBlue;
-  c[ImGuiCol_HeaderActive] = kAccentLight;
+  // ── インジケータ ────────────────────────────────────────────────────────
+  c[ImGuiCol_CheckMark] = kAccent;
+  c[ImGuiCol_SliderGrab] = kAccent;
+  c[ImGuiCol_SliderGrabActive] = ImVec4(0.30f, 0.56f, 0.95f, 1.00f);
+  c[ImGuiCol_PlotHistogram] = kAccent;
+  c[ImGuiCol_PlotLines] = ImVec4(0.55f, 0.65f, 0.85f, 1.00f);
 
-  // --- インジケータ (Check / Slider) ---
-  c[ImGuiCol_CheckMark] = kAccentLight;
-  c[ImGuiCol_SliderGrab] = ImVec4(0.35f, 0.35f, 0.35f, 1.00f);
-  c[ImGuiCol_SliderGrabActive] = kAccentLight;
+  // ── タブ / ドッキング ───────────────────────────────────────────────────
+  c[ImGuiCol_Tab] = ImVec4(0.12f, 0.12f, 0.14f, 1.00f);
+  c[ImGuiCol_TabHovered] = kAccent;
+  c[ImGuiCol_TabSelected] = ImVec4(0.18f, 0.30f, 0.52f, 1.00f);
+  c[ImGuiCol_TabSelectedOverline] = kAccent;
+  c[ImGuiCol_TabDimmed] = ImVec4(0.10f, 0.10f, 0.12f, 1.00f);
+  c[ImGuiCol_TabDimmedSelected] = ImVec4(0.14f, 0.18f, 0.28f, 1.00f);
+  c[ImGuiCol_TabDimmedSelectedOverline] = ImVec4(0, 0, 0, 0);
+  c[ImGuiCol_DockingPreview] = ImVec4(kAccent.x, kAccent.y, kAccent.z, 0.55f);
+  c[ImGuiCol_DockingEmptyBg] = kBgDark;
 
-  // --- 境界線 (Blender風: 境界を目立たせない) ---
-  c[ImGuiCol_Separator] = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
-  c[ImGuiCol_Border] = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
+  // ── 区切り / リサイズ ───────────────────────────────────────────────────
+  c[ImGuiCol_Separator] = ImVec4(0.00f, 0.00f, 0.00f, 0.50f);
+  c[ImGuiCol_SeparatorHovered] = kAccentDim;
+  c[ImGuiCol_SeparatorActive] = kAccent;
   c[ImGuiCol_ResizeGrip] = ImVec4(0, 0, 0, 0);
+  c[ImGuiCol_ResizeGripHovered] = kAccentDim;
+  c[ImGuiCol_ResizeGripActive] = kAccent;
 
-  // =========================================================================
-  //  形状設定 (Blender-Like Solid)
-  // =========================================================================
+  // ── スクロールバー ──────────────────────────────────────────────────────
+  c[ImGuiCol_ScrollbarBg] = ImVec4(0, 0, 0, 0);
+  c[ImGuiCol_ScrollbarGrab] = ImVec4(0.24f, 0.24f, 0.27f, 1.00f);
+  c[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.30f, 0.30f, 0.34f, 1.00f);
+  c[ImGuiCol_ScrollbarGrabActive] = kAccent;
+
+  // ── 表 ──────────────────────────────────────────────────────────────────
+  c[ImGuiCol_TableHeaderBg] = ImVec4(0.14f, 0.14f, 0.16f, 1.00f);
+  c[ImGuiCol_TableBorderStrong] = kLine;
+  c[ImGuiCol_TableBorderLight] = ImVec4(0.00f, 0.00f, 0.00f, 0.25f);
+  c[ImGuiCol_TableRowBgAlt] = ImVec4(1.00f, 1.00f, 1.00f, 0.025f);
+
+  c[ImGuiCol_NavCursor] = kAccent;
+  c[ImGuiCol_DragDropTarget] = ImVec4(0.95f, 0.75f, 0.25f, 0.90f);
+
+  // ── 形状 ────────────────────────────────────────────────────────────────
+  // 角は小さく丸めるだけ。ウィンドウの角は丸めない (ドッキング時に隙間が出る)。
   s.WindowRounding = 0.0f;
-  s.FrameRounding = 2.0f;
-  s.GrabRounding = 1.0f;
-  s.TabRounding = 2.0f;
+  s.ChildRounding = 0.0f;
+  s.FrameRounding = 3.0f;
+  s.PopupRounding = 3.0f;
+  s.GrabRounding = 3.0f;
+  s.TabRounding = 3.0f;
+  s.ScrollbarRounding = 3.0f;
 
   s.WindowBorderSize = 1.0f;
-  s.FrameBorderSize = 0.0f; // 枠線ではなく色差で表現
+  s.FrameBorderSize = 0.0f; // 枠線ではなく明度差で表現する
+  s.PopupBorderSize = 1.0f;
+  s.TabBorderSize = 0.0f;
 
-  s.ItemSpacing = ImVec2(8.0f, 4.0f);
-  s.FramePadding = ImVec2(5.0f, 3.5f);
-  s.WindowTitleAlign = ImVec2(0.02f, 0.5f); // 左寄せ
+  s.WindowPadding = ImVec2(8.0f, 6.0f);
+  s.FramePadding = ImVec2(6.0f, 4.0f);
+  s.ItemSpacing = ImVec2(8.0f, 5.0f);
+  s.ItemInnerSpacing = ImVec2(5.0f, 4.0f);
+  s.IndentSpacing = 16.0f;
+  s.ScrollbarSize = 12.0f;
+  s.GrabMinSize = 10.0f;
+  s.WindowTitleAlign = ImVec2(0.0f, 0.5f); // 左寄せ
+  s.SeparatorTextBorderSize = 2.0f;
+  s.SeparatorTextPadding = ImVec2(12.0f, 3.0f);
 #endif
 }
 
 // =============================================================================
 //  エディタ設定（IO / フォント）
 // =============================================================================
+#ifdef USE_IMGUI
+namespace {
+
+// 等幅の欧文 + 日本語 + アイコンを 1 つの ImFont に合成する。
+//
+// 欧文に FiraMono (等幅)
+// を使うのは、数値のパラメータが並ぶパネルで桁が揃うため。 FiraMono
+// は日本語グリフを持たないので、IPAex ゴシックを後ろにマージして
+// 欠けた文字だけを補う
+// (マージは「先に登録したフォントに無い文字」だけが使われる)。
+//
+// ※ このプロジェクトの DX12 バックエンドは ImGui 1.92 の動的フォント
+//   (ImGuiBackendFlags_RendererHasTextures)
+//   に未対応。起動時にアトラスを焼き切る
+//   旧方式なので、焼く文字範囲を明示し、最後に Fonts->Build()
+//   を呼ぶ必要がある。
+//   範囲を渡さないと既定の欧文だけが焼かれ、日本語が全部「?」になる。
+const ImWchar *JapaneseGlyphRanges(ImGuiIO &io) {
+  // ranges は Build() まで生きている必要があるので static で持つ
+  static ImVector<ImWchar> ranges;
+  if (ranges.empty()) {
+    ImFontGlyphRangesBuilder b;
+    b.AddRanges(io.Fonts->GetGlyphRangesJapanese());
+    // GetGlyphRangesJapanese() は記号類を含まないので、UI で使うものを足す
+    b.AddText(reinterpret_cast<const char *>(
+        u8"●○◆◇■□▶◀▲▼…※→←↑↓✓×±°—─「」『』【】・"));
+    b.BuildRanges(&ranges);
+  }
+  return ranges.Data;
+}
+
+ImFont *AddEditorFont(ImGuiIO &io, float size, bool withIcons) {
+  // ── 欧文 (等幅) ──
+  ImFontConfig baseCfg;
+  baseCfg.OversampleH = 2;
+  ImFont *font = io.Fonts->AddFontFromFileTTF(
+      "Resources/Fonts/FiraMono-Medium.ttf", size, &baseCfg);
+  if (!font) {
+    // 最低限は表示できる状態を保証する (日本語は下のマージで補う)
+    ImFontConfig fallbackCfg;
+    fallbackCfg.SizePixels = size;
+    font = io.Fonts->AddFontDefault(&fallbackCfg);
+  }
+
+  // ── 日本語 ──
+  // 和文は欧文より字面が小さく見えるので 1 割ほど大きくして高さを揃える
+  ImFontConfig jpCfg;
+  jpCfg.MergeMode = true;
+  jpCfg.OversampleH = 2;
+  jpCfg.GlyphOffset = ImVec2(0.0f, 1.0f);
+  if (!io.Fonts->AddFontFromFileTTF("Resources/Fonts/ipaexg.ttf", size * 1.10f,
+                                    &jpCfg, JapaneseGlyphRanges(io))) {
+    std::cout << "[ImGuiManager] 日本語フォントが見つかりません。"
+                 "日本語は '?' で表示されます\n";
+  }
+
+  // ── アイコン (Font Awesome 5) ──
+  if (withIcons) {
+    static const ImWchar kIconRanges[] = {0xf000, 0xf8ff, 0};
+    ImFontConfig iconCfg;
+    iconCfg.MergeMode = true;
+    iconCfg.PixelSnapH = true;
+    iconCfg.GlyphOffset = ImVec2(0.0f, 1.0f);
+    iconCfg.GlyphMinAdvanceX =
+        size; // アイコン幅を揃えてメニューの文字頭を合わせる
+    io.Fonts->AddFontFromFileTTF("Resources/Fonts/Free-Solid-900.otf",
+                                 size * 0.90f, &iconCfg, kIconRanges);
+  }
+  return font;
+}
+
+} // namespace
+#endif
+
 void ImGuiManager::CustomizeEditor() {
 #ifdef USE_IMGUI
   ImGuiIO &io = ImGui::GetIO();
@@ -209,80 +313,19 @@ void ImGuiManager::CustomizeEditor() {
   // ini 保存先
   io.IniFilename = "imgui_editor.ini";
 
-  // --------- アイコン範囲 --------------------------------------------------
-  static const ImWchar kIconRanges[] = {0xf000, 0xf8ff, 0};
+  // --------- フォント ------------------------------------------------------
+  // 先頭に登録したものが既定フォントになる
+  fontNormal_ = AddEditorFont(io, kFontSizeNormal, true);
+  fontLarge_ = AddEditorFont(io, kFontSizeLarge, true);
+  fontSmall_ = AddEditorFont(io, kFontSizeSmall, false);
 
-  // =========================================================================
-  //  フォント 1 : ノーマル 14px (日本語 + Font Awesome マージ)
-  // =========================================================================
-  {
-    ImFontConfig jpCfg;
-    jpCfg.OversampleH = 2;
-    jpCfg.OversampleV = 2;
-    jpCfg.PixelSnapH = false;
-    jpCfg.MergeMode = false;
-    jpCfg.GlyphOffset = ImVec2(0.0f, 1.0f);
-
-    fontNormal_ = io.Fonts->AddFontFromFileTTF(
-        "Resources/Fonts/ipaexg.ttf", 14.0f, &jpCfg,
-        io.Fonts->GetGlyphRangesJapanese());
-
-    ImFontConfig iconCfg;
-    iconCfg.OversampleH = 1;
-    iconCfg.OversampleV = 1;
-    iconCfg.PixelSnapH = true;
-    iconCfg.MergeMode = true;
-    iconCfg.GlyphOffset = ImVec2(0.0f, 1.0f);
-
-    io.Fonts->AddFontFromFileTTF("Resources/Fonts/Free-Solid-900.otf", 13.0f,
-                                 &iconCfg, kIconRanges);
-  }
-
-  // =========================================================================
-  //  フォント 2 : ラージ 18px (ツールバー / 大見出し)
-  // =========================================================================
-  {
-    ImFontConfig jpCfg;
-    jpCfg.OversampleH = 2;
-    jpCfg.OversampleV = 2;
-    jpCfg.MergeMode = false;
-    jpCfg.GlyphOffset = ImVec2(0.0f, 1.0f);
-
-    fontLarge_ = io.Fonts->AddFontFromFileTTF(
-        "Resources/Fonts/ipaexg.ttf", 18.0f, &jpCfg,
-        io.Fonts->GetGlyphRangesJapanese());
-
-    ImFontConfig iconCfg;
-    iconCfg.OversampleH = 1;
-    iconCfg.OversampleV = 1;
-    iconCfg.PixelSnapH = true;
-    iconCfg.MergeMode = true;
-    iconCfg.GlyphOffset = ImVec2(0.0f, 2.0f);
-
-    io.Fonts->AddFontFromFileTTF("Resources/Fonts/Free-Solid-900.otf", 16.0f,
-                                 &iconCfg, kIconRanges);
-  }
-
-  // =========================================================================
-  //  フォント 3 : スモール 11px (ステータスバー / デバッグ情報)
-  // =========================================================================
-  {
-    ImFontConfig jpCfg;
-    jpCfg.OversampleH = 2;
-    jpCfg.OversampleV = 2;
-    jpCfg.MergeMode = false;
-    jpCfg.GlyphOffset = ImVec2(0.0f, 0.0f);
-
-    fontSmall_ = io.Fonts->AddFontFromFileTTF(
-        "Resources/Fonts/ipaexg.ttf", 11.0f, &jpCfg,
-        io.Fonts->GetGlyphRangesJapanese());
-  }
-
+  // バックエンドが動的フォント未対応なので、ここでアトラスを焼き切る。
+  // これを省くと ImGui_ImplDX12_NewFrame 後の最初のフレームで
+  // 「font atlas is not built」の assert で落ちる。
   io.Fonts->Build();
 
 #endif // USE_IMGUI
 }
-
 void ImGuiManager::Finalize() {
 #ifdef USE_IMGUI
   ImGui_ImplDX12_Shutdown();

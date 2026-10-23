@@ -129,7 +129,7 @@ bool SpeedCurvePanel::DrawCurveEditor(float width, float height) {
   const ImVec2 mouse = ImGui::GetMousePos();
 
   // 背景とグリッド
-  dl->AddRectFilled(rMin, rMax, IM_COL32(28, 28, 32, 255), 4.0f);
+  dl->AddRectFilled(rMin, rMax, IM_COL32(27, 27, 34, 255), 4.0f);
   dl->AddRect(rMin, rMax, IM_COL32(80, 80, 90, 200), 4.0f);
   for (float xs : {0.25f, 0.5f, 0.75f}) {
     const float px = rMin.x + xs * width;

@@ -1,6 +1,7 @@
 #ifdef USE_IMGUI
 
 #include "YEmitterGroupEditor.h"
+#include "Debugger/ImGuiManager.h"
 #include "YParticleManager.h"
 #include <IconsFontAwesome5.h>
 #include <Editor/Editor.h>
@@ -183,8 +184,8 @@ void YEmitterGroupEditor::ShowGroupList() {
     ImGui::Separator();
 
     // ＋ 新規エフェクト（目立つ位置に。名前は自動でユニーク化）
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.16f, 0.40f, 0.24f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.22f, 0.54f, 0.32f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetSuccessColor());
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGuiManager::Brighten(ImGuiManager::GetSuccessColor(), 1.3f));
     if (ImGui::Button((std::string(ICON_FA_PLUS_CIRCLE) + " 新規エフェクト").c_str(), ImVec2(-1, 0))) {
         auto& cmgr = YEmitterGroupManager::GetInstance();
         std::string base = "NewEffect", nm = base;
@@ -302,7 +303,7 @@ void YEmitterGroupEditor::ShowGroupDetail() {
     }
     ImGui::SameLine();
     bool isGroupGizmo = (selectionMode_ == SelectionMode::Group && selectedGroupName_ == group->GetName());
-    if (isGroupGizmo) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.17f, 0.36f, 0.53f, 1.0f));
+    if (isGroupGizmo) ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetAccentColor());
     if (ImGui::SmallButton("ギズモ(グループ)")) SelectGroup(group->GetName());
     if (isGroupGizmo) ImGui::PopStyleColor();
     if (ImGui::IsItemHovered())
@@ -338,27 +339,27 @@ void YEmitterGroupEditor::ShowGroupDetail() {
     };
 
     // x1
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.18f, 0.42f, 0.18f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.28f, 0.58f, 0.28f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.12f, 0.32f, 0.12f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetSuccessColor());
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGuiManager::Brighten(ImGuiManager::GetSuccessColor(), 1.3f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGuiManager::Brighten(ImGuiManager::GetSuccessColor(), 0.75f));
     if (ImGui::Button((std::string(ICON_FA_PLAY) + "x1##EAG").c_str(), ImVec2(68, 0))) emitAtPreview(1);
     ImGui::PopStyleColor(3);
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("全エミッターから 1 個ずつ発生");
     ImGui::SameLine();
 
     // x10
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.22f, 0.42f, 0.12f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.32f, 0.58f, 0.18f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.16f, 0.32f, 0.08f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetSuccessColor());
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGuiManager::Brighten(ImGuiManager::GetSuccessColor(), 1.3f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGuiManager::Brighten(ImGuiManager::GetSuccessColor(), 0.75f));
     if (ImGui::Button((std::string(ICON_FA_PLAY) + "x10##EAG").c_str(), ImVec2(76, 0))) emitAtPreview(10);
     ImGui::PopStyleColor(3);
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("全エミッターから 10 個ずつ発生");
     ImGui::SameLine();
 
     // x100 バースト
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.50f, 0.32f, 0.08f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.70f, 0.48f, 0.12f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.38f, 0.24f, 0.05f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetWarningColor());
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGuiManager::Brighten(ImGuiManager::GetWarningColor(), 1.25f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGuiManager::Brighten(ImGuiManager::GetWarningColor(), 0.75f));
     if (ImGui::Button((std::string(ICON_FA_BOLT) + "x100##EAG").c_str(), ImVec2(80, 0))) emitAtPreview(100);
     ImGui::PopStyleColor(3);
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("全エミッターから一気に 100 個バースト発生");
@@ -373,18 +374,18 @@ void YEmitterGroupEditor::ShowGroupDetail() {
         if (e && e->GetAutoEmit()) { anyAutoOn = true; break; }
     }
     ImGui::PushStyleColor(ImGuiCol_Button,
-        anyAutoOn ? ImVec4(0.15f, 0.35f, 0.55f, 1.0f) : ImVec4(0.24f, 0.24f, 0.24f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.22f, 0.48f, 0.70f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.10f, 0.28f, 0.45f, 1.0f));
+        anyAutoOn ? ImGuiManager::GetAccentColor() : ImGuiManager::GetBgDeep());
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGuiManager::Brighten(ImGuiManager::GetAccentColor(), 1.2f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGuiManager::Brighten(ImGuiManager::GetAccentColor(), 0.75f));
     if (ImGui::Button((std::string(ICON_FA_SYNC) + "自動ON##AG").c_str(), ImVec2(90, 0))) group->SetAutoEmitAll(true);
     ImGui::PopStyleColor(3);
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("全エミッターの自動発生を ON にする");
     ImGui::SameLine();
 
     // 自動 OFF
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.40f, 0.16f, 0.16f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.56f, 0.24f, 0.24f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.30f, 0.10f, 0.10f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetDangerColor());
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGuiManager::Brighten(ImGuiManager::GetDangerColor(), 1.3f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGuiManager::Brighten(ImGuiManager::GetDangerColor(), 0.75f));
     if (ImGui::Button((std::string(ICON_FA_STOP) + "自動OFF##AG").c_str(), ImVec2(96, 0))) group->SetAutoEmitAll(false);
     ImGui::PopStyleColor(3);
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("全エミッターの自動発生を OFF にする");
@@ -565,7 +566,7 @@ bool YEmitterGroupEditor::ShowEmitterRow(YEmitterGroup& group, size_t index) {
     if (ImGui::Checkbox("##Auto", &autoEmit)) emitter->SetAutoEmit(autoEmit);
 
     ImGui::TableSetColumnIndex(4);
-    if (isGizmoSelected) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.17f, 0.36f, 0.53f, 1.0f));
+    if (isGizmoSelected) ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetAccentColor());
     if (ImGui::SmallButton("G##Giz"))
         SelectEmitter(group.GetName(), (int)index, ImGui::GetIO().KeyCtrl);
     if (isGizmoSelected) ImGui::PopStyleColor();
@@ -573,8 +574,8 @@ bool YEmitterGroupEditor::ShowEmitterRow(YEmitterGroup& group, size_t index) {
 
     ImGui::TableSetColumnIndex(5);
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.6f, 0.1f, 0.1f, 0.8f));
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.3f, 0.3f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGuiManager::GetDangerColor());
+    ImGui::PushStyleColor(ImGuiCol_Text, ImGuiManager::Brighten(ImGuiManager::GetDangerColor(), 1.45f));
     if (ImGui::SmallButton((std::string(ICON_FA_TRASH) + "##Del").c_str())) deleteRequested = true;
     ImGui::PopStyleColor(3);
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("このエミッターを削除");
@@ -720,17 +721,17 @@ void YEmitterGroupEditor::ShowSelectedEmitterDetail(YParticleEmitter& emitter) {
     ImGui::Spacing();
     ImGui::Text("システムをプレビュー:"); ImGui::SameLine();
     const Vector3 pv{ previewPos_[0], previewPos_[1], previewPos_[2] };
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.18f, 0.42f, 0.18f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.28f, 0.58f, 0.28f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.12f, 0.32f, 0.12f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetSuccessColor());
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGuiManager::Brighten(ImGuiManager::GetSuccessColor(), 1.3f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGuiManager::Brighten(ImGuiManager::GetSuccessColor(), 0.75f));
     if (ImGui::SmallButton((std::string(ICON_FA_PLAY) + " x1##ED").c_str()))  emitter.FollowEmit(pv, 1);
     ImGui::SameLine();
     if (ImGui::SmallButton((std::string(ICON_FA_PLAY) + " x10##ED").c_str())) emitter.FollowEmit(pv, 10);
     ImGui::PopStyleColor(3);
     ImGui::SameLine();
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.50f, 0.32f, 0.08f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.70f, 0.48f, 0.12f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.38f, 0.24f, 0.05f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImGuiManager::GetWarningColor());
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGuiManager::Brighten(ImGuiManager::GetWarningColor(), 1.25f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGuiManager::Brighten(ImGuiManager::GetWarningColor(), 0.75f));
     if (ImGui::SmallButton((std::string(ICON_FA_BOLT) + " x100##ED").c_str())) emitter.FollowEmit(pv, 100);
     ImGui::PopStyleColor(3);
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("プレビュー位置 (%.1f, %.1f, %.1f) に発生", pv.x, pv.y, pv.z);

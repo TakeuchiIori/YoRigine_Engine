@@ -1,6 +1,7 @@
 #ifdef USE_IMGUI
 
 #include "InspectorPanel.h"
+#include "Localization/Localization.h"
 
 // Engine
 #include "../Edit/SceneGizmoLayer.h"
@@ -22,16 +23,16 @@ void InspectorPanel::DrawHeader(ObjectManager::PlacedObject &obj) {
   std::snprintf(buffer, sizeof(buffer), "%s", obj.nameTag.c_str());
 
   ImGui::SetNextItemWidth(-1.0f);
-  if (ImGui::InputTextWithHint("##nameTag", "名前 (未命名)", buffer,
+  if (ImGui::InputTextWithHint("##nameTag", TR("名前 (未命名)"), buffer,
                                sizeof(buffer))) {
     obj.nameTag = buffer;
   }
   if (ImGui::IsItemHovered()) {
-    ImGui::SetTooltip("シーン内で一意な名前。TriggerAction "
-                      "などがターゲットを参照するのに使う");
+    ImGui::SetTooltip(TR("シーン内で一意な名前。TriggerAction "
+                      "などがターゲットを参照するのに使う"));
   }
 
-  ImGui::TextDisabled("ID %d   モデル: %s", obj.id, obj.modelName.c_str());
+  ImGui::TextDisabled(TR("ID %d   モデル: %s"), obj.id, obj.modelName.c_str());
   ImGui::Separator();
 }
 
@@ -52,12 +53,12 @@ void InspectorPanel::DrawMotionEditorToggle(const ScenePanelContext &context,
   }
 
   bool enabled = motionEditor->IsEnabled();
-  if (ImGui::Checkbox("モーションエディタで編集", &enabled)) {
+  if (ImGui::Checkbox(TR("モーションエディタで編集"), &enabled)) {
     motionEditor->SetEnabled(enabled);
   }
   if (ImGui::IsItemHovered()) {
-    ImGui::SetTooltip("ON の間だけ Motion Editor "
-                      "が開き、選択中のモデルを編集対象にする");
+    ImGui::SetTooltip(TR("ON の間だけ Motion Editor "
+                      "が開き、選択中のモデルを編集対象にする"));
   }
   ImGui::Separator();
 }
@@ -77,11 +78,11 @@ void InspectorPanel::DrawTransformTab(const ScenePanelContext &context,
 
   // ── アンカーポイント (回転の旋回中心) ──
   ImGui::Separator();
-  changed |= ImGui::Checkbox("アンカーを使う", &obj.useAnchorPoint);
+  changed |= ImGui::Checkbox(TR("アンカーを使う"), &obj.useAnchorPoint);
   if (obj.useAnchorPoint) {
     changed |=
-        ImGui::DragFloat3("アンカー位置 (ローカル)", &obj.anchorPoint.x, 0.05f);
-    ImGui::TextDisabled("ヒンジ扉なら端の位置を入れる (例: 0.5, 0, 0)");
+        ImGui::DragFloat3(TR("アンカー位置 (ローカル)"), &obj.anchorPoint.x, 0.05f);
+    ImGui::TextDisabled(TR("ヒンジ扉なら端の位置を入れる (例: 0.5, 0, 0)"));
   }
 
   if (changed) {
@@ -90,18 +91,18 @@ void InspectorPanel::DrawTransformTab(const ScenePanelContext &context,
 
   // ── 配置補助 ──
   ImGui::Separator();
-  ImGui::TextDisabled("配置補助");
-  if (ImGui::Button("地面に吸着 (Ctrl+G)") && context.placement) {
+  ImGui::TextDisabled(TR("配置補助"));
+  if (ImGui::Button(TR("地面に吸着 (Ctrl+G)")) && context.placement) {
     context.placement->SnapSelectionToSurface();
   }
   ImGui::SameLine();
   const bool stamping = context.isStamping && context.isStamping();
   if (stamping) {
-    if (ImGui::Button("スタンプ配置を終了 (Esc)") && context.exitStamp) {
+    if (ImGui::Button(TR("スタンプ配置を終了 (Esc)")) && context.exitStamp) {
       context.exitStamp();
     }
   } else {
-    if (ImGui::Button("スタンプ配置 (B)") && context.startStamp) {
+    if (ImGui::Button(TR("スタンプ配置 (B)")) && context.startStamp) {
       context.startStamp();
     }
   }
@@ -121,33 +122,33 @@ void InspectorPanel::DrawRenderingTab(const ScenePanelContext &context,
   ObjectManager &objectManager = *context.scene->objectManager;
 
   // ── 乗算カラー (マテリアルとは別に、オブジェクト単位で色を掛ける) ──
-  if (ImGui::ColorEdit4("乗算カラー", &obj.color.x,
+  if (ImGui::ColorEdit4(TR("乗算カラー"), &obj.color.x,
                         ImGuiColorEditFlags_AlphaBar |
                             ImGuiColorEditFlags_AlphaPreviewHalf)) {
     objectManager.ApplyObjectColor(obj);
   }
   ImGui::SameLine();
-  if (ImGui::SmallButton("白に戻す")) {
+  if (ImGui::SmallButton(TR("白に戻す"))) {
     obj.color = {1.0f, 1.0f, 1.0f, 1.0f};
     objectManager.ApplyObjectColor(obj);
   }
 
   // ── UV ──
   ImGui::Separator();
-  if (ImGui::DragFloat2("UV スケール", &obj.uvScale.x, 0.01f, 0.0f, 100.0f,
+  if (ImGui::DragFloat2(TR("UV スケール"), &obj.uvScale.x, 0.01f, 0.0f, 100.0f,
                         "%.3f")) {
     objectManager.ApplyObjectUV(obj);
   }
-  if (ImGui::SliderFloat("UV ランダム化", &obj.uvStochastic, 0.0f, 1.0f,
+  if (ImGui::SliderFloat(TR("UV ランダム化"), &obj.uvStochastic, 0.0f, 1.0f,
                          "%.2f")) {
     objectManager.ApplyObjectUV(obj);
   }
   if (ImGui::IsItemHovered()) {
-    ImGui::SetTooltip("タイル単位でハッシュ回転・オフセットを掛け、"
-                      "タイリングの繰り返し感を消す");
+    ImGui::SetTooltip(TR("タイル単位でハッシュ回転・オフセットを掛け、"
+                      "タイリングの繰り返し感を消す"));
   }
   ImGui::SameLine();
-  if (ImGui::SmallButton("UV リセット")) {
+  if (ImGui::SmallButton(TR("UV リセット"))) {
     obj.uvScale = {1.0f, 1.0f};
     obj.uvStochastic = 0.0f;
     objectManager.ApplyObjectUV(obj);
@@ -155,14 +156,14 @@ void InspectorPanel::DrawRenderingTab(const ScenePanelContext &context,
 
   // ── 描画フラグ ──
   ImGui::Separator();
-  ImGui::Checkbox("ビューポートに表示", &obj.visible);
-  ImGui::Checkbox("アウトライン", &obj.outlineEnabled);
-  ImGui::Checkbox("影を落とす", &obj.castShadow);
+  ImGui::Checkbox(TR("ビューポートに表示"), &obj.visible);
+  ImGui::Checkbox(TR("アウトライン"), &obj.outlineEnabled);
+  ImGui::Checkbox(TR("影を落とす"), &obj.castShadow);
   if (ImGui::IsItemHovered()) {
-    ImGui::SetTooltip("巨大な地面はシャドウマップを埋めて影がチラつくので OFF "
-                      "にするとよい");
+    ImGui::SetTooltip(TR("巨大な地面はシャドウマップを埋めて影がチラつくので OFF "
+                      "にするとよい"));
   }
-  ImGui::Checkbox("クリックで選択できる", &obj.pickable);
+  ImGui::Checkbox(TR("クリックで選択できる"), &obj.pickable);
 }
 
 //=============================================================================
@@ -173,11 +174,12 @@ void InspectorPanel::DrawHierarchyTab(const ScenePanelContext &context,
   ObjectManager &objectManager = *context.scene->objectManager;
 
   const std::string parentLabel =
-      obj.parentID >= 0 ? ("オブジェクト " + std::to_string(obj.parentID))
-                        : std::string("なし");
+      obj.parentID >= 0
+          ? (std::string(TR("オブジェクト")) + " " + std::to_string(obj.parentID))
+          : std::string(TR("なし"));
 
-  if (ImGui::BeginCombo("親", parentLabel.c_str())) {
-    if (ImGui::Selectable("なし", obj.parentID == -1)) {
+  if (ImGui::BeginCombo(TR("親"), parentLabel.c_str())) {
+    if (ImGui::Selectable(TR("なし"), obj.parentID == -1)) {
       objectManager.ClearParent(obj.id);
     }
 
@@ -185,13 +187,13 @@ void InspectorPanel::DrawHierarchyTab(const ScenePanelContext &context,
       if (!candidate || candidate->id == obj.id) {
         continue;
       }
-      const std::string label =
-          "オブジェクト " + std::to_string(candidate->id) + " (" +
-          candidate->modelName + ")";
+      const std::string label = std::string(TR("オブジェクト")) + " " +
+                                std::to_string(candidate->id) + " (" +
+                                candidate->modelName + ")";
 
       if (objectManager.HasCircularReference(obj.id, candidate->id)) {
         ImGui::BeginDisabled();
-        ImGui::Selectable((label + "  ※循環参照").c_str(), false);
+        ImGui::Selectable((label + "  " + TR("※循環参照")).c_str(), false);
         ImGui::EndDisabled();
         continue;
       }
@@ -204,7 +206,7 @@ void InspectorPanel::DrawHierarchyTab(const ScenePanelContext &context,
 
   const auto children = objectManager.GetChildObjects(obj.id);
   ImGui::Separator();
-  ImGui::Text("子オブジェクト: %d", static_cast<int>(children.size()));
+  ImGui::Text(TR("子オブジェクト: %d"), static_cast<int>(children.size()));
   for (auto *child : children) {
     if (child) {
       ImGui::BulletText("%d : %s", child->id, child->modelName.c_str());
@@ -223,7 +225,7 @@ void InspectorPanel::Draw(const ScenePanelContext &context) {
   auto *obj = context.scene->objectManager->GetObjectById(
       context.scene->selector->GetPrimaryId());
   if (!obj) {
-    ImGui::TextDisabled("オブジェクトが選択されていません");
+    ImGui::TextDisabled(TR("オブジェクトが選択されていません"));
     return;
   }
 
@@ -234,23 +236,23 @@ void InspectorPanel::Draw(const ScenePanelContext &context) {
     return;
   }
 
-  if (ImGui::BeginTabItem("トランスフォーム")) {
+  if (ImGui::BeginTabItem(loc::TrId("トランスフォーム"))) {
     DrawTransformTab(context, *obj);
     ImGui::EndTabItem();
   }
-  if (ImGui::BeginTabItem("描画")) {
+  if (ImGui::BeginTabItem(loc::TrId("描画"))) {
     DrawRenderingTab(context, *obj);
     ImGui::EndTabItem();
   }
-  if (ImGui::BeginTabItem("マテリアル")) {
+  if (ImGui::BeginTabItem(loc::TrId("マテリアル"))) {
     materialPanel_.Draw(context);
     ImGui::EndTabItem();
   }
-  if (ImGui::BeginTabItem("コライダー")) {
+  if (ImGui::BeginTabItem(loc::TrId("コライダー"))) {
     colliderPanel_.DrawInspectorSection(context, *obj);
     ImGui::EndTabItem();
   }
-  if (ImGui::BeginTabItem("階層")) {
+  if (ImGui::BeginTabItem(loc::TrId("階層"))) {
     DrawHierarchyTab(context, *obj);
     ImGui::EndTabItem();
   }

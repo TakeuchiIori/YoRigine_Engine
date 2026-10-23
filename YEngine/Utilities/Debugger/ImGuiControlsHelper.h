@@ -13,12 +13,12 @@
 // =============================================================================
 //  ImGuiControlsHelper
 //  デバッグエディターで使う UI コントロール群
-//  テーマ : "Black Gold" に統一したウィジェット集
+//  テーマ : エディタ共通のアクセント色 (ImGuiManager) に統一したウィジェット集
 //
 //  新機能:
-//    ・DragXxx / Slider の Gold カラーオーバーライド付きバリアント
+//    ・DragXxx / Slider のアクセント色オーバーライド付きバリアント
 //    ・XYZ 軸色分け (X=赤系/Y=緑系/Z=青系) の Vec3 ウィジェット
-//    ・GoldCollapsingHeader (ImGui 1.89+ SeparatorText 使用)
+//    ・AccentCollapsingHeader (ImGui 1.89+ SeparatorText 使用)
 //    ・DisabledGroup ヘルパー
 // =============================================================================
 class ImGuiControlsHelper
@@ -143,11 +143,11 @@ public:
 	static bool CheckboxWithReset(const char* label, bool* value, bool defaultValue);
 
 	// =========================================================================
-	//  "Black Gold" テーマ ヘルパー  ← NEW
+	//  テーマ ヘルパー (アクセント色)
 	// =========================================================================
 
-	// ゴールド色 CollapsingHeader (SeparatorText ベース)
-	static bool GoldCollapsingHeader(const char* label,
+	// アクセント色の CollapsingHeader
+	static bool AccentCollapsingHeader(const char* label,
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen);
 
 	// Disabled グループ (灰色で操作不能)

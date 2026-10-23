@@ -1,6 +1,7 @@
 #ifdef USE_IMGUI
 
 #include "ModelBrowser.h"
+#include "Localization/Localization.h"
 
 // C++
 #include <filesystem>
@@ -60,10 +61,10 @@ void ModelBrowser::ScanModelFolder()
 void ModelBrowser::Draw()
 {
     // ── フォルダ操作 ──────────────────────────────────────────
-    if (ImGui::Button("フォルダ更新")) ScanModelFolder();
+    if (ImGui::Button(TR("フォルダ更新"))) ScanModelFolder();
     ImGui::SameLine();
-    if (ImGui::Button("フォルダ変更...")) { /* TODO */ }
-    ImGui::Text("現在のフォルダ: %s", modelFolderPath_.c_str());
+    if (ImGui::Button(TR("フォルダ変更..."))) { /* TODO */ }
+    ImGui::Text(TR("現在のフォルダ: %s"), modelFolderPath_.c_str());
     ImGui::Separator();
 
     // ── 検索バー（Ctrl+F トグル） ─────────────────────────────
@@ -71,7 +72,7 @@ void ModelBrowser::Draw()
         showSearchBar_ = !showSearchBar_;
 
     if (showSearchBar_) {
-        if (ImGui::CollapsingHeader("検索バー##ModelSearch",
+        if (ImGui::CollapsingHeader(TR("検索バー##ModelSearch"),
                                     ImGuiTreeNodeFlags_FramePadding)) {
             ImGui::SetNextItemAllowOverlap();
             ImGui::PushItemWidth(-1);
@@ -101,7 +102,7 @@ void ModelBrowser::Draw()
                 const char* payloadPath = modelFiles_[idx].c_str();
                 // ペイロード（データ）としてファイルパスを送信
                 ImGui::SetDragDropPayload("DND_MODEL_PATH", payloadPath, strlen(payloadPath) + 1);
-                ImGui::Text("配置: %s", modelNames_[idx].c_str());
+                ImGui::Text(TR("配置: %s"), modelNames_[idx].c_str());
                 ImGui::EndDragDropSource();
             }
         }
@@ -110,9 +111,9 @@ void ModelBrowser::Draw()
 
     // ── 配置ボタン ────────────────────────────────────────────
     if (IsValidIndex(selectedIndex_)) {
-        if (ImGui::Button("シーンに配置する") && placeCallback_)
+        if (ImGui::Button(TR("シーンに配置する")) && placeCallback_)
             placeCallback_(modelFiles_[selectedIndex_]);
-        ImGui::Text("選択中: %s", modelNames_[selectedIndex_].c_str());
+        ImGui::Text(TR("選択中: %s"), modelNames_[selectedIndex_].c_str());
     }
 }
 

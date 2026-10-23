@@ -3,6 +3,7 @@
 #include "StampMode.h"
 
 #include "Collision/Core/CollisionManager.h"
+#include "Editor/Editor.h"
 #include "Matrix4x4.h"
 #include "Object3D/Object3dCommon.h"
 #include "Object3D/ObjectManager.h"
@@ -50,9 +51,13 @@ void StampMode::Update(const ImVec2 &viewportPos, const ImVec2 &viewportSize) {
   if (!active_)
     return;
 
-  // 終了キー (Esc / 右クリック)
+  Editor *editor = Editor::GetInstance();
+
+  // 終了キー (Esc / ビューポート上の右クリック)
+  // 右クリックはパネルのコンテキストメニューでも使うので、ゲームビュー上に限る
   if (ImGui::IsKeyPressed(ImGuiKey_Escape) ||
-      ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+      (editor->IsGameViewHovered() &&
+       ImGui::IsMouseClicked(ImGuiMouseButton_Right))) {
     Exit();
     return;
   }
@@ -68,13 +73,10 @@ void StampMode::Update(const ImVec2 &viewportPos, const ImVec2 &viewportSize) {
   if (io.WantTextInput)
     return;
 
-  // ビューポート内かどうか判定
-  ImVec2 mouse = ImGui::GetMousePos();
-  const bool inView =
-      mouse.x >= viewportPos.x && mouse.x <= viewportPos.x + viewportSize.x &&
-      mouse.y >= viewportPos.y && mouse.y <= viewportPos.y + viewportSize.y;
-
-  if (!inView) {
+  // ゲームビューの絵がホバーされているときだけゴーストを出し、クリックを受ける。
+  // 矩形の内外判定だと、手前に浮いたパネルの上でもゴーストが追従し、
+  // パネルのボタンを押すと奥に物が置かれてしまう。
+  if (!editor->IsGameViewHovered()) {
     lastHitValid_ = false;
     return;
   }
@@ -92,9 +94,8 @@ void StampMode::Update(const ImVec2 &viewportPos, const ImVec2 &viewportSize) {
 
   // 左クリックで実体化。
   // WantCaptureMouse はチェックしない: ゲームビュー自体が ImGui
-  // ウィンドウ内のため 常に true になり、全クリックが弾かれてしまう
-  // (ObjectSelector も同様の理由で外している)。 ビューポート範囲チェックは
-  // inView で済ませているのでそれで十分。
+  // ウィンドウ内のため 常に true になり、全クリックが弾かれてしまう。
+  // 手前のウィンドウとの前後関係は上の IsGameViewHovered() で済んでいる。
   if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && lastHitValid_) {
     PlaceAt(lastHitPos_);
   }

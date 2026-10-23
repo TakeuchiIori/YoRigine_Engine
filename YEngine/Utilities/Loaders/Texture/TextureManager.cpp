@@ -6,10 +6,49 @@
 #include <mutex>
 #include <assert.h>
 #include <d3dx12.h>
+#include <filesystem>
 
 // シングルトンインスタンスの初期化
 std::unique_ptr<TextureManager> TextureManager::instance = nullptr;
 std::once_flag TextureManager::initInstanceFlag;
+std::unordered_set<std::string> TextureManager::noMipPaths_;
+std::mutex TextureManager::noMipMutex_;
+
+/// <summary>
+/// ミップ無し読み込みの登録
+/// </summary>
+void TextureManager::MarkNoMips(const std::string& filePath)
+{
+	std::lock_guard<std::mutex> lk(noMipMutex_);
+	noMipPaths_.insert(filePath);
+}
+
+/// <summary>
+/// ミップを生成すべきか判定（登録済み or ベイク済みテキストのサイドカーがあれば生成しない）
+/// </summary>
+bool TextureManager::ShouldGenerateMips(const std::string& filePath)
+{
+	{
+		std::lock_guard<std::mutex> lk(noMipMutex_);
+		if (noMipPaths_.contains(filePath)) return false;
+	}
+	std::error_code ec;
+	return !std::filesystem::exists(filePath + ".meta.json", ec);
+}
+
+/// <summary>
+/// アップロード用画像の作成（圧縮形式・ミップ無し指定の画像はそのまま使う）
+/// </summary>
+HRESULT TextureManager::BuildMipChain(const std::string& filePath,
+	DirectX::ScratchImage& image, DirectX::ScratchImage& outImages)
+{
+	if (DirectX::IsCompressed(image.GetMetadata().format) || !ShouldGenerateMips(filePath)) {
+		outImages = std::move(image);
+		return S_OK;
+	}
+	return DirectX::GenerateMipMaps(image.GetImages(), image.GetImageCount(),
+		image.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, outImages);
+}
 
 /// <summary>
 /// シングルトンインスタンスの取得
@@ -93,11 +132,7 @@ void TextureManager::LoadTexture(const std::string& filePath)
 
 	// ミップマップの生成
 	DirectX::ScratchImage mipImages{};
-	if (DirectX::IsCompressed(image.GetMetadata().format)) {
-		mipImages = std::move(image);
-	} else {
-		hr = DirectX::GenerateMipMaps(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipImages);
-	}
+	hr = BuildMipChain(filePath, image, mipImages);
 	assert(SUCCEEDED(hr));
 
 	// テクスチャデータの追加
@@ -145,13 +180,8 @@ void TextureManager::ReloadTexture(const std::string& filePath)
 	if (image.GetMetadata().width == 0 || image.GetMetadata().height == 0) return;
 
 	DirectX::ScratchImage mipImages{};
-	if (DirectX::IsCompressed(image.GetMetadata().format)) {
-		mipImages = std::move(image);
-	} else {
-		hr = DirectX::GenerateMipMaps(image.GetImages(), image.GetImageCount(),
-			image.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipImages);
-		if (FAILED(hr)) return;
-	}
+	hr = BuildMipChain(filePath, image, mipImages);
+	if (FAILED(hr)) return;
 
 	// 既存の SRV インデックスを維持し、リソースだけ差し替えて SRV を作り直す
 	// （GPUハンドル不変＝参照側は再取得不要で最新を映す）

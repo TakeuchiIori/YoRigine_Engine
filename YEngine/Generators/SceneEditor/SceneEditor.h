@@ -79,10 +79,12 @@ public:
   ScenePlacementService &GetPlacementService() { return placement_; }
 
 #ifdef USE_IMGUI
-  // シーンエディタ (オブジェクト選択・ギズモ) が有効かどうか。
-  // 「モデル操作」ウィンドウが閉じている、または Editor 全体が非表示なら
-  // false。
-  bool IsSceneEditorActive() const;
+  // シーン編集のキーボードショートカット (Delete / F / Ctrl+D …) を
+  // シーンエディタが受け取るべきか。
+  // ゲームビューにマウスが乗っている / ゲームビューかシーンのパネルに
+  // フォーカスがあるときだけ true。どれも ImGui から毎フレーム取る状態で、
+  // 「有効/無効」のフラグは持たない。
+  bool IsSceneKeyboardTarget() const;
 #endif
 
 private:

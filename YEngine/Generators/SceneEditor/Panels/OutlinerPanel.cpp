@@ -1,6 +1,7 @@
 #ifdef USE_IMGUI
 
 #include "OutlinerPanel.h"
+#include "Localization/Localization.h"
 
 // Engine
 #include "../Edit/ScenePlacementService.h"
@@ -174,10 +175,10 @@ void OutlinerPanel::Draw(const ScenePanelContext &context) {
   ObjectSelector &selector = *context.scene->selector;
 
   // ── ヘッダ ──
-  ImGui::Text("オブジェクト: %d  (選択中 %d)", objectManager.GetObjectCount(),
+  ImGui::Text(TR("オブジェクト: %d  (選択中 %d)"), objectManager.GetObjectCount(),
               static_cast<int>(selector.GetSelectedIds().size()));
 
-  searchBox_.Draw("##outlinerSearch", "名前で絞り込み...", -1.0f);
+  searchBox_.Draw("##outlinerSearch", TR("名前で絞り込み..."), -1.0f);
   ImGui::Separator();
 
   // ── 一覧 ──
@@ -200,11 +201,11 @@ void OutlinerPanel::Draw(const ScenePanelContext &context) {
   if (!hasSelection) {
     ImGui::BeginDisabled();
   }
-  if (ImGui::Button("選択を削除")) {
+  if (ImGui::Button(TR("選択を削除"))) {
     DeleteSelection(context);
   }
   ImGui::SameLine();
-  if (ImGui::Button("選択を複製")) {
+  if (ImGui::Button(TR("選択を複製"))) {
     const std::vector<int> ids(selector.GetSelectedIds().begin(),
                                selector.GetSelectedIds().end());
     for (const int id : ids) {
@@ -216,18 +217,18 @@ void OutlinerPanel::Draw(const ScenePanelContext &context) {
   }
 
   ImGui::SameLine();
-  if (ImGui::Button("全て削除")) {
+  if (ImGui::Button(TR("全て削除"))) {
     ImGui::OpenPopup("##confirmClearAll");
   }
   if (ImGui::BeginPopup("##confirmClearAll")) {
-    ImGui::TextUnformatted("シーン内の全オブジェクトを削除します。");
-    if (ImGui::Button("削除する")) {
+    ImGui::TextUnformatted(TR("シーン内の全オブジェクトを削除します。"));
+    if (ImGui::Button(TR("削除する"))) {
       objectManager.ClearAllObjects();
       selector.ClearSelection();
       ImGui::CloseCurrentPopup();
     }
     ImGui::SameLine();
-    if (ImGui::Button("やめる")) {
+    if (ImGui::Button(TR("やめる"))) {
       ImGui::CloseCurrentPopup();
     }
     ImGui::EndPopup();

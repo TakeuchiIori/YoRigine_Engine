@@ -167,15 +167,7 @@ void TexturePreloader::WorkerThread(
 
         // ── ミップマップ生成（ここも並列OK） ───────────────
         DirectX::ScratchImage mipImages;
-        if (DirectX::IsCompressed(image.GetMetadata().format)) {
-            mipImages = std::move(image);
-        }
-        else {
-            hr = DirectX::GenerateMipMaps(
-                image.GetImages(), image.GetImageCount(),
-                image.GetMetadata(),
-                DirectX::TEX_FILTER_SRGB, 0, mipImages);
-        }
+        hr = TextureManager::BuildMipChain(filePath, image, mipImages);
 
         if (FAILED(hr)) {
             Logger("TexturePreloader: ミップマップ生成失敗: " + filePath);
