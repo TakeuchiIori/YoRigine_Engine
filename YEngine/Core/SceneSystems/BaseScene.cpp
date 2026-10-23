@@ -1,26 +1,7 @@
 #include "BaseScene.h"
 #include <Object3D/BaseObjectManager.h>
 #include <Object3D/Object3dCommon.h>
-
-void BaseScene::InitializeCommon() {
-  YoRigine::GameTime::Initialize();
-  YoRigine::CollisionManager::GetInstance()->Initialize();
-
-  // モデルマニピュレータ
-  YoRigine::SceneEditor::GetInstance()->LoadScene(sceneName_);
-  YoRigine::SceneEditor::GetInstance()->SetCamera(sceneCamera_.get());
-}
-
-void BaseScene::UpdateCommon() {
-  YoRigine::GameTime::Update();
-  YoRigine::SceneEditor::GetInstance()->Update();
-  YoRigine::CollisionManager::GetInstance()->Update();
-  YoRigine::LightManager::GetInstance()->UpdateShadowMatrix(sceneCamera_.get());
-}
-
-void BaseScene::DrawCommonObject() {
-  Object3dCommon::GetInstance()->DrawPreference();
-}
+#include <SceneEditor/SceneEditor.h>
 
 void BaseScene::DrawCommonShadow() {
   Object3dCommon::GetInstance()->ShadowDrawPreference();
@@ -35,8 +16,6 @@ void BaseScene::DrawCommonShadow() {
   BaseObjectManager::GetInstance()->DrawShadowAllInstanced();
   YoRigine::SceneEditor::GetInstance()->DrawShadow();
 }
-
-void BaseScene::DrawCommonParticles() {}
 
 // ============================================================
 // 登録オブジェクトの一括更新

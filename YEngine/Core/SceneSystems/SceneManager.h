@@ -59,6 +59,11 @@ public:
 	}
 
 private:
+	///************************* 内部処理 *************************///
+	// シーン更新後に行うエンジン共通システムの更新
+	void UpdateEngineSystems(YoRigine::Camera* camera);
+
+private:
 	///************************* メンバ変数 *************************///
 	static std::unique_ptr<SceneManager> instance;
 	static std::once_flag initInstanceFlag;

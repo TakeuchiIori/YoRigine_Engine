@@ -8,6 +8,7 @@
 #include "WinApp/WinApp.h"
 #include "Debugger/Logger.h"
 #include <SceneSystems/SceneManager.h>
+#include <SceneEditor/SceneEditor.h>
 #include <Debugger/ImGuiManager.h>
 #include <IconsFontAwesome5.h>
 #include "Localization/Localization.h"

@@ -13,8 +13,8 @@ public:
 	void Update() override;
 	void Draw() override;
 	bool IsFinished() const override;
-	void StartTransition()override;
-	void EndTransition()override;
+	void StartReveal() override;
+	void StartCover() override;
 
 private:
 	std::unique_ptr<Fade> fade_;
