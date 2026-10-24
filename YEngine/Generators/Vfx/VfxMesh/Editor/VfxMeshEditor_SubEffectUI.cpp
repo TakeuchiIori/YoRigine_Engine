@@ -106,174 +106,127 @@ namespace YoRigine {
         }
     }
 
-    void VfxMeshEditor::DrawElementsSection()
+    // 一覧・見出しに出すエレメント名（表示名があればそれ、無ければ「形状 × マテリアル」/ 特殊エフェクト名）
+    std::string VfxMeshEditor::ElementDisplayName(const VfxElement& sub)
+    {
+        if (!sub.label.empty()) return sub.label;
+        if (sub.kind == VfxElementKind::Composed) {
+            const auto* gd = GeometryRegistry::Instance().FindDesc(sub.GeometryType());
+            const auto* md = MaterialRegistry::Instance().FindDesc(sub.MaterialType());
+            return std::string(gd ? gd->displayName : "Shape") + " × " + (md ? md->displayName : "?");
+        }
+        const VfxElementDesc* desc = VfxMeshRegistry::Instance().FindDesc(sub.type);
+        return desc ? desc->displayName : VfxElementTypeName(sub.type);
+    }
+
+    // エレメント追加メニュー（BeginPopup の中で呼ぶ）。追加したら true
+    bool VfxMeshEditor::DrawAddElementMenuItems()
     {
         auto* sel = Selected();
-        if (!sel) return;
+        if (!sel) return false;
         auto& subs = sel->asset.elements;
-
         auto& geomReg = GeometryRegistry::Instance();
         auto& matReg  = MaterialRegistry::Instance();
 
-        ImGui::TextDisabled("形状（Geometry×Material）を好きな数だけ追加できます。特殊エフェクトも混在可。");
-        ImGui::Spacing();
-
-        // ── 追加メニュー（形状 / 特殊） ──
-        if (ImGui::Button("＋ 追加")) ImGui::OpenPopup("##addElement");
-        if (ImGui::BeginPopup("##addElement")) {
-            ImGui::TextDisabled("形状 (Geometry × Material)");
-            ImGui::Separator();
-            for (const auto& gd : geomReg.GetAll()) {
-                if (ImGui::MenuItem(gd.displayName)) {
-                    VfxEffectAsset b = sel->asset;
-                    VfxElement e;
-                    e.kind = VfxElementKind::Composed;
-                    e.geom = geomReg.MakeDefault(gd.type);
-                    e.mat  = matReg.MakeDefault(VfxMaterialType::Noise);
-                    subs.push_back(std::move(e));
-                    CommitChange(b, "形状を追加");
-                }
-            }
-            ImGui::Spacing();
-            ImGui::TextDisabled("特殊エフェクト (専用メッシュ)");
-            ImGui::Separator();
-            auto addMono = [&](VfxElementType t, const char* name) {
-                if (ImGui::MenuItem(name)) {
-                    VfxEffectAsset b = sel->asset;
-                    VfxElement e;
-                    e.kind = VfxElementKind::Monolithic;
-                    e.type = t;
-                    if (auto* d = VfxMeshRegistry::Instance().FindDesc(t); d && d->applyDefaults)
-                        d->applyDefaults(e);
-                    subs.push_back(std::move(e));
-                    CommitChange(b, "特殊エフェクトを追加");
-                }
-            };
-            addMono(VfxElementType::LightningBolt, "Lightning (稲妻)");
-            addMono(VfxElementType::LightVolume,   "LightVolume (光ボリューム)");
-            ImGui::EndPopup();
-        }
-        if (subs.empty()) {
-            ImGui::SameLine();
-            ImGui::TextDisabled("(エレメントなし)");
-        }
+        bool added = false;
+        ImGui::TextDisabled("形状 (Geometry × Material)");
         ImGui::Separator();
+        for (const auto& gd : geomReg.GetAll()) {
+            if (ImGui::MenuItem(gd.displayName)) {
+                VfxEffectAsset b = sel->asset;
+                VfxElement e;
+                e.kind = VfxElementKind::Composed;
+                e.geom = geomReg.MakeDefault(gd.type);
+                e.mat  = matReg.MakeDefault(VfxMaterialType::Noise);
+                subs.push_back(std::move(e));
+                CommitChange(b, "形状を追加");
+                added = true;
+            }
+        }
+        ImGui::Spacing();
+        ImGui::TextDisabled("特殊エフェクト (専用メッシュ)");
+        ImGui::Separator();
+        auto addMono = [&](VfxElementType t, const char* name) {
+            if (ImGui::MenuItem(name)) {
+                VfxEffectAsset b = sel->asset;
+                VfxElement e;
+                e.kind = VfxElementKind::Monolithic;
+                e.type = t;
+                if (auto* d = VfxMeshRegistry::Instance().FindDesc(t); d && d->applyDefaults)
+                    d->applyDefaults(e);
+                subs.push_back(std::move(e));
+                CommitChange(b, "特殊エフェクトを追加");
+                added = true;
+            }
+        };
+        addMono(VfxElementType::LightningBolt, "Lightning (稲妻)");
+        addMono(VfxElementType::LightVolume,   "LightVolume (光ボリューム)");
+        return added;
+    }
+
+    // エレメント 1 個分のインスペクタ（共通設定 → 形状 / 特殊エフェクト → このエレメントだけの動き）
+    void VfxMeshEditor::DrawElementInspector(VfxElement& sub)
+    {
+        auto* sel = Selected();
+        if (!sel) return;
+
+        // ── 表示名（一覧に出る名前） ──
+        {
+            char labelBuf[128] = {};
+            strncpy_s(labelBuf, sizeof(labelBuf), sub.label.c_str(), _TRUNCATE);
+            ImGui::SetNextItemWidth(220);
+            VfxEffectAsset b = sel->asset;
+            if (ImGui::InputTextWithHint("表示名##sub", ElementDisplayName(sub).c_str(), labelBuf, sizeof(labelBuf))) {
+                sub.label = labelBuf;
+                CommitChange(b, "エレメント 表示名");
+            }
+            YEditorWidget::ItemTooltip("空にすると「形状 × マテリアル」の名前になります");
+        }
+
+        {
+            VfxEffectAsset b = sel->asset;
+            if (YEditorWidget::DragVec3("オフセット##sub", sub.offset, 0.05f, -50.f, 50.f, "%.2f"))
+                CommitChange(b, "エレメント オフセット");
+        }
+
+        {
+            // ブレンドモード上書き（HDRで加算が重なって飽和する場合に Normal/Screen 等へ）
+            // 先頭 "既定" = マテリアル本来のブレンド（内部値 -1）
+            static const char* kBlendNames[] = {
+                "既定(マテリアル)", "None", "Normal", "Add", "Subtract", "Multiply", "Screen"
+            };
+            int cur = sub.blendModeOverride + 1; // -1(既定)→0
+            if (cur < 0 || cur >= IM_ARRAYSIZE(kBlendNames)) cur = 0;
+            ImGui::SetNextItemWidth(200);
+            VfxEffectAsset b = sel->asset;
+            if (ImGui::Combo("ブレンド##sub", &cur, kBlendNames, IM_ARRAYSIZE(kBlendNames))) {
+                sub.blendModeOverride = cur - 1; // 0→-1(既定)
+                CommitChange(b, "エレメント ブレンドモード");
+            }
+            YEditorWidget::ItemTooltip(
+                "加算(Add)で重なると光が飽和して真っ白になる場合、Normal/Screen に変えると合成を抑えられます。\n"
+                "既定(マテリアル)は各エフェクト本来のブレンド。");
+        }
+
+        ImGui::Spacing();
 
         auto commitFn = [this](const VfxEffectAsset& before, const char* label) {
             CommitChange(before, label);
         };
-
-        int removeIdx = -1;
-        int dupIdx = -1;
-        for (int i = 0; i < static_cast<int>(subs.size()); ++i) {
-            ImGui::PushID(i);
-            auto& sub = subs[i];
-            const bool composed = (sub.kind == VfxElementKind::Composed);
-
-            // タイトルは「形状名」で分かりやすく（Composed）／種類名（Monolithic）
-            const char* typeName;
-            if (composed) {
-                const auto* gd = geomReg.FindDesc(sub.GeometryType());
-                typeName = gd ? gd->displayName : "Shape";
-            } else {
-                const VfxElementDesc* desc = VfxMeshRegistry::Instance().FindDesc(sub.type);
-                typeName = desc ? desc->displayName : VfxElementTypeName(sub.type);
+        if (sub.kind == VfxElementKind::Composed) {
+            DrawComposedElementBody(sub);
+        } else {
+            if (sub.type == VfxElementType::LightVolume) {
+                ImGui::Checkbox("OBB ワイヤーフレーム表示", &showVolumeDebug_);
             }
-
-            std::string title = std::string(sub.enabled ? (ICON_FA_CHECK " ") : (ICON_FA_BAN " ")) + typeName;
-            if (composed) {
-                if (const auto* md = matReg.FindDesc(sub.MaterialType()))
-                    title += std::string("  ×  ") + md->displayName;
-            }
-            if (!sub.label.empty()) title += "  \"" + sub.label + "\"";
-            title += "###subHeader";
-
-            if (YEditorWidget::Section sec{ title.c_str() }) {
-                ImGui::Indent();
-
-                {
-                    VfxEffectAsset b = sel->asset;
-                    if (ImGui::Checkbox("有効##sub", &sub.enabled)) CommitChange(b, "エレメント 有効切替");
-                }
-                ImGui::SameLine();
-                if (ImGui::SmallButton("複製##sub")) dupIdx = i;
-                YEditorWidget::ItemTooltip("このエレメントをパラメータごとコピーして追加");
-                ImGui::SameLine();
-                if (ImGui::SmallButton("削除##sub")) removeIdx = i;
-
-                {
-                    char labelBuf[128] = {};
-                    strncpy_s(labelBuf, sizeof(labelBuf), sub.label.c_str(), _TRUNCATE);
-                    ImGui::SetNextItemWidth(200);
-                    VfxEffectAsset b = sel->asset;
-                    if (ImGui::InputText("表示名##sub", labelBuf, sizeof(labelBuf),
-                                         ImGuiInputTextFlags_EnterReturnsTrue)) {
-                        sub.label = labelBuf;
-                        CommitChange(b, "エレメント 表示名");
-                    }
-                }
-
-                {
-                    VfxEffectAsset b = sel->asset;
-                    if (YEditorWidget::DragVec3("オフセット##sub", sub.offset, 0.05f, -50.f, 50.f, "%.2f"))
-                        CommitChange(b, "エレメント オフセット");
-                }
-
-                {
-                    // ブレンドモード上書き（HDRで加算が重なって飽和する場合に Normal/Screen 等へ）
-                    // 先頭 "既定" = マテリアル本来のブレンド（内部値 -1）
-                    static const char* kBlendNames[] = {
-                        "既定(マテリアル)", "None", "Normal", "Add", "Subtract", "Multiply", "Screen"
-                    };
-                    int cur = sub.blendModeOverride + 1; // -1(既定)→0
-                    if (cur < 0 || cur >= IM_ARRAYSIZE(kBlendNames)) cur = 0;
-                    ImGui::SetNextItemWidth(200);
-                    VfxEffectAsset b = sel->asset;
-                    if (ImGui::Combo("ブレンド##sub", &cur, kBlendNames, IM_ARRAYSIZE(kBlendNames))) {
-                        sub.blendModeOverride = cur - 1; // 0→-1(既定)
-                        CommitChange(b, "エレメント ブレンドモード");
-                    }
-                    YEditorWidget::ItemTooltip(
-                        "加算(Add)で重なると光が飽和して真っ白になる場合、Normal/Screen に変えると合成を抑えられます。\n"
-                        "既定(マテリアル)は各エフェクト本来のブレンド。");
-                }
-
-                ImGui::Spacing();
-
-                if (composed) {
-                    // 形状 × マテリアルの編集
-                    DrawComposedElementBody(sub);
-                } else {
-                    // 特殊エフェクト（Lightning / LightVolume）は専用 UI
-                    if (sub.type == VfxElementType::LightVolume) {
-                        ImGui::Checkbox("OBB ワイヤーフレーム表示", &showVolumeDebug_);
-                        if (showVolumeDebug_) ImGui::TextColored(ImVec4(1, 1, 0, 1), "  > OBB ワイヤーフレーム ON");
-                    }
-                    ImGui::Spacing();
-                    VfxMeshRegistry::Instance().DrawUI(sub.type, sub, sel->asset, commitFn);
-                }
-
-                YEditorWidget::SectionHeader("このエレメントのモジュール");
-                ImGui::TextDisabled("  ※エフェクト全体のモジュール（Moduleタブ）に加算で適用されます");
-                DrawModuleListUI(sub.modules, false, "エレメントモジュール編集");
-
-                ImGui::Unindent();
-            }
-            ImGui::Separator();
-            ImGui::PopID();
+            ImGui::Spacing();
+            VfxMeshRegistry::Instance().DrawUI(sub.type, sub, sel->asset, commitFn);
         }
 
-        if (dupIdx >= 0) {
-            VfxEffectAsset b = sel->asset;
-            VfxElement copy = subs[dupIdx];
-            subs.insert(subs.begin() + dupIdx + 1, std::move(copy));
-            CommitChange(b, "エレメント複製");
-        }
-        if (removeIdx >= 0) {
-            VfxEffectAsset b = sel->asset;
-            subs.erase(subs.begin() + removeIdx);
-            CommitChange(b, "エレメント削除");
-        }
+        ImGui::Spacing();
+        YEditorWidget::SectionHeader("このエレメントだけの動き");
+        ImGui::TextDisabled("  ※エフェクト全体の動き（スタックの「全体の動き」）に足し合わせて適用されます");
+        DrawModuleListUI(sub.modules, false, "エレメントモジュール編集");
     }
 
 } // namespace YoRigine

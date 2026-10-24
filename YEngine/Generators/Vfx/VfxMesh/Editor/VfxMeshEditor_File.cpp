@@ -2,6 +2,7 @@
 #include "VfxMeshEditor.h"
 
 #include "Debugger/Logger.h"
+#include <imgui.h>
 #include "Core/Editor/Widgets/YEditorWidget_Notify.h"
 
 #include <algorithm>
@@ -150,6 +151,36 @@ namespace YoRigine {
     }
 
     void VfxMeshEditor::CommitChange(const VfxEffectAsset& before, const char* label)
+    {
+        auto* sel = Selected();
+        if (!sel) return;
+
+        // ドラッグやテキスト入力の途中（項目がアクティブ）は確定を待ち、離した時点で 1 件にまとめる。
+        // 以前はドラッグ中の毎フレーム 1 件ずつ積んでいたため、1 回のドラッグで履歴（上限 100）が埋まっていた。
+        if (ImGui::IsAnyItemActive()) {
+            if (!pendingCommit_) {
+                pendingCommit_ = true;
+                pendingBefore_ = before;
+                pendingLabel_ = label;
+                pendingIndex_ = selectedIndex_;
+            }
+            sel->isDirty = true;
+            if (previewTrailEmitter_) previewTrailEmitter_->SetAsset(sel->asset);
+            return;
+        }
+        PushHistory(before, label);
+    }
+
+    void VfxMeshEditor::FlushPendingCommit()
+    {
+        if (!pendingCommit_ || ImGui::IsAnyItemActive()) return;
+        pendingCommit_ = false;
+        // 編集中に別のエフェクトへ切り替わっていたら捨てる（SelectEffect で履歴も消えている）
+        if (pendingIndex_ != selectedIndex_) return;
+        PushHistory(pendingBefore_, pendingLabel_.c_str());
+    }
+
+    void VfxMeshEditor::PushHistory(const VfxEffectAsset& before, const char* label)
     {
         auto* sel = Selected();
         if (!sel) return;

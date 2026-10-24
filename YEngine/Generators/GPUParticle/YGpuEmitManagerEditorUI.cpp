@@ -853,14 +853,15 @@ namespace {
 		auto row = [&](GpuItem item, int index, const char* label, const std::function<void()>& summary) {
 			ImGui::PushID(static_cast<int>(item) * 100 + index);
 			ImGui::TableNextRow();
+			// 要約を先に描き、名前（Selectable）を行の最後に描く（右クリックメニューが「直前の項目」を対象にするため）
+			ImGui::TableSetColumnIndex(1);
+			if (summary) summary();
 			ImGui::TableSetColumnIndex(0);
 			const bool selected = (st.item == item && st.itemIndex == index);
 			if (ImGui::Selectable(label, selected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap)) {
 				st.item = item;
 				st.itemIndex = index;
 			}
-			ImGui::TableSetColumnIndex(1);
-			if (summary) summary();
 			ImGui::PopID();
 		};
 		auto text = [](const std::string& s) { return [s] { ImGui::TextDisabled("%s", s.c_str()); }; };

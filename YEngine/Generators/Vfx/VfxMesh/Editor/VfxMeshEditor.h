@@ -73,13 +73,21 @@ namespace YoRigine {
         void DrawListPanel();
         void DrawEditPanel();
         void DrawTrailSection();
-        // エレメント（エレメントインスタンス）: 一覧＋追加/複製/削除
-        void DrawElementsSection();
+        // スタック（項目一覧）とインスペクタ（選んだ 1 件の詳細）
+        void DrawStackPanel();
+        void DrawInspectorPanel();
+        void DrawPlaybackControls();
+        // エレメント: 追加メニューの中身 / 1 個分のインスペクタ / 表示名
+        bool DrawAddElementMenuItems();
+        void DrawElementInspector(VfxElement& sub);
+        static std::string ElementDisplayName(const VfxElement& sub);
         // 形状（Composed: Geometry × Material）1個分の編集 UI
         void DrawComposedElementBody(VfxElement& sub);
         // モジュールリスト編集（全体用とエレメント個別用で共用。showTarget=false で対象コンボを隠す）
         void DrawModuleListUI(std::vector<VfxModule>& modules, bool showTarget, const char* commitLabel);
-        void DrawModuleSection();
+        // モジュール 1 個分の編集 / 種類を選んで追加するメニュー（BeginPopup ごと）
+        bool DrawModuleBody(VfxModule& m, bool showTarget);
+        bool DrawAddModuleMenu(std::vector<VfxModule>& modules, const char* popupId);
         static void ApplyDefaultElementModules(VfxElement& sub);
         void DrawPreviewSection();
         void DrawNewEffectDialog();
@@ -105,6 +113,9 @@ namespace YoRigine {
         std::string MakeUniqueEffectName(const std::string& base) const;
 
         void CommitChange(const VfxEffectAsset& before, const char* label);
+        // ドラッグ中にまとめていた変更を、操作が終わった時点で 1 件の履歴にする
+        void FlushPendingCommit();
+        void PushHistory(const VfxEffectAsset& before, const char* label);
 
         // アセットの elements と previewElements_ の構成（数と種類）を同期させる。
         // 追加/削除/種類変更/Undo などで構成が変わったら作り直す。
@@ -195,6 +206,18 @@ namespace YoRigine {
 
         bool showNewDialog_ = false;
         int  deleteRequestIndex_ = -1;   // 削除確認中のエフェクト（-1 = なし）
+
+        // スタックで選んでいる項目
+        enum class VfxStackItem { Preview, Trail, Element, Module };
+        VfxStackItem stackItem_ = VfxStackItem::Trail;
+        int          stackIndex_ = -1;
+        float        stackWidth_ = 260.0f;
+
+        // ドラッグ中の変更（離した時点で 1 件の履歴にする）
+        bool           pendingCommit_ = false;
+        VfxEffectAsset pendingBefore_;
+        std::string    pendingLabel_;
+        int            pendingIndex_ = -1;
         bool showRescanConfirm_ = false;
         float listWidth_ = 200.0f;
         char  listFilter_[64] = "";

@@ -135,6 +135,7 @@ namespace YoRigine {
 
 		selectedIndex_ = index;
 		history_.Clear();
+		pendingCommit_ = false;
 
 		previewTimer_ = 0.f;
 		previewPlaying_ = false;
@@ -179,6 +180,7 @@ namespace YoRigine {
 
 		DrawNewEffectDialog();
 		DrawConfirmDialogs();
+		FlushPendingCommit();
 	}
 
 	void VfxMeshEditor::DrawConfirmDialogs()
@@ -314,68 +316,51 @@ namespace YoRigine {
 		if (ImGui::Button(ICON_FA_REDO)) history_.Redo();
 		ImGui::EndDisabled();
 		YEditorWidget::ItemTooltip("やり直し (Ctrl+Y)");
+		// 再生操作は常にここに出す（以前は画面の一番下で、項目が多いとスクロールしないと届かなかった）
+		ImGui::SameLine(0, 16);
+		ImGui::TextDisabled("|");
+		ImGui::SameLine(0, 16);
+		DrawPlaybackControls();
 		ImGui::SameLine(0, 16);
 		if (sel->isDirty) ImGui::TextColored(ImVec4(1.0f, 0.65f, 0.2f, 1.0f), "* 未保存");
 		else              ImGui::TextDisabled("保存済み");
 		YEditorWidget::ItemTooltip(("保存先: " + sel->filePath).c_str());
 		ImGui::Separator();
 
+		// 名前（Enter で確定。JSON のファイル名も合わせて変わる）と寿命無限
+		// 入力中は ImGui が内部の文字列を使うので、毎フレーム写しても打っている文字は消えない
 		strncpy_s(nameBuffer_, asset.name.c_str(), sizeof(nameBuffer_));
-		ImGui::SetNextItemWidth(-1);
-		VfxEffectAsset before = asset;
-		if (ImGui::InputText("##effectname", nameBuffer_, sizeof(nameBuffer_), ImGuiInputTextFlags_EnterReturnsTrue)) {
+		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.5f);
+		if (ImGui::InputText("名前##effectname", nameBuffer_, sizeof(nameBuffer_), ImGuiInputTextFlags_EnterReturnsTrue)) {
+			VfxEffectAsset before = asset;
 			asset.name = nameBuffer_;
 			CommitChange(before, "名前変更");
 			RenameCurrentFile(nameBuffer_);
 		}
-		ImGui::SameLine(0, 4); ImGui::TextDisabled("名前");
-
-		// 寿命無限（バフエリア等、Stop するまで消えないエフェクト）
+		YEditorWidget::ItemTooltip("Enter で確定（JSON のファイル名も変わります）");
+		ImGui::SameLine(0, 16);
 		{
-			VfxEffectAsset bLoop = asset;
-			if (ImGui::Checkbox("寿命を無限にする (ループし続ける)", &asset.loopForever)) {
+			const bool prev = asset.loopForever;
+			if (ImGui::Checkbox("寿命を無限にする", &asset.loopForever)) {
+				VfxEffectAsset bLoop = asset;
+				bLoop.loopForever = prev;
 				CommitChange(bLoop, "寿命無限 切替");
 			}
-			ImGui::SameLine(0, 6);
-			ImGui::TextDisabled(asset.loopForever ? "(無限: Stop まで持続)" : "(ワンショット/Lifetime に従う)");
+			YEditorWidget::ItemTooltip("ON: Stop するまで消えない（バフエリア等） / OFF: ワンショット（Lifetime に従う）");
 		}
 		ImGui::Separator();
 
-		if (YEditorWidget::TabBar tabBar{"##vfxTabs"}) {
-			// Trail タブ
-			{
-				std::string label = std::string(asset.useTrail ? (ICON_FA_CIRCLE " ") : "   ") + "Trail###tab_Trail";
-				if (YEditorWidget::Tab t{label.c_str()}) {
-					VfxEffectAsset b = asset;
-					if (ImGui::Checkbox("この効果を有効化", &asset.useTrail)) CommitChange(b, "Trail 有効切替");
-					ImGui::Separator();
-					if (asset.useTrail) DrawTrailSection();
-					else                ImGui::TextDisabled("(無効) — 上のチェックで有効化");
-				}
-			}
-
-			// エレメントタブ
-			{
-				std::string slabel = std::string(asset.elements.empty() ? "   " : (ICON_FA_CIRCLE " "))
-					+ "エレメント (" + std::to_string(asset.elements.size()) + ")###tab_elements";
-				if (YEditorWidget::Tab t{slabel.c_str()}) {
-					DrawElementsSection();
-				}
-			}
-
-			// Module タブ
-			{
-				std::string mlabel = std::string(asset.modules.empty() ? "   " : (ICON_FA_CIRCLE " "))
-					+ "Module###tab_Module";
-				if (YEditorWidget::Tab t{mlabel.c_str()}) {
-					DrawModuleSection();
-				}
-			}
-		}
-		ImGui::Separator();
-
-		DrawPreviewSection();
+		// 左: スタック（項目一覧） / 右: インスペクタ（選んだ 1 件だけ）
+		ImGui::BeginChild("##vfxStack", ImVec2(stackWidth_, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
+		stackWidth_ = ImGui::GetWindowWidth();
+		DrawStackPanel();
+		ImGui::EndChild();
+		ImGui::SameLine();
+		ImGui::BeginChild("##vfxInspector", ImVec2(0, 0), ImGuiChildFlags_Borders);
+		DrawInspectorPanel();
+		ImGui::EndChild();
 	}
+
 
 	void VfxMeshEditor::DrawNewEffectDialog()
 	{
