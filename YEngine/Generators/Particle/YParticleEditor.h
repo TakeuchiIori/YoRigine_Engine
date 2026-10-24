@@ -1,128 +1,122 @@
 #pragma once
 
 #ifdef USE_IMGUI
-#include <json.hpp>
-#include <string>
 #include "FileOperations/FileBrowser.h"
+#include "Vector3.h"
+#include "YParticleSystemInspector.h"
+#include <json.hpp>
+#include <memory>
+#include <string>
+#include <unordered_map>
+
+class YParticleSystem;
 
 /// <summary>
-/// YParticleSystem用のエディタクラス
-/// システムの作成、編集、保存/読込を提供
+/// CPU パーティクル（YParticleSystem）のエディタ。
+///
+///   ┌ ツールバー: 保存 / Undo / Redo / テスト発生 ────────────────┐
+///   ├ システム一覧 ┬ スタック（モジュール） ┬ インスペクタ ─────────┤
+///
+/// ・Ctrl+S
+/// で読み込み元ファイルへ上書き保存（バンドルなら中の同名システムだけ差し替え）
+/// ・編集は全て Undo / Redo できる（システムごとに履歴を持つ）
+/// ・結果は画面右下の通知に出る
 /// </summary>
 class YParticleEditor {
 public:
-	//=================================================================
-	// シングルトン
-	//=================================================================
+  static YParticleEditor &GetInstance() {
+    static YParticleEditor instance;
+    return instance;
+  }
 
-	static YParticleEditor& GetInstance() {
-		static YParticleEditor instance;
-		return instance;
-	}
+  YParticleEditor(const YParticleEditor &) = delete;
+  YParticleEditor &operator=(const YParticleEditor &) = delete;
 
-	YParticleEditor(const YParticleEditor&) = delete;
-	YParticleEditor& operator=(const YParticleEditor&) = delete;
+  /// メインエディタウィンドウを表示（Editor の GameUI パネル内で呼ばれる）
+  void ShowEditorWindow();
 
-	//=================================================================
-	// エディタウィンドウ
-	//=================================================================
-
-	/// <summary>
-	/// メインエディタウィンドウを表示
-	/// </summary>
-	void ShowEditorWindow();
-
-	//=================================================================
-	// ファイル操作
-	//=================================================================
-
-	bool SaveAllSystemsToFile(const std::string& filePath);
-	bool LoadAllSystemsFromFile(const std::string& filePath);
-	bool SaveSystemToFile(const std::string& systemName, const std::string& filePath);
-	bool LoadSystemFromFile(const std::string& filePath);
-
-	//=================================================================
-	// JSON変換
-	//=================================================================
-
-	nlohmann::json SaveAllSystemsToJson() const;
-	void LoadAllSystemsFromJson(const nlohmann::json& json);
-	nlohmann::json SaveSystemToJson(const std::string& systemName) const;
-	void LoadSystemFromJson(const nlohmann::json& json);
-
-	//=================================================================
-	// エディタ状態
-	//=================================================================
-
-	void SetSelectedSystem(const std::string& systemName) { selectedSystemName_ = systemName; }
-	const std::string& GetSelectedSystem() const { return selectedSystemName_; }
+  void SetSelectedSystem(const std::string &systemName) {
+    selectedSystemName_ = systemName;
+  }
+  const std::string &GetSelectedSystem() const { return selectedSystemName_; }
 
 private:
-	YParticleEditor();
-	~YParticleEditor() = default;
+  YParticleEditor();
+  ~YParticleEditor() = default;
 
-	//=================================================================
-	// 内部ヘルパー関数
-	//=================================================================
+  //=================================================================
+  // 画面の部品
+  //=================================================================
 
-	void ShowSystemCreationUI();
-	void ShowSystemListUI();
-	void ShowSystemDetailUI();
+  void DrawMenuBar();
+  void DrawToolbar(YParticleSystem *system);
+  void DrawSystemList();
+  void DrawPopups();
+  void HandleShortcuts(YParticleSystem *system);
+  void UpdateTestEmit(YParticleSystem *system);
 
-	/// <summary>
-	/// ファイル操作UI（FileBrowser 版）
-	/// </summary>
-	void ShowFileOperationsUI();
+  //=================================================================
+  // ファイル操作
+  //=================================================================
 
-	/// <summary>
-	/// 保存/読み込み通知トーストを描画（タイマーが残っている間だけ表示）
-	/// </summary>
-	void ShowSaveNotification();
+  /// 選択中システムを保存する。読み込み元があればそこへ、無ければ「名前を付けて保存」を開く
+  void SaveSelected();
 
-	/// <summary>
-	/// 保存通知をセット
-	/// </summary>
-	/// <param name="success">保存成功かどうか</param>
-	/// <param name="message">表示するメッセージ</param>
-	void SetNotification(bool success, const std::string& message);
+  /// system を path へ保存する。path が既存のバンドル（"systems" 配列を持つ
+  /// JSON）なら
+  /// その中の同名システムだけを差し替え、他のシステムやグループは触らない
+  bool SaveSystemIntoFile(YParticleSystem &system, const std::string &path);
 
-	//=================================================================
-	// メンバ変数
-	//=================================================================
+  /// 単体ファイル / バンドル / 全システム一括ファイル のどれでも読み込む
+  bool LoadFile(const std::string &path);
 
-	std::string selectedSystemName_;
-	char newSystemNameBuffer_[128] = "";
-	int newSystemMaxParticles_ = 1000;
+  /// 全システムを 1 ファイルへ（旧形式 {"version","systems":[...]}）
+  bool SaveAllSystemsToFile(const std::string &path);
 
-	float systemListWidth_ = 200.0f;
+  //=================================================================
+  // ヘルパー
+  //=================================================================
 
-	// JSONファイルのデフォルトディレクトリ
-	const std::string jsonDirectory_ = "Resources/Json/YParticleSystems/";
+  YParticleSystem *GetSelectedSystemPtr();
+  YParticleSystemInspector &GetInspector(const std::string &systemName);
+  std::string MakeUniqueSystemName(const std::string &base) const;
+  void OpenSaveAs(const std::string &defaultFileName);
 
-	//=================================================================
-	// FileBrowser（Save / Load / Single-Save / Single-Load）
-	//=================================================================
+  //=================================================================
+  // 状態
+  //=================================================================
 
-	YoRigine::FileBrowser saveAllBrowser_;
-	YoRigine::FileBrowser loadAllBrowser_;
-	YoRigine::FileBrowser saveSingleBrowser_;
-	YoRigine::FileBrowser loadSingleBrowser_;
+  std::string selectedSystemName_;
 
-	bool showSaveAllPopup_ = false;
-	bool showLoadAllPopup_ = false;
-	bool showSaveSinglePopup_ = false;
-	bool showLoadSinglePopup_ = false;
+  // システムごとの編集状態（Undo 履歴・未保存判定）。切り替えても履歴が消えない
+  std::unordered_map<std::string, std::unique_ptr<YParticleSystemInspector>>
+      inspectors_;
 
-	// ポップアップ内の新規ファイル名バッファ（各ブラウザ共用）
-	char saveAsNameBuf_[256] = "";
+  float listWidth_ = 200.0f;
+  char listFilter_[64] = "";
 
-	//=================================================================
-	// 保存完了トースト通知
-	//=================================================================
+  // 新規作成 / 削除確認
+  bool showNewDialog_ = false;
+  char newNameBuffer_[128] = "";
+  int newMaxParticles_ = 1000;
+  bool showDeleteConfirm_ = false;
 
-	float       saveNotifyTimer_ = 0.0f;	  // 残り表示時間（秒）
-	bool        saveNotifySuccess_ = true;    // true=成功 / false=失敗
-	std::string saveNotifyMessage_;           // 表示するメッセージ文字列
+  // テスト発生（エディタ上で見た目を確認するため、その場で粒を出す）
+  int testEmitCount_ = 30;
+  Vector3 testEmitPos_ = {0.0f, 1.0f, 0.0f};
+  bool testEmitLoop_ = false;
+  float testEmitInterval_ = 0.5f;
+  float testEmitTimer_ = 0.0f;
+
+  // ファイルダイアログ
+  const std::string jsonDirectory_ = "Resources/Json/YParticleSystems/";
+  YoRigine::FileBrowser saveAsBrowser_;
+  YoRigine::FileBrowser loadBrowser_;
+  YoRigine::FileBrowser saveAllBrowser_;
+  bool showSaveAsPopup_ = false;
+  bool showLoadPopup_ = false;
+  bool showSaveAllPopup_ = false;
+  char saveAsNameBuf_[256] = "";
 };
 
 #endif // USE_IMGUI

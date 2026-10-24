@@ -1,6 +1,7 @@
 #pragma once
 #include "../../IParticleModule.h"
 #include "../../../YParticleModuleFactory.h"
+#include "../../ModuleSummary.h"
 
 /// <summary>
 /// 寿命(age)に応じて透明度をフェードアウト
@@ -12,6 +13,7 @@ public:
     void DrawEditor() override;
     std::string GetName() const override { return "フェードアウト"; }
     std::string GetTypeName() const override { return "UpdateFadeOut"; }
+    std::string GetSummary()  const override { return FormatSummary("寿命 %.0f%%〜%.0f%%", fadeStart_ * 100.0f, fadeEnd_ * 100.0f); }
 
     void SaveToJson(nlohmann::json& json) const override;
     void LoadFromJson(const nlohmann::json& json) override;

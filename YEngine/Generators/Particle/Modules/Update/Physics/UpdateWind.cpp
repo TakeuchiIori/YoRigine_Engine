@@ -1,9 +1,14 @@
 #include "UpdateWind.h"
 #include <cmath>
 
+void UpdateWind::OnFrameBegin(float dt)
+{
+    // 突風の時間はフレームごとに 1 回だけ進める（粒子ごとに進めると粒子数に比例して速くなる）
+    timeAccum_ += dt;
+}
+
 void UpdateWind::OnUpdate(ParticleAttribute* attrs, uint32_t index, float dt)
 {
-    timeAccum_ += dt;
     // ガスト：sin 関数で周期的な強さ変化
     float gustMult = 1.0f + gustStrength_ * std::sin(timeAccum_ * 2.3f + attrs[index].phase);
 

@@ -1,6 +1,7 @@
 #pragma once
 #include "../../IParticleModule.h"
 #include "../../../YParticleModuleFactory.h"
+#include "../../ModuleSummary.h"
 
 
 class UpdateVelocity : public IUpdateModule
@@ -10,6 +11,7 @@ public:
     void DrawEditor() override;
     std::string GetName() const override { return "速度"; }
     std::string  GetTypeName() const override { return "UpdateVelocity"; }
+    std::string GetSummary()  const override { return FormatSummary(isRandom_ ? "ランダム (%.1f, %.1f, %.1f)" : "(%.1f, %.1f, %.1f)", velocity_.x, velocity_.y, velocity_.z); }
 
     void SaveToJson(nlohmann::json& json) const override;
     void LoadFromJson(const nlohmann::json& json) override;

@@ -1,6 +1,7 @@
 #pragma once
 #include "../../IParticleModule.h"
 #include "../../../YParticleModuleFactory.h"
+#include "../../ModuleSummary.h"
 
 /// <summary>
 /// 空気抵抗・摩擦を追加
@@ -12,6 +13,7 @@ public:
     void DrawEditor() override;
     std::string GetName() const override { return "ドラッグ"; }
     std::string GetTypeName() const override { return "UpdateDrag"; }
+    std::string GetSummary()  const override { return FormatSummary("係数 %.2f", dragCoefficient_); }
 
     void SaveToJson(nlohmann::json& json) const override;
     void LoadFromJson(const nlohmann::json& json) override;

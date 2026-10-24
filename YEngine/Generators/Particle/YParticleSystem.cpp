@@ -2,47 +2,15 @@
 
 #include <Loaders/Texture/TextureManager.h>
 
-//------------------ モジュールのインクルード ------------------//
-// Spawnモジュール
-#include "Modules/Spawn/Color/SpawnRandomColor.h"
-
-#include "Modules/Spawn/Life/SpawnLifeTime.h"
-
-#include "Modules/Spawn/Movement/SpawnConeVelocity.h"
-#include "Modules/Spawn/Movement/SpawnRadialVelocity.h"
-#include "Modules/Spawn/Movement/SpawnVelocity.h"
-
-#include "Modules/Spawn/Transform/SpawnRandomScale.h"
-#include "Modules/Spawn/Transform/SpawnRandomRotate.h"
-
-#include "Modules/Spawn/UV/SpawnUV.h"
-
-// Updateモジュール
-#include "Modules/Update/Physics/UpdateGravity.h"
-#include "Modules/Update/Physics/UpdateAttractor.h"
-#include "Modules/Update/Physics/UpdateCollision.h"
-#include "Modules/Update/Physics/UpdateDrag.h"
-
-#include "Modules/Update/Movement/UpdateOrbital.h"
-#include "Modules/Update/Movement/UpdateSpiralConverge.h"
-#include "Modules/Update/Movement/UpdateVelocity.h"
-
-#include "Modules/Update/Color/UpdateColor.h"
-#include "Modules/Update/Color/UpdateColorGradient.h"
-#include "Modules/Update/Color/UpdateFadeOut.h"
-
-#include "Modules/Update/Random/UpdateNoise.h"
-
-#include "Modules/Update/Animation/UpdatePulse.h"
-
-#include "Modules/Update/Transform/UpdateRotation.h"
-#include "Modules/Update/Transform/UpdateScale.h"
-
-#include "Modules/Update/UV/UpdateUVScroll.h"
-#include "Modules/Update/UV/UpdateUVFlicker.h"
+#include "YParticleModuleFactory.h"
+#include "Debugger/Logger.h"
+#include <algorithm>
+#include <cctype>
+#include <cfloat>
 
 #ifdef USE_IMGUI
 #include "imgui.h"
+#include <IconsFontAwesome5.h>
 #endif
 
 
@@ -97,6 +65,14 @@ void YParticleSystem::DeleteUpdateModule(const std::shared_ptr<IUpdateModule>& m
 }
 void YParticleSystem::Update(float deltaTime)
 {
+	// 有効なモジュールだけを集め、フレーム単位の処理（共有時間など）を 1 回ずつ進める
+	activeUpdateModules_.clear();
+	for (auto& module : updateModules_) {
+		if (!module->IsEnabled()) continue;
+		module->OnFrameBegin(deltaTime);
+		activeUpdateModules_.push_back(module.get());
+	}
+
 	for (uint32_t i = 0; i < maxParticles_; ++i) {
 		auto& attr = attributes_[i];
 		if (!attr.isActive) continue;
@@ -106,7 +82,7 @@ void YParticleSystem::Update(float deltaTime)
 
 		// 不滅粒は寿命で死なず、モジュール更新だけ受け続ける（Persistent 用）
 		if (attr.immortal) {
-			for (auto& module : updateModules_) {
+			for (auto* module : activeUpdateModules_) {
 				module->OnUpdate(attributes_.data(), i, deltaTime);
 			}
 			continue;
@@ -114,7 +90,7 @@ void YParticleSystem::Update(float deltaTime)
 
 		// 寿命チェック（死亡の瞬間に OnDeath フックを発火 → サブエミッタ等）
 		if (attr.currentTime >= attr.lifeTime) {
-			for (auto& module : updateModules_) {
+			for (auto* module : activeUpdateModules_) {
 				module->OnDeath(attributes_.data(), i);
 			}
 			attr.isActive = false;
@@ -122,7 +98,7 @@ void YParticleSystem::Update(float deltaTime)
 		}
 
 		// モジュールの更新
-		for (auto& module : updateModules_) {
+		for (auto* module : activeUpdateModules_) {
 			module->OnUpdate(attributes_.data(), i, deltaTime);
 		}
 	}
@@ -158,7 +134,7 @@ void YParticleSystem::Emit(const Vector3& position, int count, bool prewarmAge, 
 
 		// ── Spawn モジュールを適用して初期状態を確定 ─────────────────
 		for (auto& module : spawnModules_) {
-			module->OnSpawn(attributes_.data(), index);
+			if (module->IsEnabled()) module->OnSpawn(attributes_.data(), index);
 		}
 
 		// Spawn モジュール適用後に initialScale/initialColor を確定
@@ -248,10 +224,151 @@ std::shared_ptr<IParticleModule> YParticleSystem::GetModule(const std::string& m
 	return nullptr;
 }
 
-#ifdef USE_IMGUI
-void YParticleSystem::ShowEditor()
+//=================================================================
+// モジュールの並べ替え（エディタ用）
+//=================================================================
+
+namespace {
+
+	template <class T>
+	void MoveElement(std::vector<T>& v, size_t from, size_t to) {
+		if (from >= v.size() || to >= v.size() || from == to) return;
+		T item = std::move(v[from]);
+		v.erase(v.begin() + from);
+		v.insert(v.begin() + to, std::move(item));
+	}
+
+} // namespace
+
+void YParticleSystem::MoveSpawnModule(size_t from, size_t to) { MoveElement(spawnModules_, from, to); }
+void YParticleSystem::MoveUpdateModule(size_t from, size_t to) { MoveElement(updateModules_, from, to); }
+
+void YParticleSystem::InsertSpawnModule(size_t at, std::shared_ptr<ISpawnModule> module)
 {
-	ImGui::Text("システム: %s", name_.c_str());
+	if (!module) return;
+	module->Initialize(maxParticles_);
+	at = (std::min)(at, spawnModules_.size());
+	spawnModules_.insert(spawnModules_.begin() + at, std::move(module));
+}
+
+void YParticleSystem::InsertUpdateModule(size_t at, std::shared_ptr<IUpdateModule> module)
+{
+	if (!module) return;
+	module->Initialize(maxParticles_);
+	at = (std::min)(at, updateModules_.size());
+	updateModules_.insert(updateModules_.begin() + at, std::move(module));
+}
+
+//=================================================================
+// JSON（保存・読み込みはここに一本化）
+//=================================================================
+
+namespace {
+
+	template <class TModule>
+	nlohmann::json SaveModuleList(const std::vector<std::shared_ptr<TModule>>& modules, const nlohmann::json& unknown)
+	{
+		nlohmann::json arr = nlohmann::json::array();
+		for (const auto& m : modules) {
+			nlohmann::json mj;
+			mj["type"] = m->GetTypeName();
+			mj["name"] = m->GetName();
+			// 既定（有効）は書かない＝既存ファイルの差分を増やさない
+			if (!m->IsEnabled()) mj["enabled"] = false;
+			m->SaveToJson(mj["data"]);
+			arr.push_back(std::move(mj));
+		}
+		// 読み込めなかったモジュールも消さずに書き戻す（エディタで保存し直しても失われない）
+		for (const auto& u : unknown) arr.push_back(u);
+		return arr;
+	}
+
+} // namespace
+
+void YParticleSystem::SaveToJson(nlohmann::json& json) const
+{
+	json["name"]              = name_;
+	json["maxParticles"]      = maxParticles_;
+	json["texture"]           = textureFilePath_;
+	json["isRelative"]        = isRelative_;
+	json["billboardType"]     = GetBillboardTypeAsUInt();
+	json["BlendMode"]         = static_cast<int>(blendMode_);
+	json["Lighting"]          = IsEnableLight();
+	json["softParticle"]      = softParticle_;
+	json["softFadeDistance"]  = softFadeDistance_;
+	json["emissiveIntensity"] = emissiveIntensity_;
+	json["mesh"]["type"]      = currentMeshType_;
+	json["mesh"]["params"]    = { meshParams_[0], meshParams_[1], meshParams_[2], meshParams_[3] };
+	json["spawnModules"]      = SaveModuleList(spawnModules_, unknownSpawnModules_);
+	json["updateModules"]     = SaveModuleList(updateModules_, unknownUpdateModules_);
+}
+
+void YParticleSystem::LoadFromJson(const nlohmann::json& json)
+{
+	// 同名システムの再読込や Undo で二重追加しないよう、モジュールは必ず作り直す
+	ClearModules();
+
+	// テクスチャ・メッシュは変わったときだけ作り直す（Undo のたびに GPU リソースを作り直さないため）
+	if (json.contains("texture") && json["texture"].get<std::string>() != textureFilePath_) {
+		SetTexture(json["texture"]);
+	}
+	if (json.contains("isRelative"))        isRelative_ = json["isRelative"];
+	if (json.contains("billboardType"))     billboardType_ = static_cast<BillboardType>(json["billboardType"].get<uint32_t>());
+	if (json.contains("BlendMode"))         blendMode_ = static_cast<BlendMode>(json["BlendMode"].get<int>());
+	if (json.contains("Lighting")) {
+		const bool on = json["Lighting"].get<bool>();
+		lightSetting_.enableDirectionalLight = on;
+		lightSetting_.enablePointLight       = on;
+		lightSetting_.enableSpotLight        = on;
+	}
+	if (json.contains("softParticle"))      softParticle_ = json["softParticle"];
+	if (json.contains("softFadeDistance"))  softFadeDistance_ = json["softFadeDistance"];
+	if (json.contains("emissiveIntensity")) emissiveIntensity_ = json["emissiveIntensity"];
+
+	if (json.contains("mesh")) {
+		const auto& meshJson = json["mesh"];
+		if (meshJson.contains("type") && meshJson.contains("params")) {
+			const int type = meshJson["type"];
+			bool same = (type == currentMeshType_) && meshJson["params"].is_array();
+			for (size_t i = 0; same && i < 4 && i < meshJson["params"].size(); ++i) {
+				same = (meshJson["params"][i].get<float>() == meshParams_[i]);
+			}
+			if (!same || !mesh_) SetMeshType(type, meshJson["params"]);
+		}
+	}
+
+	auto& factory = YParticleModuleFactory::GetInstance();
+	if (json.contains("spawnModules")) {
+		for (const auto& mj : json["spawnModules"]) {
+			auto module = factory.CreateSpawnModule(mj.value("type", ""));
+			if (!module) {
+				unknownSpawnModules_.push_back(mj);
+				Logger("YParticleSystem[" + name_ + "]: 未登録の生成モジュール \"" + mj.value("type", "") + "\" を保持して読み飛ばしました");
+				continue;
+			}
+			if (mj.contains("data")) module->LoadFromJson(mj["data"]);
+			module->SetEnabled(mj.value("enabled", true));
+			AddSpawnModule(module);
+		}
+	}
+	if (json.contains("updateModules")) {
+		for (const auto& mj : json["updateModules"]) {
+			auto module = factory.CreateUpdateModule(mj.value("type", ""));
+			if (!module) {
+				unknownUpdateModules_.push_back(mj);
+				Logger("YParticleSystem[" + name_ + "]: 未登録の更新モジュール \"" + mj.value("type", "") + "\" を保持して読み飛ばしました");
+				continue;
+			}
+			if (mj.contains("data")) module->LoadFromJson(mj["data"]);
+			module->SetEnabled(mj.value("enabled", true));
+			AddUpdateModule(module);
+		}
+	}
+}
+
+#ifdef USE_IMGUI
+void YParticleSystem::DrawSettingsEditor()
+{
 
 	// --- テクスチャ設定 ---
 	if (ImGui::TreeNode("テクスチャ設定")) {
@@ -341,6 +458,7 @@ void YParticleSystem::ShowEditor()
 					changed = true;
 				}
 			}
+			break;
 
 		case 5: // Sphere (radius, -, divide)
 			changed |= ImGui::DragFloat("半径", &meshParams_[0], 0.1f, 0.1f, 100.0f);
@@ -415,212 +533,5 @@ void YParticleSystem::ShowEditor()
 	ImGui::DragFloat("エミッシブ強度", &emissiveIntensity_, 0.05f, 0.0f, 20.0f);
 	ImGui::TextDisabled("rgbを明るくして Bloom を強く乗せます（ド派手用）。要 Bloom 有効。");
 
-	// === Spawn Modules ===
-	if (ImGui::TreeNode("スポーンモジュール")) {
-		ImGui::Spacing();
-
-		// 既存モジュールの表示と編集
-		if (!spawnModules_.empty()) {
-			ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "登録済みモジュール (%d個)", (int)spawnModules_.size());
-			ImGui::Separator();
-
-			for (int i = 0; i < spawnModules_.size(); ++i) {
-				ImGui::PushID(i);
-
-				// モジュール名をヘッダーとして表示
-				bool nodeOpen = ImGui::TreeNodeEx(spawnModules_[i]->GetName().c_str(),
-					ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed);
-
-				if (nodeOpen) {
-					ImGui::Indent();
-
-					// 各モジュールのエディタを表示
-					spawnModules_[i]->DrawEditor();
-
-					ImGui::Spacing();
-
-					// 削除ボタン（赤色で目立たせる）
-					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
-					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
-					ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.9f, 0.1f, 0.1f, 1.0f));
-
-					if (ImGui::Button("削除", ImVec2(60, 0))) {
-						DeleteSpawnModule(spawnModules_[i]);
-						ImGui::PopStyleColor(3);
-						ImGui::Unindent();
-						ImGui::TreePop();
-						ImGui::PopID();
-						break; // イテレータ破壊を避けるため
-					}
-
-					ImGui::PopStyleColor(3);
-					ImGui::Unindent();
-					ImGui::TreePop();
-				}
-
-				ImGui::PopID();
-				ImGui::Spacing();
-			}
-		}
-		else {
-			ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "登録されているモジュールはありません");
-		}
-
-		ImGui::Spacing();
-		ImGui::Separator();
-		ImGui::Spacing();
-
-		// 新規追加（コンボボックス形式）
-		ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "モジュールを追加");
-
-		struct SpawnModuleEntry {
-			const char* name;
-			std::function<std::shared_ptr<ISpawnModule>()> factory;
-		};
-		static SpawnModuleEntry availableSpawnModules[] = {
-			{ "速度", []() { return std::make_shared<SpawnVelocity>(); } },
-			{  "UV", []() { return std::make_shared<SpawnUV>(); } },
-			{ "コーン速度", []() { return std::make_shared<SpawnConeVelocity>(); } },
-			{ "放射状速度", []() { return std::make_shared<SpawnRadialVelocity>(); } },
-			{ "ランダムカラー", []() { return std::make_shared<SpawnRandomColor>(); } },
-			{ "ランダムスケール", []() { return std::make_shared<SpawnRandomScale>(); } },
-			{ "ランダム回転", []() { return std::make_shared<SpawnRandomRotate>(); } },
-			{ "ライフタイム", []() { return std::make_shared<SpawnLifeTime>(); } },
-		};
-
-		static int selectedSpawnModule = 0;
-
-		// コンボボックスでモジュールを選択
-		ImGui::SetNextItemWidth(-80);
-		ImGui::Combo("##SpawnModuleSelect", &selectedSpawnModule,
-			[](void* data, int idx, const char** out_text) {
-				*out_text = ((SpawnModuleEntry*)data)[idx].name;
-				return true;
-			},
-			availableSpawnModules, IM_ARRAYSIZE(availableSpawnModules));
-
-		ImGui::SameLine();
-
-		// 追加ボタン（緑色で目立たせる）
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.8f, 0.3f, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.6f, 0.1f, 1.0f));
-
-		if (ImGui::Button("追加", ImVec2(70, 0))) {
-			AddSpawnModule(availableSpawnModules[selectedSpawnModule].factory());
-		}
-
-		ImGui::PopStyleColor(3);
-
-		ImGui::TreePop();
-	}
-
-	// === Update Modules ===
-	if (ImGui::TreeNode("更新モジュール")) {
-		ImGui::Spacing();
-
-		// 既存モジュールの表示と編集
-		if (!updateModules_.empty()) {
-			ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "登録済みモジュール (%d個)", (int)updateModules_.size());
-			ImGui::Separator();
-
-			for (int i = 0; i < updateModules_.size(); ++i) {
-				ImGui::PushID(i);
-
-				// モジュール名をヘッダーとして表示
-				bool nodeOpen = ImGui::TreeNodeEx(updateModules_[i]->GetName().c_str(),
-					ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed);
-
-				if (nodeOpen) {
-					ImGui::Indent();
-
-					// 各モジュールのエディタを表示
-					updateModules_[i]->DrawEditor();
-
-					ImGui::Spacing();
-
-					// 削除ボタン（赤色で目立たせる）
-					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
-					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
-					ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.9f, 0.1f, 0.1f, 1.0f));
-
-					if (ImGui::Button("削除", ImVec2(60, 0))) {
-						DeleteUpdateModule(updateModules_[i]);
-						ImGui::PopStyleColor(3);
-						ImGui::Unindent();
-						ImGui::TreePop();
-						ImGui::PopID();
-						break;
-					}
-
-					ImGui::PopStyleColor(3);
-					ImGui::Unindent();
-					ImGui::TreePop();
-				}
-
-				ImGui::PopID();
-				ImGui::Spacing();
-			}
-		}
-		else {
-			ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "登録されているモジュールはありません");
-		}
-
-		ImGui::Spacing();
-		ImGui::Separator();
-		ImGui::Spacing();
-
-		// 新規追加（コンボボックス形式）
-		ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "モジュールを追加");
-
-		struct UpdateModuleEntry {
-			const char* name;
-			std::function<std::shared_ptr<IUpdateModule>()> factory;
-		};
-		static UpdateModuleEntry availableUpdateModules[] = {
-			{ "速度", []() { return std::make_shared<UpdateVelocity>(); } },
-			{  "UVスクロール", []() { return std::make_shared<UpdateUVScroll>(); } },
-			{  "UVちらつき", []() { return std::make_shared<UpdateUVFlicker>(); } },
-			{ "重力", []() { return std::make_shared<UpdateGravity>(); } },
-			{ "カラー", []() { return std::make_shared<UpdateColor>(); } },
-			{ "アトラクタ", []() { return std::make_shared<UpdateAttractor>(); } },
-			{ "衝突", []() { return std::make_shared<UpdateCollision>(); } },
-			{ "グラデーション", []() { return std::make_shared<UpdateColorGradient>(); } },
-			{ "ドラッグ", []() { return std::make_shared<UpdateDrag>(); } },
-			{ "ノイズ", []() { return std::make_shared<UpdateNoise>(); } },
-			{ "軌道", []() { return std::make_shared<UpdateOrbital>(); } },
-			{ "パルス", []() { return std::make_shared<UpdatePulse>(); } },
-			{ "回転", []() { return std::make_shared<UpdateRotation>(); } },
-			{ "スケール", []() { return std::make_shared<UpdateScale>(); } },
-			{ "スパイラル収束", []() { return std::make_shared<UpdateSpiralConverge>(); } },
-			{ "フェードアウト", []() { return std::make_shared<UpdateFadeOut>(); } },
-		};
-
-		static int selectedUpdateModule = 0;
-
-		// コンボボックスでモジュールを選択
-		ImGui::SetNextItemWidth(-80);
-		ImGui::Combo("##UpdateModuleSelect", &selectedUpdateModule,
-			[](void* data, int idx, const char** out_text) {
-				*out_text = ((UpdateModuleEntry*)data)[idx].name;
-				return true;
-			},
-			availableUpdateModules, IM_ARRAYSIZE(availableUpdateModules));
-
-		ImGui::SameLine();
-
-		// 追加ボタン（緑色で目立たせる）
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.8f, 0.3f, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.6f, 0.1f, 1.0f));
-
-		if (ImGui::Button("追加", ImVec2(70, 0))) {
-			AddUpdateModule(availableUpdateModules[selectedUpdateModule].factory());
-		}
-
-		ImGui::PopStyleColor(3);
-
-		ImGui::TreePop();
-	}
 }
 #endif

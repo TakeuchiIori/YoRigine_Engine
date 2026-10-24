@@ -6,6 +6,7 @@
 #include "Debugger/Gizmo/GizmoController.h"
 #include "YEmitterGizmable.h"
 #include "YEmitterGroupGizmable.h"
+#include "YParticleSystemInspector.h"
 
 #include <string>
 #include <vector>
@@ -171,6 +172,9 @@ private:
     float       saveNotifyTimer_ = 0.0f;   // 残り表示時間（秒）
     bool        saveNotifySuccess_ = true;    // true=成功 / false=失敗
     std::string saveNotifyMessage_;           // 表示するメッセージ文字列
+
+    // エミッタが使うシステムをその場で編集する（スタック＋インスペクタ。Undo 付き）
+    YParticleSystemInspector systemInspector_;
 };
 
 #endif // USE_IMGUI

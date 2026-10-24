@@ -1,6 +1,7 @@
 #pragma once
 #include "../../IParticleModule.h"
 #include "../../../YParticleModuleFactory.h"
+#include "../../ModuleSummary.h"
 
 
 
@@ -10,6 +11,7 @@ public:
     void DrawEditor() override;
 	std::string GetName() const override { return "速度"; }
 	std::string GetTypeName() const override { return "SpawnVelocity"; }
+	std::string GetSummary()  const override { return FormatSummary("Y %.1f〜%.1f", minVel_.y, maxVel_.y); }
 
     void SaveToJson(nlohmann::json& json) const override;
 	void LoadFromJson(const nlohmann::json& json) override;

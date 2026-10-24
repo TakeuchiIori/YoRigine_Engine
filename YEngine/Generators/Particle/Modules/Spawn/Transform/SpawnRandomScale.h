@@ -1,6 +1,7 @@
 #pragma once
 #include "../../IParticleModule.h"
 #include "../../../YParticleModuleFactory.h"
+#include "../../ModuleSummary.h"
 
 /// <summary>
 /// 生成時にランダムなスケールを設定
@@ -10,8 +11,9 @@ class SpawnRandomScale : public ISpawnModule {
 public:
     void OnSpawn(ParticleAttribute* attrs, uint32_t index) override;
     void DrawEditor() override;
-    std::string GetName() const override { return "Spawn Random Scale"; }
+    std::string GetName() const override { return "ランダムスケール"; }
     std::string GetTypeName() const override { return "SpawnRandomScale"; }
+    std::string GetSummary()  const override { return FormatSummary("%.2f〜%.2f", minScale_.x, maxScale_.x); }
 
     void SaveToJson(nlohmann::json& json) const override;
     void LoadFromJson(const nlohmann::json& json) override;

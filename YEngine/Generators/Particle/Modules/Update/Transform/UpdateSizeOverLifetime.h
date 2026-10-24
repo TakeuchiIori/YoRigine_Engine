@@ -1,6 +1,7 @@
 #pragma once
 #include "../../IParticleModule.h"
 #include "../../../YParticleModuleFactory.h"
+#include "../../ModuleSummary.h"
 #include "../../../ParticleCurve.h"
 
 /// <summary>
@@ -15,6 +16,7 @@ public:
     void DrawEditor() override;
     std::string GetName()     const override { return "寿命でサイズ変化"; }
     std::string GetTypeName() const override { return "UpdateSizeOverLifetime"; }
+    std::string GetSummary()  const override { return FormatSummary("x%.2f → x%.2f", curve_.Evaluate(0.0f), curve_.Evaluate(1.0f)); }
     void SaveToJson(nlohmann::json& json) const override;
     void LoadFromJson(const nlohmann::json& json) override;
 private:

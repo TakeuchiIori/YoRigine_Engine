@@ -110,7 +110,8 @@ public:
     /// <summary>
     /// JSONからすべてのシステムを読み込み
     /// </summary>
-    void LoadSystemsFromJson(const nlohmann::json& json);
+    // 読み込んだ（または既存の同名）システムを返す。name が無ければ nullptr
+    YParticleSystem* LoadSystemsFromJson(const nlohmann::json& json);
 
     /// <summary>
     /// すべてのシステムをファイルに保存

@@ -1,6 +1,7 @@
 #pragma once
 #include "../../IParticleModule.h"
 #include "../../../YParticleModuleFactory.h"
+#include "../../ModuleSummary.h"
 
 /// <summary>
 /// 中心から外側に向かう放射状の速度を設定
@@ -12,6 +13,7 @@ public:
     void DrawEditor() override;
     std::string GetName() const override { return "放射状速度"; }
     std::string GetTypeName() const override { return "SpawnRadialVelocity"; }
+    std::string GetSummary()  const override { return FormatSummary(use3D_ ? "3D 速さ %.1f ±%.1f" : "XZ 速さ %.1f ±%.1f", speed_, speedVariation_); }
 
     void SaveToJson(nlohmann::json& json) const override;
     void LoadFromJson(const nlohmann::json& json) override;

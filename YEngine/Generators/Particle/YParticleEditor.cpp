@@ -1,530 +1,500 @@
 #ifdef USE_IMGUI
 
 #include "YParticleEditor.h"
-#include "YParticleModuleFactory.h"
-#include "YParticleManager.h"
 #include "YEmitterGroupEditor.h"
+#include "YParticleManager.h"
+#include "YParticleSystem.h"
+#include "Core/Editor/Widgets/YEditorWidget_Notify.h"
+#include "Core/Editor/Widgets/YEditorWidget_Tooltip.h"
 
 #include <IconsFontAwesome5.h>
-#include "imgui.h"
-#include <fstream>
+#include <imgui.h>
 #include <algorithm>
-#include <cmath>
+#include <cctype>
+#include <cfloat>
+#include <filesystem>
+#include <fstream>
 
-//=================================================================
-// 内部ヘルパー: 垂直分割線（シンプル版）
-//=================================================================
+namespace {
 
-static void Splitter(float thickness, float* size1, float min_size1, float min_size2, float height = -1.0f) {
-	ImVec2 backup_pos = ImGui::GetCursorPos();
-	if (height < 0)
-		height = ImGui::GetContentRegionAvail().y;
+	/// 名前で探す（大文字小文字を無視、英字のみ）
+	bool MatchFilter(const std::string& name, const char* filter) {
+		if (!filter || !filter[0]) return true;
+		std::string a = name, b = filter;
+		std::transform(a.begin(), a.end(), a.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+		std::transform(b.begin(), b.end(), b.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+		return a.find(b) != std::string::npos;
+	}
 
-	ImGui::Button("##vsplitter", ImVec2(thickness, height));
-	if (ImGui::IsItemActive()) {
-		float delta = ImGui::GetIO().MouseDelta.x;
-		if (delta != 0.0f) {
-			*size1 += delta;
-			if (*size1 < min_size1) *size1 = min_size1;
-			if (*size1 > ImGui::GetContentRegionAvail().x - min_size2 - thickness)
-				*size1 = ImGui::GetContentRegionAvail().x - min_size2 - thickness;
+	/// パスからファイル名だけを取り出す（一覧のツールチップ用）
+	std::string FileNameOf(const std::string& path) {
+		return std::filesystem::path(path).filename().string();
+	}
+
+	/// ファイルブラウザ入りのモーダル。onSaveAs を渡すと「新しい名前で保存」欄が付く
+	void DrawBrowserPopup(const char* popupId, bool& showFlag, const char* title,
+		YoRigine::FileBrowser& browser, char* nameBuf, size_t nameBufSize,
+		const std::function<void(const std::string&)>& onSaveAs) {
+		if (showFlag && !ImGui::IsPopupOpen(popupId)) ImGui::OpenPopup(popupId);
+
+		ImGui::SetNextWindowSize(ImVec2(520, 420), ImGuiCond_Appearing);
+		if (ImGui::BeginPopupModal(popupId, &showFlag, ImGuiWindowFlags_NoTitleBar)) {
+			ImGui::TextUnformatted(title);
+			ImGui::Separator();
+
+			const float footer = ImGui::GetFrameHeightWithSpacing() * (onSaveAs ? 2.0f : 1.0f) + ImGui::GetStyle().ItemSpacing.y;
+			browser.Draw("##browser", ImVec2(0, -footer));
+
+			if (onSaveAs) {
+				ImGui::SetNextItemWidth(-140);
+				const bool enter = ImGui::InputTextWithHint("##saveAs", "新しいファイル名.json", nameBuf, static_cast<int>(nameBufSize),
+					ImGuiInputTextFlags_EnterReturnsTrue);
+				ImGui::SameLine();
+				if ((ImGui::Button(ICON_FA_SAVE " この名前で保存", ImVec2(-FLT_MIN, 0)) || enter) && nameBuf[0] != '\0') {
+					std::string name = nameBuf;
+					if (std::filesystem::path(name).extension() != ".json") name += ".json";
+					onSaveAs(browser.GetCurrentDir() + name);
+					showFlag = false;
+				}
+			}
+
+			if (ImGui::Button("キャンセル", ImVec2(-FLT_MIN, 0))) showFlag = false;
+			if (!showFlag) ImGui::CloseCurrentPopup();
+			ImGui::EndPopup();
 		}
 	}
-	if (ImGui::IsItemHovered())
-		ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
 
-	ImGui::SetCursorPos(backup_pos);
-}
+} // namespace
 
 //=================================================================
-// コンストラクタ：FileBrowser を初期化
+// 初期化
 //=================================================================
 
 YParticleEditor::YParticleEditor()
-	: saveAllBrowser_(jsonDirectory_, { ".json" }, YoRigine::FileBrowser::DisplayMode::List)
-	, loadAllBrowser_(jsonDirectory_, { ".json" }, YoRigine::FileBrowser::DisplayMode::List)
-	, saveSingleBrowser_(jsonDirectory_, { ".json" }, YoRigine::FileBrowser::DisplayMode::List)
-	, loadSingleBrowser_(jsonDirectory_, { ".json" }, YoRigine::FileBrowser::DisplayMode::List) {
-	// Save All: 既存ファイルをクリックで上書き保存
+	: saveAsBrowser_(jsonDirectory_, { ".json" }, YoRigine::FileBrowser::DisplayMode::List)
+	, loadBrowser_(jsonDirectory_, { ".json" }, YoRigine::FileBrowser::DisplayMode::List)
+	, saveAllBrowser_(jsonDirectory_, { ".json" }, YoRigine::FileBrowser::DisplayMode::List) {
+
+	// 既存ファイルをクリック = そこへ上書き保存
+	saveAsBrowser_.SetOnFileSelected([this](const std::string& path) {
+		if (auto* system = GetSelectedSystemPtr()) SaveSystemIntoFile(*system, path);
+		showSaveAsPopup_ = false;
+		});
+	loadBrowser_.SetOnFileSelected([this](const std::string& path) {
+		LoadFile(path);
+		showLoadPopup_ = false;
+		});
 	saveAllBrowser_.SetOnFileSelected([this](const std::string& path) {
-		bool ok = SaveAllSystemsToFile(path);
+		SaveAllSystemsToFile(path);
 		showSaveAllPopup_ = false;
-		SetNotification(ok, ok ? "全システム保存完了: " + path : "保存失敗: " + path);
-		});
-
-	// Load All: ファイルをクリックでロード
-	loadAllBrowser_.SetOnFileSelected([this](const std::string& path) {
-		bool ok = LoadAllSystemsFromFile(path);
-		showLoadAllPopup_ = false;
-		SetNotification(ok, ok ? "全システム読み込み完了: " + path : "読み込み失敗: " + path);
-		});
-
-	// Save Selected: 既存ファイルをクリックで上書き保存
-	saveSingleBrowser_.SetOnFileSelected([this](const std::string& path) {
-		if (!selectedSystemName_.empty()) {
-			bool ok = SaveSystemToFile(selectedSystemName_, path);
-			SetNotification(ok, ok ? "保存完了: " + path : "保存失敗: " + path);
-		}
-		showSaveSinglePopup_ = false;
-		});
-
-	// Load Single: ファイルをクリックでロード
-	loadSingleBrowser_.SetOnFileSelected([this](const std::string& path) {
-		bool ok = LoadSystemFromFile(path);
-		showLoadSinglePopup_ = false;
-		SetNotification(ok, ok ? "読み込み完了: " + path : "読み込み失敗: " + path);
 		});
 }
 
 //=================================================================
-// 通知ヘルパー
-//=================================================================
-
-void YParticleEditor::SetNotification(bool success, const std::string& message) {
-	saveNotifySuccess_ = success;
-	saveNotifyMessage_ = message;
-	saveNotifyTimer_ = 3.0f;   // 3秒間表示
-}
-
-/// <summary>
-/// トースト通知をウィンドウ下部にオーバーレイ描画する
-/// ShowEditorWindow() の先頭で毎フレーム呼ぶ
-/// </summary>
-void YParticleEditor::ShowSaveNotification() {
-	if (saveNotifyTimer_ <= 0.0f) return;
-
-	saveNotifyTimer_ -= ImGui::GetIO().DeltaTime;
-
-	// フェードアウト（残り0.5秒から）
-	float alpha = std::min(1.0f, saveNotifyTimer_ / 0.5f);
-	alpha = std::min(alpha, 1.0f);
-
-	ImVec4 col = saveNotifySuccess_
-		? ImVec4(0.2f, 1.0f, 0.3f, alpha)
-		: ImVec4(1.0f, 0.3f, 0.2f, alpha);
-
-	const char* icon = saveNotifySuccess_ ? ICON_FA_CHECK :ICON_FA_TIMES;
-	ImGui::PushStyleColor(ImGuiCol_Text, col);
-	ImGui::Text("%s%s", icon, saveNotifyMessage_.c_str());
-	ImGui::PopStyleColor();
-	ImGui::Separator();
-}
-
-//=================================================================
-// エディタウィンドウ
+// メイン
 //=================================================================
 
 void YParticleEditor::ShowEditorWindow() {
+	YParticleSystem* system = GetSelectedSystemPtr();
 
-	// ── トースト通知（最上部に表示）──────────────────────────
-	ShowSaveNotification();
+	HandleShortcuts(system);
+	UpdateTestEmit(system);
 
-	// メニューバー
-	if (ImGui::BeginMenuBar()) {
-		if (ImGui::BeginMenu("保存・読み込み設定")) {
-			if (ImGui::MenuItem("全てのシステムを保存")) {
-				saveAllBrowser_.Scan();
-				// 全保存のデフォルト名は空にしておく
-				saveAsNameBuf_[0] = '\0';
-				showSaveAllPopup_ = true;
-			}
-			if (ImGui::MenuItem("全てのシステムを読み込み")) {
-				loadAllBrowser_.Scan();
-				showLoadAllPopup_ = true;
-			}
+	DrawMenuBar();
+
+	if (ImGui::BeginTabBar("##particleEditorTabs")) {
+		if (ImGui::BeginTabItem(ICON_FA_FIRE " パーティクルシステム")) {
+			DrawToolbar(system);
 			ImGui::Separator();
-			if (ImGui::MenuItem("選択しているシステムを保存")) {
-				if (!selectedSystemName_.empty()) {
-					saveSingleBrowser_.Scan();
-					// ★ テンプレート名: 選択中のシステム名 + ".json"
-					std::string defaultName = selectedSystemName_ + ".json";
-					strncpy_s(saveAsNameBuf_, defaultName.c_str(), sizeof(saveAsNameBuf_));
-					showSaveSinglePopup_ = true;
-				}
+
+			// 左: システム一覧（幅はドラッグで変更可）
+			ImGui::BeginChild("##systemList", ImVec2(listWidth_, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
+			listWidth_ = ImGui::GetWindowWidth();
+			DrawSystemList();
+			ImGui::EndChild();
+
+			ImGui::SameLine();
+
+			// 右: スタック＋インスペクタ
+			ImGui::BeginChild("##systemEdit", ImVec2(0, 0));
+			if (system = GetSelectedSystemPtr(); system) {
+				GetInspector(system->GetName()).Draw(*system, YParticleSystemInspector::Layout::SideBySide);
+			} else {
+				ImGui::Spacing();
+				ImGui::TextDisabled("左の一覧からシステムを選ぶか、「+ 新規」で作成してください。");
 			}
-			if (ImGui::MenuItem("システムの読み込み")) {
-				loadSingleBrowser_.Scan();
-				showLoadSinglePopup_ = true;
-			}
-			ImGui::EndMenu();
-		}
-		ImGui::EndMenuBar();
-	}
+			ImGui::EndChild();
 
-	float availHeight = ImGui::GetContentRegionAvail().y;
-
-	// 左側: システム一覧
-	ImGui::BeginChild("SystemList", ImVec2(systemListWidth_, 0), true);
-	ShowSystemListUI();
-	ImGui::EndChild();
-
-	ImGui::SameLine();
-
-	Splitter(4.0f, &systemListWidth_, 120.0f, 300.0f, availHeight);
-
-	ImGui::SameLine();
-
-	// 右側: システム詳細とファイル操作
-	ImGui::BeginChild("SystemDetail", ImVec2(0, 0), true);
-
-	if (ImGui::BeginTabBar("タブ")) {
-		if (ImGui::BeginTabItem("既存パーティクルシステムの詳細設定")) {
-			ShowSystemDetailUI();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem("新規パーティクルシステムを作成")) {
-			ShowSystemCreationUI();
-			ImGui::EndTabItem();
-		}
-		if (ImGui::BeginTabItem("エミッタグループ")) {
+		if (ImGui::BeginTabItem(ICON_FA_LAYER_GROUP " エミッタグループ")) {
 			YEmitterGroupEditor::GetInstance().ShowEditor();
-			ImGui::EndTabItem();
-		}
-		if (ImGui::BeginTabItem("ファイル操作")) {
-			ShowFileOperationsUI();
 			ImGui::EndTabItem();
 		}
 		ImGui::EndTabBar();
 	}
 
-	ImGui::EndChild();
+	// どのタブを開いていてもダイアログが出るよう、タブの外で毎フレーム描く
+	DrawPopups();
+}
+
+void YParticleEditor::DrawMenuBar() {
+	if (!ImGui::BeginMenuBar()) return;
+
+	if (ImGui::BeginMenu("ファイル")) {
+		const bool hasSel = GetSelectedSystemPtr() != nullptr;
+		if (ImGui::MenuItem(ICON_FA_SAVE " 保存", "Ctrl+S", false, hasSel)) SaveSelected();
+		if (ImGui::MenuItem("名前を付けて保存...", nullptr, false, hasSel)) OpenSaveAs(selectedSystemName_ + ".json");
+		if (ImGui::MenuItem(ICON_FA_FOLDER_OPEN " 開く...")) {
+			loadBrowser_.Scan();
+			showLoadPopup_ = true;
+		}
+		ImGui::Separator();
+		if (ImGui::MenuItem("全システムを 1 ファイルに保存...")) {
+			saveAllBrowser_.Scan();
+			saveAsNameBuf_[0] = '\0';
+			showSaveAllPopup_ = true;
+		}
+		ImGui::EndMenu();
+	}
+
+	if (ImGui::BeginMenu("編集")) {
+		if (YParticleSystem* system = GetSelectedSystemPtr()) {
+			auto& history = GetInspector(system->GetName()).GetHistory();
+			if (ImGui::MenuItem(ICON_FA_UNDO " 元に戻す", "Ctrl+Z", false, history.CanUndo())) history.Undo();
+			if (ImGui::MenuItem(ICON_FA_REDO " やり直し", "Ctrl+Y", false, history.CanRedo())) history.Redo();
+		} else {
+			ImGui::MenuItem("（システム未選択）", nullptr, false, false);
+		}
+		ImGui::EndMenu();
+	}
+
+	ImGui::EndMenuBar();
+}
+
+void YParticleEditor::DrawToolbar(YParticleSystem* system) {
+	ImGui::BeginDisabled(system == nullptr);
+
+	// 保存 / Undo / Redo
+	if (ImGui::Button(ICON_FA_SAVE)) SaveSelected();
+	YEditorWidget::ItemTooltip("保存 (Ctrl+S)\n読み込み元のファイルへ上書きします");
+	ImGui::SameLine();
+
+	CommandHistory* history = system ? &GetInspector(system->GetName()).GetHistory() : nullptr;
+	ImGui::BeginDisabled(!history || !history->CanUndo());
+	if (ImGui::Button(ICON_FA_UNDO) && history) history->Undo();
+	ImGui::EndDisabled();
+	YEditorWidget::ItemTooltip("元に戻す (Ctrl+Z)");
+	ImGui::SameLine();
+	ImGui::BeginDisabled(!history || !history->CanRedo());
+	if (ImGui::Button(ICON_FA_REDO) && history) history->Redo();
+	ImGui::EndDisabled();
+	YEditorWidget::ItemTooltip("やり直し (Ctrl+Y)");
+
+	// テスト発生
+	ImGui::SameLine(0, 16);
+	ImGui::TextDisabled("|");
+	ImGui::SameLine(0, 16);
+	if (ImGui::Button(ICON_FA_PLAY " 発生") && system) system->Emit(testEmitPos_, testEmitCount_);
+	YEditorWidget::ItemTooltip("このシステムの粒をその場で出して見た目を確認する");
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(ImGui::GetFontSize() * 4.0f);
+	ImGui::DragInt("##count", &testEmitCount_, 1.0f, 1, 5000, "%d 個");
+	ImGui::SameLine();
+	ImGui::Checkbox(ICON_FA_SYNC " 連続", &testEmitLoop_);
+	YEditorWidget::ItemTooltip("一定間隔で発生し続ける（パラメータを触りながら確認する用）");
+	if (testEmitLoop_) {
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(ImGui::GetFontSize() * 4.0f);
+		ImGui::DragFloat("##interval", &testEmitInterval_, 0.01f, 0.02f, 5.0f, "%.2f 秒");
+	}
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(ImGui::GetFontSize() * 10.0f);
+	ImGui::DragFloat3("##pos", &testEmitPos_.x, 0.05f);
+	YEditorWidget::ItemTooltip("発生位置（ワールド座標）");
+
+	ImGui::EndDisabled();
+
+	// 保存先と未保存の表示
+	if (system) {
+		ImGui::SameLine(0, 16);
+		const bool dirty = GetInspector(system->GetName()).IsDirty();
+		if (dirty) ImGui::TextColored(ImVec4(1.0f, 0.65f, 0.2f, 1.0f), "* 未保存");
+		else       ImGui::TextDisabled("保存済み");
+		const std::string& src = system->GetSourceFilePath();
+		YEditorWidget::ItemTooltip(src.empty() ? "保存先: 未設定（保存時に名前を決めます）" : ("保存先: " + src).c_str());
+	}
+}
+
+void YParticleEditor::DrawSystemList() {
+	auto& manager = YParticleManager::GetInstance();
+
+	if (ImGui::Button(ICON_FA_PLUS " 新規")) {
+		const std::string uniq = MakeUniqueSystemName("NewParticle");
+		strncpy_s(newNameBuffer_, uniq.c_str(), _TRUNCATE);
+		newMaxParticles_ = 1000;
+		showNewDialog_ = true;
+	}
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(-FLT_MIN);
+	ImGui::InputTextWithHint("##filter", ICON_FA_SEARCH " 検索", listFilter_, sizeof(listFilter_));
+	ImGui::Separator();
+
+	auto names = manager.GetAllSystemNames();
+	std::sort(names.begin(), names.end());
+
+	for (const auto& name : names) {
+		if (!MatchFilter(name, listFilter_)) continue;
+
+		auto* system = manager.GetSystem(name);
+		auto it = inspectors_.find(name);
+		const bool dirty = (it != inspectors_.end()) && it->second->IsDirty();
+
+		std::string label = dirty ? (name + " *") : name;
+		if (ImGui::Selectable(label.c_str(), name == selectedSystemName_)) selectedSystemName_ = name;
+		if (system) {
+			const std::string& src = system->GetSourceFilePath();
+			YEditorWidget::ItemTooltip(src.empty() ? "（未保存の新規システム）" : src.c_str());
+		}
+
+		if (ImGui::BeginPopupContextItem()) {
+			selectedSystemName_ = name;
+			if (ImGui::MenuItem(ICON_FA_SAVE " 保存")) SaveSelected();
+			if (ImGui::MenuItem(ICON_FA_CLONE " 複製") && system) {
+				// JSON に写して別名のシステムを作る（保存先は未設定 = 新規扱い）
+				nlohmann::json json;
+				system->SaveToJson(json);
+				const std::string newName = MakeUniqueSystemName(name + "_copy");
+				if (auto* copy = manager.CreateSystem(newName, system->GetMaxParticles())) {
+					copy->LoadFromJson(json);
+					selectedSystemName_ = newName;
+					YEditorWidget::NotifyInfo("複製しました: %s", newName.c_str());
+				}
+			}
+			ImGui::Separator();
+			if (ImGui::MenuItem(ICON_FA_TRASH " 削除...")) showDeleteConfirm_ = true;
+			ImGui::EndPopup();
+		}
+	}
+	if (names.empty()) ImGui::TextDisabled("(システムなし)");
+}
+
+void YParticleEditor::DrawPopups() {
+	// ── 新規作成 ───────────────────────────────────────────
+	if (showNewDialog_ && !ImGui::IsPopupOpen("新規パーティクルシステム")) ImGui::OpenPopup("新規パーティクルシステム");
+	if (ImGui::BeginPopupModal("新規パーティクルシステム", &showNewDialog_, ImGuiWindowFlags_AlwaysAutoResize)) {
+		if (ImGui::IsWindowAppearing()) ImGui::SetKeyboardFocusHere();
+		ImGui::InputText("名前", newNameBuffer_, sizeof(newNameBuffer_));
+		ImGui::InputInt("最大粒子数", &newMaxParticles_, 100, 1000);
+		newMaxParticles_ = std::clamp(newMaxParticles_, 1, 200000);
+
+		const bool exists = YParticleManager::GetInstance().GetSystem(newNameBuffer_) != nullptr;
+		if (exists) ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "同じ名前のシステムがあります");
+
+		ImGui::BeginDisabled(newNameBuffer_[0] == '\0' || exists);
+		if (ImGui::Button("作成", ImVec2(120, 0))) {
+			YParticleManager::GetInstance().CreateSystem(newNameBuffer_, static_cast<uint32_t>(newMaxParticles_));
+			selectedSystemName_ = newNameBuffer_;
+			showNewDialog_ = false;
+		}
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+		if (ImGui::Button("キャンセル", ImVec2(120, 0))) showNewDialog_ = false;
+		if (!showNewDialog_) ImGui::CloseCurrentPopup();
+		ImGui::EndPopup();
+	}
+
+	// ── 削除確認（システムの削除は Undo できないので確認する。ファイルは消さない）──
+	if (showDeleteConfirm_ && !ImGui::IsPopupOpen("システムの削除")) ImGui::OpenPopup("システムの削除");
+	if (ImGui::BeginPopupModal("システムの削除", &showDeleteConfirm_, ImGuiWindowFlags_AlwaysAutoResize)) {
+		ImGui::Text("「%s」をメモリから削除しますか？", selectedSystemName_.c_str());
+		ImGui::TextDisabled("JSON ファイルは削除されません。元に戻せません。");
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.18f, 0.18f, 1.0f));
+		if (ImGui::Button("削除する", ImVec2(120, 0))) {
+			inspectors_.erase(selectedSystemName_);
+			YParticleManager::GetInstance().RemoveSystem(selectedSystemName_);
+			YEditorWidget::NotifyInfo("削除しました: %s", selectedSystemName_.c_str());
+			selectedSystemName_.clear();
+			showDeleteConfirm_ = false;
+		}
+		ImGui::PopStyleColor();
+		ImGui::SameLine();
+		if (ImGui::Button("キャンセル", ImVec2(120, 0))) showDeleteConfirm_ = false;
+		if (!showDeleteConfirm_) ImGui::CloseCurrentPopup();
+		ImGui::EndPopup();
+	}
+
+	// ── ファイルダイアログ ──────────────────────────────────
+	DrawBrowserPopup("##saveAs", showSaveAsPopup_,
+		"名前を付けて保存 — 既存ファイルをクリックで上書き（バンドルなら同名システムだけ差し替え）",
+		saveAsBrowser_, saveAsNameBuf_, sizeof(saveAsNameBuf_),
+		[this](const std::string& path) {
+			if (auto* system = GetSelectedSystemPtr()) SaveSystemIntoFile(*system, path);
+		});
+	DrawBrowserPopup("##load", showLoadPopup_,
+		"開く — 単体ファイル / エフェクトバンドル / 一括ファイルのどれでも読み込めます",
+		loadBrowser_, saveAsNameBuf_, sizeof(saveAsNameBuf_), nullptr);
+	DrawBrowserPopup("##saveAll", showSaveAllPopup_,
+		"全システムを 1 ファイルに保存",
+		saveAllBrowser_, saveAsNameBuf_, sizeof(saveAsNameBuf_),
+		[this](const std::string& path) { SaveAllSystemsToFile(path); });
+}
+
+void YParticleEditor::HandleShortcuts(YParticleSystem* system) {
+	// このパネルにフォーカスがあるときだけ（他のエディタの Ctrl+S と衝突させない）
+	if (!system || !ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) return;
+	if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_S)) SaveSelected();
+}
+
+void YParticleEditor::UpdateTestEmit(YParticleSystem* system) {
+	if (!system || !testEmitLoop_) {
+		testEmitTimer_ = 0.0f;
+		return;
+	}
+	testEmitTimer_ += ImGui::GetIO().DeltaTime;
+	if (testEmitTimer_ >= testEmitInterval_) {
+		testEmitTimer_ = 0.0f;
+		system->Emit(testEmitPos_, testEmitCount_);
+	}
 }
 
 //=================================================================
 // ファイル操作
 //=================================================================
 
-bool YParticleEditor::SaveAllSystemsToFile(const std::string& filePath) {
-	try {
-		nlohmann::json json = SaveAllSystemsToJson();
-		std::ofstream file(filePath);
-		if (!file.is_open()) return false;
-		file << json.dump(4);
-		return true;
-	}
-	catch (const std::exception&) { return false; }
-}
-
-bool YParticleEditor::LoadAllSystemsFromFile(const std::string& filePath) {
-	try {
-		std::ifstream file(filePath);
-		if (!file.is_open()) return false;
-		nlohmann::json json;
-		file >> json;
-		LoadAllSystemsFromJson(json);
-		return true;
-	}
-	catch (const std::exception&) { return false; }
-}
-
-bool YParticleEditor::SaveSystemToFile(const std::string& systemName, const std::string& filePath) {
-	try {
-		nlohmann::json json = SaveSystemToJson(systemName);
-		std::ofstream file(filePath);
-		if (!file.is_open()) return false;
-		file << json.dump(4);
-		return true;
-	}
-	catch (const std::exception&) { return false; }
-}
-
-bool YParticleEditor::LoadSystemFromFile(const std::string& filePath) {
-	try {
-		std::ifstream file(filePath);
-		if (!file.is_open()) return false;
-		nlohmann::json json;
-		file >> json;
-		LoadSystemFromJson(json);
-		return true;
-	}
-	catch (const std::exception&) { return false; }
-}
-
-//=================================================================
-// JSON変換
-//=================================================================
-
-nlohmann::json YParticleEditor::SaveAllSystemsToJson() const {
-	nlohmann::json json;
-	json["version"] = "1.0";
-	json["systems"] = nlohmann::json::array();
-
-	auto& manager = YParticleManager::GetInstance();
-	for (const auto& name : manager.GetAllSystemNames()) {
-		json["systems"].push_back(SaveSystemToJson(name));
-	}
-	return json;
-}
-
-void YParticleEditor::LoadAllSystemsFromJson(const nlohmann::json& json) {
-	if (!json.contains("systems")) return;
-	for (const auto& systemJson : json["systems"]) {
-		LoadSystemFromJson(systemJson);
-	}
-}
-
-nlohmann::json YParticleEditor::SaveSystemToJson(const std::string& systemName) const {
-	nlohmann::json json;
-	auto& manager = YParticleManager::GetInstance();
-	auto* system = manager.GetSystem(systemName);
-	if (!system) return json;
-
-	json["name"] = system->GetName();
-	json["maxParticles"] = system->GetMaxParticles();
-	json["texture"] = system->GetTextureFilePath();
-	json["isRelative"] = system->IsRelative();
-	json["billboardType"] = system->GetBillboardTypeAsUInt();
-	json["BlendMode"] = static_cast<int>(system->GetBlendMode());
-	json["Lighting"] = system->IsEnableLight();
-	json["softParticle"] = system->IsSoftParticle();
-	json["softFadeDistance"] = system->GetSoftFadeDistance();
-	json["emissiveIntensity"] = system->GetEmissiveIntensity();
-	json["mesh"]["type"] = system->GetCurrentMeshType();
-	json["mesh"]["params"] = nlohmann::json::array();
-	const float* params = system->GetMeshParams();
-	for (int i = 0; i < 4; ++i) json["mesh"]["params"].push_back(params[i]);
-
-	json["spawnModules"] = nlohmann::json::array();
-	for (const auto& module : system->GetSpawnModules()) {
-		nlohmann::json moduleJson;
-		moduleJson["type"] = module->GetTypeName();
-		moduleJson["name"] = module->GetName();
-		module->SaveToJson(moduleJson["data"]);
-		json["spawnModules"].push_back(moduleJson);
-	}
-
-	json["updateModules"] = nlohmann::json::array();
-	for (const auto& module : system->GetUpdateModules()) {
-		nlohmann::json moduleJson;
-		moduleJson["type"] = module->GetTypeName();
-		moduleJson["name"] = module->GetName();
-		module->SaveToJson(moduleJson["data"]);
-		json["updateModules"].push_back(moduleJson);
-	}
-
-	return json;
-}
-
-void YParticleEditor::LoadSystemFromJson(const nlohmann::json& json) {
-	if (!json.contains("name")) return;
-
-	std::string name = json["name"];
-	uint32_t maxP = json.value("maxParticles", 1000);
-
-	auto& manager = YParticleManager::GetInstance();
-	auto* system = manager.CreateSystem(name, maxP);
+void YParticleEditor::SaveSelected() {
+	YParticleSystem* system = GetSelectedSystemPtr();
 	if (!system) return;
 
-	if (json.contains("texture"))      system->SetTexture(json["texture"]);
-	if (json.contains("isRelative"))   system->SetRelative(json["isRelative"]);
-	if (json.contains("billboardType"))
-		system->SetBillboardType(static_cast<BillboardType>(json["billboardType"].get<uint32_t>()));
-	if (json.contains("BlendMode"))
-		system->SetBlendMode(static_cast<BlendMode>(json["BlendMode"].get<int>()));
-	if (json.contains("Lighting"))
-		system->SetLightSetting(json["Lighting"].get<bool>() ? ParticleLightSetting{ true, true, true } : ParticleLightSetting{ false, false, false });
-	if (json.contains("softParticle"))     system->SetSoftParticle(json["softParticle"].get<bool>());
-	if (json.contains("softFadeDistance")) system->SetSoftFadeDistance(json["softFadeDistance"].get<float>());
-	if (json.contains("emissiveIntensity")) system->SetEmissiveIntensity(json["emissiveIntensity"].get<float>());
-
-	if (json.contains("mesh")) {
-		const auto& meshJson = json["mesh"];
-		if (meshJson.contains("type") && meshJson.contains("params"))
-			system->SetMeshType(meshJson["type"], meshJson["params"]);
+	if (system->GetSourceFilePath().empty()) {
+		OpenSaveAs(system->GetName() + ".json");
+		return;
 	}
-
-	if (json.contains("spawnModules")) {
-		for (const auto& mj : json["spawnModules"]) {
-			if (!mj.contains("type")) continue;
-			auto module = YParticleModuleFactory::GetInstance().CreateSpawnModule(mj["type"]);
-			if (module) {
-				if (mj.contains("data")) module->LoadFromJson(mj["data"]);
-				system->AddSpawnModule(module);
-			}
-		}
-	}
-
-	if (json.contains("updateModules")) {
-		for (const auto& mj : json["updateModules"]) {
-			if (!mj.contains("type")) continue;
-			auto module = YParticleModuleFactory::GetInstance().CreateUpdateModule(mj["type"]);
-			if (module) {
-				if (mj.contains("data")) module->LoadFromJson(mj["data"]);
-				system->AddUpdateModule(module);
-			}
-		}
-	}
+	SaveSystemIntoFile(*system, system->GetSourceFilePath());
 }
 
-//=================================================================
-// 内部UI関数
-//=================================================================
+bool YParticleEditor::SaveSystemIntoFile(YParticleSystem& system, const std::string& path) {
+	nlohmann::json sysJson;
+	system.SaveToJson(sysJson);
 
-void YParticleEditor::ShowSystemCreationUI() {
-	ImGui::InputText("システムの名前", newSystemNameBuffer_, sizeof(newSystemNameBuffer_));
-	ImGui::InputInt("パーティクルの最大数", &newSystemMaxParticles_);
-	if (newSystemMaxParticles_ < 1) newSystemMaxParticles_ = 1;
-
-	ImGui::Separator();
-
-	if (ImGui::Button("システムの生成", ImVec2(200, 30))) {
-		if (strlen(newSystemNameBuffer_) > 0) {
-			YParticleManager::GetInstance().CreateSystem(newSystemNameBuffer_, newSystemMaxParticles_);
-			selectedSystemName_ = newSystemNameBuffer_;
-			newSystemNameBuffer_[0] = '\0';
-			newSystemMaxParticles_ = 1000;
-		}
+	// 既存ファイルを読み、バンドル（"systems" 配列あり）なら同名システムだけ差し替える
+	nlohmann::json root;
+	if (std::ifstream in(path); in.is_open()) {
+		try { in >> root; } catch (...) { root = nullptr; }
 	}
+
+	bool replacedInBundle = false;
+	if (root.is_object() && root.contains("systems") && root["systems"].is_array()) {
+		bool found = false;
+		for (auto& s : root["systems"]) {
+			if (s.value("name", "") == system.GetName()) {
+				s = sysJson;
+				found = true;
+				break;
+			}
+		}
+		if (!found) root["systems"].push_back(sysJson);
+		replacedInBundle = true;
+	} else {
+		root = std::move(sysJson);
+	}
+
+	std::ofstream out(path);
+	if (!out.is_open()) {
+		YEditorWidget::NotifyError("保存に失敗しました: %s", path.c_str());
+		return false;
+	}
+	out << root.dump(4);
+
+	system.SetSourceFilePath(path);
+	GetInspector(system.GetName()).MarkSaved();
+	YEditorWidget::NotifySuccess(replacedInBundle ? "保存しました（バンドル内を更新）: %s" : "保存しました: %s",
+		FileNameOf(path).c_str());
+	return true;
 }
 
-void YParticleEditor::ShowSystemListUI() {
-	ImGui::Text("システム一覧");
-	ImGui::Separator();
+bool YParticleEditor::LoadFile(const std::string& path) {
+	nlohmann::json root;
+	if (std::ifstream in(path); in.is_open()) {
+		try { in >> root; } catch (const std::exception& e) {
+			YEditorWidget::NotifyError("JSON の読み込みに失敗しました: %s\n%s", FileNameOf(path).c_str(), e.what());
+			return false;
+		}
+	} else {
+		YEditorWidget::NotifyError("ファイルを開けません: %s", path.c_str());
+		return false;
+	}
+
+	auto& manager = YParticleManager::GetInstance();
+	bool ok = false;
+	if (root.contains("systems")) {
+		// バンドル / 一括ファイル（グループもあれば一緒に読む）
+		ok = manager.LoadEffectBundle(path);
+	} else {
+		ok = manager.LoadSystemsFromFile(path);
+		if (ok && root.contains("name")) selectedSystemName_ = root["name"];
+	}
+
+	// 読み直したシステムの履歴は意味を失うので捨てる
+	inspectors_.clear();
+
+	if (ok) YEditorWidget::NotifySuccess("読み込みました: %s", FileNameOf(path).c_str());
+	else    YEditorWidget::NotifyError("読み込みに失敗しました: %s", FileNameOf(path).c_str());
+	return ok;
+}
+
+bool YParticleEditor::SaveAllSystemsToFile(const std::string& path) {
+	nlohmann::json root;
+	root["version"] = "1.0";
+	root["systems"] = nlohmann::json::array();
 
 	auto& manager = YParticleManager::GetInstance();
 	for (const auto& name : manager.GetAllSystemNames()) {
-		bool isSelected = (name == selectedSystemName_);
-		if (ImGui::Selectable(name.c_str(), isSelected)) {
-			selectedSystemName_ = name;
+		if (auto* system = manager.GetSystem(name)) {
+			nlohmann::json j;
+			system->SaveToJson(j);
+			root["systems"].push_back(std::move(j));
 		}
 	}
+
+	std::ofstream out(path);
+	if (!out.is_open()) {
+		YEditorWidget::NotifyError("保存に失敗しました: %s", path.c_str());
+		return false;
+	}
+	out << root.dump(4);
+	YEditorWidget::NotifySuccess("全システムを保存しました: %s", FileNameOf(path).c_str());
+	return true;
 }
 
-void YParticleEditor::ShowSystemDetailUI() {
-	if (selectedSystemName_.empty()) {
-		ImGui::Text("パーティクルシステムが選択されていません");
-		return;
-	}
+//=================================================================
+// ヘルパー
+//=================================================================
+
+YParticleSystem* YParticleEditor::GetSelectedSystemPtr() {
+	if (selectedSystemName_.empty()) return nullptr;
+	return YParticleManager::GetInstance().GetSystem(selectedSystemName_);
+}
+
+YParticleSystemInspector& YParticleEditor::GetInspector(const std::string& systemName) {
+	auto& slot = inspectors_[systemName];
+	if (!slot) slot = std::make_unique<YParticleSystemInspector>();
+	return *slot;
+}
+
+std::string YParticleEditor::MakeUniqueSystemName(const std::string& base) const {
 	auto& manager = YParticleManager::GetInstance();
-	auto* system = manager.GetSystem(selectedSystemName_);
-	if (!system) {
-		ImGui::Text("パーティクルシステムが見つかりません: %s", selectedSystemName_.c_str());
-		return;
-	}
-	system->ShowEditor();
-}
-
-//=================================================================
-// ファイル操作タブ（FileBrowser 版）
-//=================================================================
-
-/// ポップアップ用のヘルパー：ブラウザ + 新規名入力 + キャンセル
-static void DrawBrowserPopup(
-	const char* popupId,
-	bool& showFlag,
-	const char* title,
-	YoRigine::FileBrowser& browser,
-	char* saveAsNameBuf,
-	size_t saveAsNameBufSize,
-	std::function<void(const std::string&)> onSaveAs   // nullptr なら「上書き専用」（Load 用）
-) {
-	if (showFlag) ImGui::OpenPopup(popupId);
-
-	ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_Appearing);
-	if (ImGui::BeginPopupModal(popupId, &showFlag,
-		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize)) {
-		ImGui::Text("%s", title);
-		ImGui::Separator();
-
-		float browserH = onSaveAs ? 270.0f : 310.0f;
-		browser.Draw("##BrowserChild", ImVec2(0, browserH));
-
-		ImGui::Separator();
-
-		// 新規ファイル名入力（Save 系のみ）
-		if (onSaveAs) {
-			ImGui::SetNextItemWidth(-90);
-			ImGui::InputTextWithHint("##SaveAs", "新規ファイル.json", saveAsNameBuf, (int)saveAsNameBufSize);
-			ImGui::SameLine();
-			if (ImGui::Button("名前を付けて保存")) {
-				if (saveAsNameBuf[0] != '\0') {
-					onSaveAs(browser.GetCurrentDir() + saveAsNameBuf);
-					saveAsNameBuf[0] = '\0';
-					showFlag = false;
-					ImGui::CloseCurrentPopup();
-				}
-			}
-		}
-
-		if (ImGui::Button("キャンセル", ImVec2(-1, 0))) {
-			showFlag = false;
-			ImGui::CloseCurrentPopup();
-		}
-
-		ImGui::EndPopup();
+	if (!manager.GetSystem(base)) return base;
+	for (int i = 1;; ++i) {
+		std::string candidate = base + std::to_string(i);
+		if (!manager.GetSystem(candidate)) return candidate;
 	}
 }
 
-void YParticleEditor::ShowFileOperationsUI() {
-	ImGui::Text("ファイル操作");
-	ImGui::Separator();
-
-	// ── Save All ────────────────────────────────────────────
-	if (ImGui::Button("すべてのシステムを保存", ImVec2(220, 30))) {
-		saveAllBrowser_.Scan();
-		saveAsNameBuf_[0] = '\0';   // 全保存はデフォルト名なし
-		showSaveAllPopup_ = true;
-	}
-	DrawBrowserPopup(
-		"##SaveAll", showSaveAllPopup_,
-		"すべてのシステムを保存 — クリックで上書き、または新しい名前を入力",
-		saveAllBrowser_, saveAsNameBuf_, sizeof(saveAsNameBuf_),
-		[this](const std::string& path) {
-			bool ok = SaveAllSystemsToFile(path);
-			SetNotification(ok, ok ? "全システム保存完了: " + path : "保存失敗: " + path);
-		}
-	);
-
-	// ── Load All ────────────────────────────────────────────
-	if (ImGui::Button("すべてのシステムを読み込み", ImVec2(220, 30))) {
-		loadAllBrowser_.Scan();
-		showLoadAllPopup_ = true;
-	}
-	DrawBrowserPopup(
-		"##LoadAll", showLoadAllPopup_,
-		"すべてのシステムを読み込み — ファイルをクリックして読み込む",
-		loadAllBrowser_, saveAsNameBuf_, sizeof(saveAsNameBuf_),
-		nullptr // Load なので新規名入力欄は不要
-	);
-
-	ImGui::Separator();
-
-	// ── Save Selected ───────────────────────────────────────
-	ImGui::BeginDisabled(selectedSystemName_.empty());
-	if (!selectedSystemName_.empty()) {
-		ImGui::Text("選択中: %s", selectedSystemName_.c_str());
-	}
-	if (ImGui::Button("選択したシステムを保存", ImVec2(220, 30))) {
-		saveSingleBrowser_.Scan();
-		// ★ テンプレート名: 選択中のシステム名 + ".json"
-		std::string defaultName = selectedSystemName_ + ".json";
-		strncpy_s(saveAsNameBuf_, defaultName.c_str(), sizeof(saveAsNameBuf_));
-		showSaveSinglePopup_ = true;
-	}
-	ImGui::EndDisabled();
-
-	DrawBrowserPopup(
-		"##SaveSingle", showSaveSinglePopup_,
-		"選択したシステムを保存 — クリックで上書き、または新しい名前を入力",
-		saveSingleBrowser_, saveAsNameBuf_, sizeof(saveAsNameBuf_),
-		[this](const std::string& path) {
-			if (!selectedSystemName_.empty()) {
-				bool ok = SaveSystemToFile(selectedSystemName_, path);
-				SetNotification(ok, ok ? "保存完了: " + path : "保存失敗: " + path);
-			}
-		}
-	);
-
-	// ── Load Single ─────────────────────────────────────────
-	if (ImGui::Button("ファイルからシステムを読み込み", ImVec2(220, 30))) {
-		loadSingleBrowser_.Scan();
-		showLoadSinglePopup_ = true;
-	}
-	DrawBrowserPopup(
-		"##LoadSingle", showLoadSinglePopup_,
-		"システムを読み込み — ファイルをクリックして読み込む",
-		loadSingleBrowser_, saveAsNameBuf_, sizeof(saveAsNameBuf_),
-		nullptr
-	);
+void YParticleEditor::OpenSaveAs(const std::string& defaultFileName) {
+	saveAsBrowser_.Scan();
+	strncpy_s(saveAsNameBuf_, defaultFileName.c_str(), _TRUNCATE);
+	showSaveAsPopup_ = true;
 }
+
 #endif // USE_IMGUI

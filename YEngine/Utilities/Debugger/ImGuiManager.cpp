@@ -9,6 +9,7 @@
 #include <imgui_impl_dx12.h>
 #include <imgui_impl_win32.h>
 #include <implot/implot.h>
+#include "Core/Editor/Widgets/YEditorWidget_Notify.h"
 #endif
 #include <iostream>
 
@@ -50,6 +51,9 @@ void ImGuiManager::Begin() {
 
 void ImGuiManager::End() {
 #ifdef USE_IMGUI
+  // エディタ共通のトースト通知（全ウィンドウを描いた後に 1 回だけ描く）
+  YEditorWidget::RenderNotifications();
+
   // 1.91+ では EndFrame() → Render() の順が推奨
   ImGui::EndFrame();
   ImGui::Render();

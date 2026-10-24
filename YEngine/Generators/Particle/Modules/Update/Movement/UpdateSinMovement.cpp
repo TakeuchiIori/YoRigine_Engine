@@ -2,9 +2,14 @@
 #include <cmath>
 static constexpr float k2Pi = 6.28318f;
 
+void UpdateSinMovement::OnFrameBegin(float dt)
+{
+    // 揺れの時間はフレームごとに 1 回だけ進める（粒子ごとに進めると粒子数に比例して速くなる）
+    timeAccum_ += dt;
+}
+
 void UpdateSinMovement::OnUpdate(ParticleAttribute* attrs, uint32_t index, float dt)
 {
-    timeAccum_ += dt;
     float sinVal = std::sin(timeAccum_ * frequency_ * k2Pi + attrs[index].phase);
 
     // 位置に振幅を加算（速度ではなく直接位置を補正）

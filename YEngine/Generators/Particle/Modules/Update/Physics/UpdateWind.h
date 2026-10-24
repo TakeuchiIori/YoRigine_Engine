@@ -8,6 +8,7 @@
 /// </summary>
 class UpdateWind : public IUpdateModule {
 public:
+    void OnFrameBegin(float dt) override;
     void OnUpdate(ParticleAttribute* attrs, uint32_t index, float dt) override;
     void DrawEditor() override;
     std::string GetName()     const override { return "風"; }

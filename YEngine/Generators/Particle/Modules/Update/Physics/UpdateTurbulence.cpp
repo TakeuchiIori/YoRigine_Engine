@@ -1,4 +1,5 @@
 #include "UpdateTurbulence.h"
+#include <cstdio>
 #include <cmath>
 
 // ── シンプルなハッシュノイズ ────────────────────────────────────────────────
@@ -33,10 +34,21 @@ float UpdateTurbulence::Noise3(float x, float y, float z)
              + (-a+b+c-d+e-f-g+h)*ux*uy*uz;
 }
 
+void UpdateTurbulence::OnFrameBegin(float dt)
+{
+    // 乱流場の時間はフレームごとに 1 回だけ進める（粒子ごとに進めると粒子数に比例して速くなる）
+    timeAccum_ += dt * speed_;
+}
+
+std::string UpdateTurbulence::GetSummary() const
+{
+    char buf[64];
+    snprintf(buf, sizeof(buf), "強さ %.1f / 周波数 %.2f", strength_, frequency_);
+    return buf;
+}
+
 void UpdateTurbulence::OnUpdate(ParticleAttribute* attrs, uint32_t index, float dt)
 {
-    timeAccum_ += dt * speed_;
-
     auto& a = attrs[index];
     float px = a.position.x * frequency_ + timeAccum_;
     float py = a.position.y * frequency_ + timeAccum_ * 1.31f;

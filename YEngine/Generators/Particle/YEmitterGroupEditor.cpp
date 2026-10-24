@@ -759,7 +759,7 @@ void YEmitterGroupEditor::ShowSelectedEmitterDetail(YParticleEmitter& emitter) {
         std::string header = std::string(ICON_FA_COG) + " システム \"" + sys->GetName() + "\" を編集";
         if (ImGui::CollapsingHeader(header.c_str())) {
             ImGui::Indent();
-            sys->ShowEditor();
+            systemInspector_.Draw(*sys, YParticleSystemInspector::Layout::Stacked);
             ImGui::Unindent();
         }
     }

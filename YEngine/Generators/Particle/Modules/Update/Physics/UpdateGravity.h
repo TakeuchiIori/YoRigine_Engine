@@ -1,6 +1,7 @@
 #pragma once
 #include "../../IParticleModule.h"
 #include "../../../YParticleModuleFactory.h"
+#include "../../ModuleSummary.h"
 
 
 class UpdateGravity : public IUpdateModule
@@ -10,6 +11,7 @@ public:
 	void DrawEditor() override;
 	std::string GetName() const override { return "重力"; }
 	std::string GetTypeName() const override { return "UpdateGravity"; }
+	std::string GetSummary()  const override { return FormatSummary("(%.1f, %.1f, %.1f)", gravity_.x, gravity_.y, gravity_.z); }
 
 	void SaveToJson(nlohmann::json& json) const override;
 	void LoadFromJson(const nlohmann::json& json) override;

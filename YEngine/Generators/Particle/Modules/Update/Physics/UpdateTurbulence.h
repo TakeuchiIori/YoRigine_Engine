@@ -8,10 +8,12 @@
 /// </summary>
 class UpdateTurbulence : public IUpdateModule {
 public:
+    void OnFrameBegin(float dt) override;
     void OnUpdate(ParticleAttribute* attrs, uint32_t index, float dt) override;
     void DrawEditor() override;
     std::string GetName()     const override { return "乱流"; }
     std::string GetTypeName() const override { return "UpdateTurbulence"; }
+    std::string GetSummary()  const override;
     void SaveToJson(nlohmann::json& json) const override;
     void LoadFromJson(const nlohmann::json& json) override;
 private:

@@ -1,6 +1,7 @@
 #pragma once
 #include "../../IParticleModule.h"
 #include "../../../YParticleModuleFactory.h"
+#include "../../ModuleSummary.h"
 
 /// <summary>
 /// 生成時にランダムな生存時間を設定
@@ -12,6 +13,7 @@ public:
     void DrawEditor() override;
     std::string GetName() const override { return "生存時間"; }
     std::string GetTypeName() const override { return "SpawnLifeTime"; }
+    std::string GetSummary()  const override { return FormatSummary("%.2f〜%.2f 秒", minLifeTime_, maxLifeTime_); }
 
     void SaveToJson(nlohmann::json& json) const override;
     void LoadFromJson(const nlohmann::json& json) override;
