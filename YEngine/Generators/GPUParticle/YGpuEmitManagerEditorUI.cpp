@@ -186,6 +186,22 @@ namespace {
 		ImGui::Dummy(size);
 	}
 
+	/// グラデーションの帯（寿命カラーの要約）
+	void DrawGradientStrip(const ColorGradient& g, const ImVec2& size) {
+		ImDrawList* dl = ImGui::GetWindowDrawList();
+		const ImVec2 p = ImGui::GetCursorScreenPos();
+		constexpr int kSteps = 24;
+		for (int i = 0; i < kSteps; ++i) {
+			const float t0 = static_cast<float>(i) / kSteps;
+			const float t1 = static_cast<float>(i + 1) / kSteps;
+			const ImU32 ca = ImGui::ColorConvertFloat4ToU32(ToImVec4(g.Sample(t0)));
+			const ImU32 cb = ImGui::ColorConvertFloat4ToU32(ToImVec4(g.Sample(t1)));
+			dl->AddRectFilledMultiColor({ p.x + size.x * t0, p.y }, { p.x + size.x * t1, p.y + size.y }, ca, cb, cb, ca);
+		}
+		dl->AddRect(p, { p.x + size.x, p.y + size.y }, IM_COL32(90, 90, 100, 255));
+		ImGui::Dummy(size);
+	}
+
 	std::string FileNameOf(const std::string& path) {
 		return path.empty() ? std::string("(なし)") : std::filesystem::path(path).filename().string();
 	}
@@ -218,10 +234,19 @@ namespace {
 		bool*       isEnable;            // 追加済みフラグ
 		std::function<bool()> drawBody;  // 調整 UI（変更があれば true）
 		std::function<void()> reset;     // 削除時に既定値へ戻す
+		std::function<void()> onAdd = nullptr; // 追加した瞬間の初期化（任意）
 	};
 
-	std::vector<ExtModuleEntry> GetExtEntries(GpuExtModules& m) {
+	std::vector<ExtModuleEntry> GetExtEntries(GpuExtModules& m, ParticleParams& pp) {
 		return {
+			{ "寿命カラー（グラデーション）", "炎 / 魔法など多段の色変化。開始色→終了色の 2 色補間を置き換える", &m.colorGradient.isEnable,
+			  [&] { return YColorGradientModule::DrawImGui(m.colorGradient); }, [&] { m.colorGradient = ColorGradientParams{}; },
+			  // 追加しただけで見た目が変わらないよう、今の 開始色 → 終了色 から作る
+			  [&] {
+				  m.colorGradient.gradient.space = ColorGradient::Space::Oklab;
+				  m.colorGradient.gradient.stops = { { 0.0f, pp.startColor }, { 1.0f, pp.endColor } };
+				  m.colorGradient.gradient.MarkDirty();
+			  } },
 			{ "発光", "HDR 輝度倍率。Bloom を乗せる", &m.emissive.isEnable,
 			  [&] { return YEmissiveModule::DrawImGui(m.emissive); }, [&] { m.emissive = EmissiveParams{}; } },
 			{ "フリップブック", "爆発 / 炎のスプライトシート", &m.flipbook.isEnable,
@@ -875,9 +900,11 @@ namespace {
 			row(GpuItem::Scale, -1, "スケール", text(std::format("{:.2f} → {:.2f}", pp.startScale.x, pp.endScale.x)));
 			row(GpuItem::Rotation, -1, "回転", text(std::format("{:.1f} /秒", pp.rotationSpeed)));
 			row(GpuItem::Velocity, -1, "速度・重力", text(std::format("Y {:.2f} / 重力 {:.2f}", pp.velocity.y, pp.gravity)));
-			row(GpuItem::Color, -1, "色", [&] {
+			row(GpuItem::Color, -1, e.extModules.colorGradient.isEnable ? "色（グラデーション）" : "色", [&] {
 				const float h = ImGui::GetTextLineHeight() * 0.8f;
-				DrawColorStrip(pp.startColor, pp.endColor, ImVec2(ImGui::GetContentRegionAvail().x, h));
+				const ImVec2 size(ImGui::GetContentRegionAvail().x, h);
+				if (e.extModules.colorGradient.isEnable) DrawGradientStrip(e.extModules.colorGradient.gradient, size);
+				else                                     DrawColorStrip(pp.startColor, pp.endColor, size);
 				});
 			row(GpuItem::Trail, -1, "トレイル", text(pp.child.isTrail ? "ON" : "OFF"));
 			ImGui::EndTable();
@@ -886,7 +913,7 @@ namespace {
 
 		// ── 拡張モジュール（任意で追加する演出） ──
 		ImGui::PushID("ext");
-		auto entries = GetExtEntries(e.extModules);
+		auto entries = GetExtEntries(e.extModules, e.particleParams);
 		int addedCount = 0;
 		for (const auto& entry : entries) addedCount += *entry.isEnable ? 1 : 0;
 		if (beginSection("拡張モジュール")) {
@@ -914,6 +941,7 @@ namespace {
 				any = true;
 				if (ImGui::Selectable(entries[i].label)) {
 					*entries[i].isEnable = true;
+					if (entries[i].onAdd) entries[i].onAdd();
 					manager.UpdateParticleParams(&e);
 					st.item = GpuItem::Ext;
 					st.itemIndex = i;
@@ -1026,7 +1054,20 @@ namespace {
 		case GpuItem::Scale:    ImGui::SeparatorText("スケール");   particleChanged |= YScaleOverLifeModule::DrawImGui(pp); break;
 		case GpuItem::Rotation: ImGui::SeparatorText("回転");       particleChanged |= YRotationModule::DrawImGui(pp);      break;
 		case GpuItem::Velocity: ImGui::SeparatorText("速度・重力"); particleChanged |= YVelocityModule::DrawImGui(pp);      break;
-		case GpuItem::Color:    ImGui::SeparatorText("色");         particleChanged |= YColorOverLifeModule::DrawImGui(pp); break;
+		case GpuItem::Color:
+			ImGui::SeparatorText("色");
+			if (e.extModules.colorGradient.isEnable) {
+				ImGui::TextColored(ImVec4(1.0f, 0.75f, 0.3f, 1.0f), ICON_FA_INFO_CIRCLE " 寿命カラー（グラデーション）が有効なので、下の開始色 / 終了色は使われていません");
+				if (ImGui::Button("グラデーションを編集")) {
+					auto entries = GetExtEntries(e.extModules, pp);
+					for (int k = 0; k < static_cast<int>(entries.size()); ++k) {
+						if (entries[k].isEnable == &e.extModules.colorGradient.isEnable) { st.item = GpuItem::Ext; st.itemIndex = k; }
+					}
+				}
+				ImGui::Separator();
+			}
+			particleChanged |= YColorOverLifeModule::DrawImGui(pp);
+			break;
 
 		case GpuItem::Trail:
 			ImGui::SeparatorText("トレイル（粒子が動いた軌跡に子パーティクルを出す）");
@@ -1042,7 +1083,7 @@ namespace {
 			break;
 
 		case GpuItem::Ext: {
-			auto entries = GetExtEntries(e.extModules);
+			auto entries = GetExtEntries(e.extModules, e.particleParams);
 			if (st.itemIndex < 0 || st.itemIndex >= static_cast<int>(entries.size()) || !*entries[st.itemIndex].isEnable) {
 				st.item = GpuItem::Shape;
 				break;

@@ -133,3 +133,16 @@ inline void from_json(const nlohmann::json& j, FlipbookParams& p)
 	p.rows     = j.value("rows", d.rows);
 	p.fps      = j.value("fps", d.fps);
 }
+
+// 寿命カラー（グラデーション）: グラデーション本体は ColorGradient 自身の形式で保存する
+// （CPU パーティクルの寿命カラーと同じ {"space", "stops": [{"t", "color"}]}）
+inline void to_json(nlohmann::json& j, const ColorGradientParams& p)
+{
+	j = nlohmann::json{ {"isEnable", p.isEnable} };
+	p.gradient.SaveToJson(j["gradient"]);
+}
+inline void from_json(const nlohmann::json& j, ColorGradientParams& p)
+{
+	p.isEnable = j.value("isEnable", false);
+	if (j.contains("gradient")) p.gradient.LoadFromJson(j["gradient"]);
+}

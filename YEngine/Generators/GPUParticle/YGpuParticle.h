@@ -89,11 +89,14 @@ public:
 		float     pad[3];
 	};
 
+	// 寿命カラー表の段数（HLSL 側 GPU_COLOR_GRADIENT_LUT_SIZE と一致させること）
+	static constexpr int kGpuColorGradientLutSize = 32;
+
 	// 拡張Paramモジュール（任意ON/OFFの演出）用の共有CBV。
 	// VS(g_ExtParams, b1) と Update CS(g_ExtParams, b2) の両方が読む。
 	//   VS  が使う: UVScroll / ScalePulse / ColorFlicker / StretchByVelocity（見た目）
 	//   CS  が使う: Drag / Bounce（速度・位置の物理更新）
-	// HLSL側 ParticleExtParams(GPUParticle.hlsli)と厳密に同一レイアウト (96 bytes)。
+	// HLSL側 ParticleExtParams(GPUParticle.hlsli)と厳密に同一レイアウト (656 bytes)。
 	__declspec(align(16))
 	struct ParticleExtParameters {
 		Vector2  uvScrollSpeed;
@@ -132,8 +135,13 @@ public:
 		uint32_t flipbookRows;
 		float    flipbookFps;      // 0以下なら寿命全体でちょうど1周する
 		uint32_t flipbookEnable;   // 128
+
+		// 寿命カラー（グラデーション）。有効時は VS が start/end の 2 色補間の代わりにこの表を引く
+		uint32_t colorGradientEnable;
+		float    pad6[3];          // 144
+		Vector4  colorGradientLut[kGpuColorGradientLutSize]; // 144 + 16*32 = 656
 	};
-	static_assert(sizeof(ParticleExtParameters) == 128, "ParticleExtParameters must match HLSL ParticleExtParams (128B)");
+	static_assert(sizeof(ParticleExtParameters) == 656, "ParticleExtParameters must match HLSL ParticleExtParams (656B)");
 
 
 public:

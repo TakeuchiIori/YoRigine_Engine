@@ -611,6 +611,7 @@ void YGpuEmitter::SetExtParams(const GpuExtModules& modules)
 	YBounceModule::WriteTo(ext, modules.bounce);
 	YEmissiveModule::WriteTo(ext, modules.emissive);
 	YFlipbookModule::WriteTo(ext, modules.flipbook);
+	YColorGradientModule::WriteTo(ext, modules.colorGradient);
 	gpuParticle_->SetExtParams(ext);
 }
 

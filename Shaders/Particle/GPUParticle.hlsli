@@ -255,6 +255,9 @@ struct MeshTriangle
 //   VS が使う: uvScroll / pulse / flicker / stretch（見た目）
 //   CS が使う: drag / bounce（速度・位置の物理更新）
 // C++ 側 YGpuParticle::ParticleExtParameters と厳密に同一レイアウト (96 bytes)。
+// 寿命カラー表の段数（C++ 側 YGpuParticle::kGpuColorGradientLutSize と一致させること）
+#define GPU_COLOR_GRADIENT_LUT_SIZE 32
+
 struct ParticleExtParams
 {
     float2 uvScrollSpeed;
@@ -293,6 +296,12 @@ struct ParticleExtParams
     uint   flipbookRows;
     float  flipbookFps;       // 0以下なら寿命全体でちょうど1周する
     uint   flipbookEnable;    // 128
+
+    // 寿命カラー（グラデーション）。有効時は start/end の 2 色補間の代わりにこの表を寿命で引く。
+    // 表は CPU 側の ColorGradient（Oklab 補間）を等間隔にサンプルしたもの＝エディタの見た目と一致する。
+    uint   colorGradientEnable;
+    float3 pad6;              // 144
+    float4 colorGradientLut[GPU_COLOR_GRADIENT_LUT_SIZE]; // 144 + 16*32 = 656
 };
 // ────────────────────────────────────────────────────────────────────────────
 

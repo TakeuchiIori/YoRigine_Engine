@@ -22,6 +22,7 @@
 #include "Bounce/YBounceModule.h"
 #include "Emissive/YEmissiveModule.h"
 #include "Flipbook/YFlipbookModule.h"
+#include "ColorGradient/YColorGradientModule.h"
 
 struct GpuExtModules {
 	UVScrollParams          uvScroll;
@@ -32,4 +33,5 @@ struct GpuExtModules {
 	BounceParams            bounce;
 	EmissiveParams          emissive;
 	FlipbookParams          flipbook;
+	ColorGradientParams     colorGradient; // 寿命カラー（グラデーション）
 };

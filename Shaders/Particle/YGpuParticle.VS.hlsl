@@ -31,6 +31,15 @@ VertexShaderOutput main(VertexShaderInput input, uint instanceID : SV_InstanceID
     float3 scale = lerp(warm.startScale, warm.endScale, lifeRatio);
     float4 color = lerp(warm.startColor, warm.endColor, lifeRatio);
 
+    // ②'' 拡張Paramモジュール: 寿命カラー（グラデーション）。2 色補間を表引きで置き換える
+    //      （隣り合う 2 段を線形補間。表は CPU 側で Oklab 補間済みなので見た目はエディタと一致）
+    if (g_ExtParams.colorGradientEnable != 0)
+    {
+        float f  = lifeRatio * (float) (GPU_COLOR_GRADIENT_LUT_SIZE - 1);
+        uint  i0 = min((uint) f, (uint) (GPU_COLOR_GRADIENT_LUT_SIZE - 2));
+        color = lerp(g_ExtParams.colorGradientLut[i0], g_ExtParams.colorGradientLut[i0 + 1], f - (float) i0);
+    }
+
     // ②' 拡張Paramモジュール: スケール脈動・色の明滅（粒子ごとの経過時間 hot.currentTime を位相に使う）
     static const float kTwoPi = 6.28318530718f;
     if (g_ExtParams.pulseEnable != 0)
