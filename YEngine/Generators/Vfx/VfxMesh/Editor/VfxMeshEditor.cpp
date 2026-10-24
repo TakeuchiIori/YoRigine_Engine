@@ -11,9 +11,24 @@
 #include <Loaders/Texture/TextureManager.h>
 #include <IconsFontAwesome5.h>
 #include "Core/Editor/Widgets/YEditorWidget.h"
+#include <cfloat>
+#include <cctype>
 
 
 namespace fs = std::filesystem;
+
+namespace {
+
+	/// 名前で探す（大文字小文字を無視。英字のみ）
+	bool MatchesFilter(const std::string& name, const char* filter) {
+		if (!filter || !filter[0]) return true;
+		std::string a = name, b = filter;
+		std::transform(a.begin(), a.end(), a.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+		std::transform(b.begin(), b.end(), b.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+		return a.find(b) != std::string::npos;
+	}
+
+} // namespace
 
 namespace YoRigine {
 
@@ -142,11 +157,17 @@ namespace YoRigine {
 	// ===========================================================
 	void VfxMeshEditor::DrawImGui()
 	{
-		history_.HandleKeyInput();
+		// 文字入力中の Ctrl+Z は入力欄自身の取り消しに使われるので、エディタの Undo は走らせない
+		if (!ImGui::GetIO().WantTextInput) history_.HandleKeyInput();
+		// Ctrl+S はこのパネルにフォーカスがあるときだけ（他のエディタと衝突させない）
+		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_S)) {
+			SaveCurrent();
+		}
 
 		ImGui::SetNextWindowSize(ImVec2(760, 680), ImGuiCond_FirstUseEver);
 
-		ImGui::BeginChild("##list", ImVec2(200, 0), true);
+		ImGui::BeginChild("##list", ImVec2(listWidth_, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
+		listWidth_ = ImGui::GetWindowWidth();
 		DrawListPanel();
 		ImGui::EndChild();
 
@@ -157,36 +178,92 @@ namespace YoRigine {
 		ImGui::EndChild();
 
 		DrawNewEffectDialog();
+		DrawConfirmDialogs();
+	}
+
+	void VfxMeshEditor::DrawConfirmDialogs()
+	{
+		// ── 削除（ディスク上の JSON も消すので必ず確認する。元に戻せない）──
+		if (deleteRequestIndex_ >= 0 && !ImGui::IsPopupOpen("VFX エフェクトの削除")) ImGui::OpenPopup("VFX エフェクトの削除");
+		if (ImGui::BeginPopupModal("VFX エフェクトの削除", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+			const bool valid = deleteRequestIndex_ >= 0 && deleteRequestIndex_ < static_cast<int>(entries_.size());
+			if (valid) {
+				ImGui::Text("「%s」を削除しますか？", entries_[deleteRequestIndex_].asset.name.c_str());
+				ImGui::TextColored(ImVec4(1.0f, 0.45f, 0.35f, 1.0f), ICON_FA_EXCLAMATION_TRIANGLE " JSON ファイルもディスクから削除されます。元に戻せません。");
+				ImGui::TextDisabled("%s", entries_[deleteRequestIndex_].filePath.c_str());
+			}
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.18f, 0.18f, 1.0f));
+			if (ImGui::Button("削除する", ImVec2(120, 0)) && valid) {
+				selectedIndex_ = deleteRequestIndex_;
+				DeleteCurrent();
+				deleteRequestIndex_ = -1;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::PopStyleColor();
+			ImGui::SameLine();
+			if (ImGui::Button("キャンセル", ImVec2(120, 0)) || !valid) {
+				deleteRequestIndex_ = -1;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+
+		// ── 再読み込み（未保存の変更が消えるので確認する）──
+		if (showRescanConfirm_ && !ImGui::IsPopupOpen("VFX の再読み込み")) ImGui::OpenPopup("VFX の再読み込み");
+		if (ImGui::BeginPopupModal("VFX の再読み込み", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+			int dirtyCount = 0;
+			for (const auto& e : entries_) dirtyCount += e.isDirty ? 1 : 0;
+			ImGui::Text("未保存の変更が %d 件あります。破棄してフォルダから読み直しますか？", dirtyCount);
+			if (ImGui::Button("破棄して読み直す", ImVec2(160, 0))) {
+				Rescan();
+				showRescanConfirm_ = false;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("キャンセル", ImVec2(120, 0))) {
+				showRescanConfirm_ = false;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+	}
+
+	void VfxMeshEditor::Rescan()
+	{
+		const int prevSel = selectedIndex_;
+		ScanDirectory(scanRoot_);
+		selectedIndex_ = -1;
+		if (prevSel >= 0 && prevSel < static_cast<int>(entries_.size())) SelectEffect(prevSel);
+		else if (!entries_.empty())                                    SelectEffect(0);
+		YEditorWidget::NotifyInfo("VFX を読み直しました（%d 件）", static_cast<int>(entries_.size()));
 	}
 
 	void VfxMeshEditor::DrawListPanel()
 	{
-		ImGui::TextDisabled("エフェクト一覧");
-		ImGui::SameLine();
-		if (ImGui::SmallButton("+")) {
+		if (ImGui::Button(ICON_FA_PLUS " 新規")) {
 			std::string uniq = MakeUniqueEffectName("NewEffect");
 			strncpy_s(newNameBuffer_, sizeof(newNameBuffer_), uniq.c_str(), _TRUNCATE);
 			newPathBuffer_[0] = '\0';
 			showNewDialog_ = true;
 		}
 		ImGui::SameLine();
-		if (ImGui::SmallButton("R")) {
-			int prevSel = selectedIndex_;
-			ScanDirectory(scanRoot_);
-			selectedIndex_ = -1;
-			if (prevSel >= 0 && prevSel < static_cast<int>(entries_.size())) {
-				SelectEffect(prevSel);
-			}
-			else if (!entries_.empty()) {
-				SelectEffect(0);
-			}
+		if (ImGui::Button(ICON_FA_SYNC)) {
+			// 未保存の変更があるときは黙って捨てない
+			bool anyDirty = false;
+			for (const auto& e : entries_) anyDirty |= e.isDirty;
+			if (anyDirty) showRescanConfirm_ = true;
+			else          Rescan();
 		}
-		YEditorWidget::ItemTooltip("ディレクトリを再スキャン");
+		YEditorWidget::ItemTooltip("フォルダから読み直す");
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(-FLT_MIN);
+		ImGui::InputTextWithHint("##filter", ICON_FA_SEARCH " 検索", listFilter_, sizeof(listFilter_));
 
 		ImGui::Separator();
 
 		for (int i = 0; i < static_cast<int>(entries_.size()); ++i) {
 			const auto& e = entries_[i];
+			if (!MatchesFilter(e.asset.name, listFilter_)) continue;
 
 			std::string label = e.asset.name;
 			if (e.isDirty) label += " *";
@@ -197,16 +274,13 @@ namespace YoRigine {
 			}
 
 			if (ImGui::BeginPopupContextItem()) {
-				if (ImGui::MenuItem("保存")) {
+				if (ImGui::MenuItem(ICON_FA_SAVE " 保存")) {
 					selectedIndex_ = i;
 					SaveCurrent();
 				}
-				if (ImGui::MenuItem("削除")) {
-					selectedIndex_ = i;
-					DeleteCurrent();
-					ImGui::EndPopup();
-					break;
-				}
+				ImGui::Separator();
+				// ディスク上のファイルも消えるので、確認ダイアログを経由する
+				if (ImGui::MenuItem(ICON_FA_TRASH " 削除...")) deleteRequestIndex_ = i;
 				ImGui::EndPopup();
 			}
 
@@ -227,16 +301,23 @@ namespace YoRigine {
 		}
 		auto& asset = sel->asset;
 
-		history_.DrawImGui();
+		// CPU / GPU エディタと同じ並びのツールバー
+		if (ImGui::Button(ICON_FA_SAVE)) SaveCurrent();
+		YEditorWidget::ItemTooltip("保存 (Ctrl+S)");
 		ImGui::SameLine();
-		if (ImGui::Button("保存")) SaveCurrent();
-		if (sel->isDirty) {
-			ImGui::SameLine();
-			ImGui::TextColored(ImVec4(1.f, 0.6f, 0.1f, 1.f), "* 未保存");
-		}
-		ImGui::Separator();
-
-		ImGui::TextDisabled("Path: %s", sel->filePath.c_str());
+		ImGui::BeginDisabled(!history_.CanUndo());
+		if (ImGui::Button(ICON_FA_UNDO)) history_.Undo();
+		ImGui::EndDisabled();
+		YEditorWidget::ItemTooltip("元に戻す (Ctrl+Z)");
+		ImGui::SameLine();
+		ImGui::BeginDisabled(!history_.CanRedo());
+		if (ImGui::Button(ICON_FA_REDO)) history_.Redo();
+		ImGui::EndDisabled();
+		YEditorWidget::ItemTooltip("やり直し (Ctrl+Y)");
+		ImGui::SameLine(0, 16);
+		if (sel->isDirty) ImGui::TextColored(ImVec4(1.0f, 0.65f, 0.2f, 1.0f), "* 未保存");
+		else              ImGui::TextDisabled("保存済み");
+		YEditorWidget::ItemTooltip(("保存先: " + sel->filePath).c_str());
 		ImGui::Separator();
 
 		strncpy_s(nameBuffer_, asset.name.c_str(), sizeof(nameBuffer_));

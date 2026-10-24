@@ -272,7 +272,7 @@ namespace {
 		for (const auto& m : modules) {
 			nlohmann::json mj;
 			mj["type"] = m->GetTypeName();
-			mj["name"] = m->GetName();
+			mj["name"] = m->GetDisplayName(); // 作者が付けた名前を保つ
 			// 既定（有効）は書かない＝既存ファイルの差分を増やさない
 			if (!m->IsEnabled()) mj["enabled"] = false;
 			m->SaveToJson(mj["data"]);
@@ -348,6 +348,7 @@ void YParticleSystem::LoadFromJson(const nlohmann::json& json)
 			}
 			if (mj.contains("data")) module->LoadFromJson(mj["data"]);
 			module->SetEnabled(mj.value("enabled", true));
+			module->SetLabel(mj.value("name", std::string{}));
 			AddSpawnModule(module);
 		}
 	}
@@ -361,6 +362,7 @@ void YParticleSystem::LoadFromJson(const nlohmann::json& json)
 			}
 			if (mj.contains("data")) module->LoadFromJson(mj["data"]);
 			module->SetEnabled(mj.value("enabled", true));
+			module->SetLabel(mj.value("name", std::string{}));
 			AddUpdateModule(module);
 		}
 	}

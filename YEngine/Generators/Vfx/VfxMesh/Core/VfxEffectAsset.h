@@ -316,7 +316,8 @@ namespace YoRigine {
         // あればその duration の最大値、無ければ既存アセット互換のヒューリスティック。
         float OneShotDuration() const;
 
-        void SaveToJson(const std::string& filePath) const;
+        // 保存できたら true（ファイルを開けなかった等は false）
+        bool SaveToJson(const std::string& filePath) const;
         bool LoadFromJson(const std::string& filePath);
     };
 

@@ -2,6 +2,7 @@
 #include "VfxMeshEditor.h"
 
 #include "Debugger/Logger.h"
+#include "Core/Editor/Widgets/YEditorWidget_Notify.h"
 
 #include <algorithm>
 #include <filesystem>
@@ -21,9 +22,14 @@ namespace YoRigine {
             std::error_code ec;
             fs::create_directories(p.parent_path(), ec);
         }
-        sel->asset.SaveToJson(sel->filePath);
+        if (!sel->asset.SaveToJson(sel->filePath)) {
+            Logger("VfxMeshEditor: 保存失敗 -> " + sel->filePath);
+            YEditorWidget::NotifyError("保存に失敗しました: %s", sel->filePath.c_str());
+            return;
+        }
         sel->isDirty = false;
         Logger("VfxMeshEditor: 保存 -> " + sel->filePath);
+        YEditorWidget::NotifySuccess("保存しました: %s", fs::path(sel->filePath).filename().string().c_str());
     }
 
     void VfxMeshEditor::SaveAs(const std::string& newPath)
@@ -43,6 +49,7 @@ namespace YoRigine {
         if (newName.empty()) return;
         if (newName.find_first_of("\\/:*?\"<>|") != std::string::npos) {
             Logger("VfxMeshEditor: ファイル名に使えない文字が含まれるためリネームしません -> " + newName);
+            YEditorWidget::NotifyWarning("ファイル名に使えない文字が含まれるため、ファイル名は変えません: %s", newName.c_str());
             return;
         }
 
@@ -71,6 +78,7 @@ namespace YoRigine {
             fs::rename(oldPath, newPath, ec);
             if (ec) {
                 Logger("VfxMeshEditor: リネーム失敗 " + oldPath.string() + " -> " + newPath.string());
+                YEditorWidget::NotifyError("ファイル名の変更に失敗しました: %s", newPath.filename().string().c_str());
                 return;
             }
             Logger("VfxMeshEditor: リネーム " + oldPath.string() + " -> " + newPath.string());
@@ -86,8 +94,13 @@ namespace YoRigine {
 
         std::error_code ec;
         fs::remove(sel->filePath, ec);
-        if (ec) Logger("VfxMeshEditor: 削除失敗 -> " + sel->filePath);
-        else    Logger("VfxMeshEditor: 削除 -> " + sel->filePath);
+        if (ec) {
+            Logger("VfxMeshEditor: 削除失敗 -> " + sel->filePath);
+            YEditorWidget::NotifyError("ファイルの削除に失敗しました: %s", sel->filePath.c_str());
+            return;
+        }
+        Logger("VfxMeshEditor: 削除 -> " + sel->filePath);
+        YEditorWidget::NotifyInfo("削除しました: %s", fs::path(sel->filePath).filename().string().c_str());
 
         entries_.erase(entries_.begin() + selectedIndex_);
 

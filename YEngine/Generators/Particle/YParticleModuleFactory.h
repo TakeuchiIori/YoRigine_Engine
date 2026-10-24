@@ -140,6 +140,18 @@ public:
   /// <summary>カテゴリの表示名（日本語）</summary>
   static const char *GetCategoryName(ParticleModuleCategory category);
 
+  /// <summary>一行説明（追加メニュー・インスペクタ用。未登録は空文字）</summary>
+  static const char *GetDescription(const std::string &typeName);
+
+  /// <summary>
+  /// 旧モジュールなら推奨の置き換え先の型名（追加メニューに出さず、インスペクタで変換を勧める）。
+  /// 置き換え先は旧モジュールの JSON をそのまま読めること。旧モジュールでなければ nullptr。
+  /// </summary>
+  static const char *GetReplacement(const std::string &typeName);
+
+  /// <summary>速度だけを書き換えるモジュールか（位置への反映に UpdateVelocity が必要）</summary>
+  static bool UsesVelocity(const std::string &typeName);
+
 private:
   YParticleModuleFactory() = default;
   ~YParticleModuleFactory() = default;

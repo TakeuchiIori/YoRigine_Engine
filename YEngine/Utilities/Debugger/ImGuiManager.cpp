@@ -12,6 +12,8 @@
 #include "Core/Editor/Widgets/YEditorWidget_Notify.h"
 #endif
 #include <iostream>
+#include <unordered_map>
+#include <vector>
 
 ImGuiManager *ImGuiManager::GetInstance() {
   static ImGuiManager instance;
@@ -77,19 +79,79 @@ void ImGuiManager::Draw() {
 // =============================================================================
 //  DirectX12 バックエンド
 // =============================================================================
+#ifdef USE_IMGUI
+namespace {
+
+// 動的フォント（ImGui 1.92 の RendererHasTextures）を使うか。
+// true : 文字サイズを変えても字がぼやけない（必要な大きさで都度ラスタライズする）
+// false: 旧方式（起動時に固定サイズのアトラスを 1 枚焼く。拡大するとぼやける）
+// 表示が崩れたときの切り戻し用に残している。
+constexpr bool kUseDynamicFonts = true;
+
+// ImGui が使う SRV のプール。動的フォントではアトラスのテクスチャが増減するため
+// ImGui に確保・解放の口を渡す必要があるが、SrvManager には解放が無いので
+// 起動時にまとめて確保し、その中で使い回す。
+// フォントアトラスは通常 1 枚（作り直しの間だけ 2〜3 枚）。ヒープ全体は 512 枠なので取りすぎない
+constexpr uint32_t kImGuiSrvPoolSize = 8;
+std::vector<uint32_t> gImGuiFreeSrvs;
+std::unordered_map<SIZE_T, uint32_t> gImGuiSrvByCpuHandle;
+
+void ImGuiSrvAlloc(ImGui_ImplDX12_InitInfo *, D3D12_CPU_DESCRIPTOR_HANDLE *outCpu,
+                   D3D12_GPU_DESCRIPTOR_HANDLE *outGpu) {
+  assert(!gImGuiFreeSrvs.empty() && "ImGui 用 SRV プールが足りません（kImGuiSrvPoolSize を増やす）");
+  const uint32_t index = gImGuiFreeSrvs.back();
+  gImGuiFreeSrvs.pop_back();
+  auto *srv = YoRigine::SrvManager::GetInstance();
+  *outCpu = srv->GetCPUDescriptorHandle(index);
+  *outGpu = srv->GetGPUDescriptorHandle(index);
+  gImGuiSrvByCpuHandle[outCpu->ptr] = index;
+}
+
+void ImGuiSrvFree(ImGui_ImplDX12_InitInfo *, D3D12_CPU_DESCRIPTOR_HANDLE cpu,
+                  D3D12_GPU_DESCRIPTOR_HANDLE) {
+  auto it = gImGuiSrvByCpuHandle.find(cpu.ptr);
+  if (it == gImGuiSrvByCpuHandle.end()) return;
+  gImGuiFreeSrvs.push_back(it->second);
+  gImGuiSrvByCpuHandle.erase(it);
+}
+
+} // namespace
+#endif
+
 void ImGuiManager::InitialzeDX12() {
 #ifdef USE_IMGUI
   IMGUI_CHECKVERSION();
   ImGui_ImplWin32_Init(winApp_->GetHwnd());
 
-  uint32_t srvIndex = YoRigine::SrvManager::GetInstance()->Allocate();
-  HRESULT hr = ImGui_ImplDX12_Init(
-      dxCommon_->GetDevice().Get(), dxCommon_->GetBackBufferCount(),
-      DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
-      YoRigine::SrvManager::GetInstance()->GetDescriptorHeap(),
-      YoRigine::SrvManager::GetInstance()->GetCPUDescriptorHandle(srvIndex),
-      YoRigine::SrvManager::GetInstance()->GetGPUDescriptorHandle(srvIndex));
-  assert(SUCCEEDED(hr));
+  auto *srv = YoRigine::SrvManager::GetInstance();
+  if (!kUseDynamicFonts) {
+    // 旧方式: SRV 1 個にフォントアトラスを焼く
+    uint32_t srvIndex = srv->Allocate();
+    HRESULT hr = ImGui_ImplDX12_Init(
+        dxCommon_->GetDevice().Get(), dxCommon_->GetBackBufferCount(),
+        DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, srv->GetDescriptorHeap(),
+        srv->GetCPUDescriptorHandle(srvIndex), srv->GetGPUDescriptorHandle(srvIndex));
+    assert(SUCCEEDED(hr));
+    return;
+  }
+
+  // 新方式: SRV の確保・解放を ImGui に任せる（文字サイズを変えても字がぼやけない）
+  const uint32_t base = srv->Allocate(kImGuiSrvPoolSize);
+  gImGuiFreeSrvs.clear();
+  for (uint32_t i = 0; i < kImGuiSrvPoolSize; ++i) gImGuiFreeSrvs.push_back(base + kImGuiSrvPoolSize - 1 - i);
+
+  ImGui_ImplDX12_InitInfo info;
+  info.Device = dxCommon_->GetDevice().Get();
+  info.CommandQueue = dxCommon_->GetCommandQueue().Get(); // フォントテクスチャの転送に使う
+  info.NumFramesInFlight = static_cast<int>(dxCommon_->GetBackBufferCount());
+  info.RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+  info.DSVFormat = DXGI_FORMAT_UNKNOWN;
+  info.SrvDescriptorHeap = srv->GetDescriptorHeap();
+  info.SrvDescriptorAllocFn = &ImGuiSrvAlloc;
+  info.SrvDescriptorFreeFn = &ImGuiSrvFree;
+  const bool ok = ImGui_ImplDX12_Init(&info);
+  assert(ok);
+  (void)ok;
 #endif
 }
 
@@ -326,10 +388,10 @@ void ImGuiManager::CustomizeEditor() {
   fontLarge_ = AddEditorFont(io, kFontSizeLarge, true);
   fontSmall_ = AddEditorFont(io, kFontSizeSmall, false);
 
-  // バックエンドが動的フォント未対応なので、ここでアトラスを焼き切る。
-  // これを省くと ImGui_ImplDX12_NewFrame 後の最初のフレームで
-  // 「font atlas is not built」の assert で落ちる。
-  io.Fonts->Build();
+  // 旧方式（kUseDynamicFonts = false）はバックエンドが動的フォント未対応なので、
+  // ここでアトラスを焼き切る。省くと最初のフレームで「font atlas is not built」の assert で落ちる。
+  // 新方式は必要な文字・大きさを描くときにラスタライズするので焼き切り不要。
+  if (!kUseDynamicFonts) io.Fonts->Build();
 
 #endif // USE_IMGUI
 }

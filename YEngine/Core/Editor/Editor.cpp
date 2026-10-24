@@ -1,5 +1,7 @@
 #ifdef USE_IMGUI
 
+#include <algorithm>
+#include <cmath>
 #include <imgui_internal.h>
 
 // Engine
@@ -111,6 +113,9 @@ void Editor::Finalize()
 // =============================================================================
 void Editor::Draw()
 {
+	// 文字サイズ（全パネル共通）。動的フォントなので拡大しても字はぼやけない
+	ImGui::GetStyle().FontScaleMain = fontScale_;
+
 	// F1 でエディタ表示トグル
 	if (ImGui::IsKeyPressed(ImGuiKey_F1)) {
 		showEditor_ = !showEditor_;
@@ -312,6 +317,34 @@ void Editor::DrawMenuBar()
 			if (ImGui::MenuItem(TR(ICON_FA_EYE_SLASH "  エディターを非表示"), "F1")) {
 				showEditor_ = false;
 			}
+			ImGui::SeparatorText(TR("文字サイズ"));
+			// ドラッグ中に反映すると、文字と一緒にメニュー（このスライダー自身）の大きさも変わり、
+			// カーソルの下でスライダーが動いて画面全体ががたつく。
+			// そこでドラッグ中は値だけを動かし、離した時点で 1 回だけ反映・保存する。
+			{
+				if (!fontScaleDragging_) pendingFontScale_ = fontScale_;
+				ImGui::SetNextItemWidth(ImGui::GetFontSize() * 9.0f);
+				if (ImGui::SliderFloat("##fontScale", &pendingFontScale_, 0.75f, 2.0f, "%.2f 倍")) {
+					pendingFontScale_ = std::round(pendingFontScale_ * 20.0f) / 20.0f; // 0.05 刻み
+				}
+				fontScaleDragging_ = ImGui::IsItemActive();
+				if (ImGui::IsItemDeactivatedAfterEdit()) {
+					fontScale_ = pendingFontScale_;
+					SaveSettings();
+				}
+				ImGui::SetItemTooltip("%s", TR("離したときに反映されます"));
+
+				// よく使う大きさはワンクリックで
+				for (float preset : { 1.0f, 1.25f, 1.5f }) {
+					ImGui::SameLine();
+					const std::string label = std::to_string(static_cast<int>(preset * 100.0f + 0.5f)) + "%";
+					if (ImGui::SmallButton(label.c_str())) {
+						fontScale_ = pendingFontScale_ = preset;
+						SaveSettings();
+					}
+				}
+			}
+
 			ImGui::SeparatorText(TR("設定"));
 			if (ImGui::MenuItem(TR(ICON_FA_SAVE "  設定をセーブ"))) {
 				SaveSettings();
@@ -618,7 +651,8 @@ void Editor::SaveSettings()
 	file << "LayoutVersion=" << kLayoutVersion << "\n";
 	file << "ShowEditor=" << (showEditor_ ? "1" : "0") << "\n";
 	file << "CurrentScene=" << currentScene_ << "\n";
-	file << "Language=" << YoRigine::loc::LanguageCode(YoRigine::loc::Current()) << "\n\n";
+	file << "Language=" << YoRigine::loc::LanguageCode(YoRigine::loc::Current()) << "\n";
+	file << "FontScale=" << fontScale_ << "\n\n";
 
 	file << "[GameUI]\n";
 	for (const auto& [name, ui] : gameUIs_) {
@@ -658,6 +692,7 @@ void Editor::LoadSettings()
 			else if (key == "ShowEditor")     showEditor_ = (value == "1");
 			else if (key == "CurrentScene")   currentScene_ = value;
 			else if (key == "Language")       YoRigine::loc::SetLanguage(YoRigine::loc::LanguageFromCode(value));
+			else if (key == "FontScale")      fontScale_ = std::clamp(std::stof(value), 0.75f, 2.0f);
 		}
 		else if (section == "GameUI") {
 			size_t under = key.rfind('_');

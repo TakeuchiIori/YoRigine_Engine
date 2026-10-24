@@ -12,8 +12,16 @@ void UpdateVelocity::OnUpdate(ParticleAttribute* attrs, uint32_t index, float dt
 void UpdateVelocity::DrawEditor()
 {
 #ifdef USE_IMGUI
-	ImGui::Checkbox("ランダム速度", &isRandom_);
-	ImGui::DragFloat3("速度", &velocity_.x, 0.1f);
+	// isRandom_ は「生成時の速度（と重力などで変わった速度）をそのまま使う」の意味。
+	// OFF だと毎フレーム下の固定速度で上書きするため、他の速度系モジュールが効かなくなる。
+	ImGui::Checkbox("生成時の速度を使う", &isRandom_);
+	if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort)) {
+		ImGui::SetTooltip("ON : 生成時の速度・重力・乱流などで決まった速度で動く（通常はこちら）\n"
+		                  "OFF: 毎フレーム下の固定速度で上書きして動く（他の速度系モジュールは効かない）");
+	}
+	ImGui::BeginDisabled(isRandom_);
+	ImGui::DragFloat3("固定速度", &velocity_.x, 0.1f);
+	ImGui::EndDisabled();
 #endif
 }
 

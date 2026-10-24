@@ -257,6 +257,8 @@ struct MeshTriangle
 // C++ 側 YGpuParticle::ParticleExtParameters と厳密に同一レイアウト (96 bytes)。
 // 寿命カラー表の段数（C++ 側 YGpuParticle::kGpuColorGradientLutSize と一致させること）
 #define GPU_COLOR_GRADIENT_LUT_SIZE 32
+// 寿命サイズ表の段数（C++ 側 YGpuParticle::kGpuSizeCurveLutSize と一致させること。4 の倍数）
+#define GPU_SIZE_CURVE_LUT_SIZE 32
 
 struct ParticleExtParams
 {
@@ -302,6 +304,12 @@ struct ParticleExtParams
     uint   colorGradientEnable;
     float3 pad6;              // 144
     float4 colorGradientLut[GPU_COLOR_GRADIENT_LUT_SIZE]; // 144 + 16*32 = 656
+
+    // 寿命でサイズ変化（カーブ）。有効時は「開始スケール × この倍率」で scale を決める。
+    // 1 段 = float 1 個を float4 に 4 段ずつ詰めている（[i / 4][i % 4] で読む）
+    uint   sizeCurveEnable;
+    float3 pad7;              // 672
+    float4 sizeCurveLut[GPU_SIZE_CURVE_LUT_SIZE / 4];     // 672 + 16*8 = 800
 };
 // ────────────────────────────────────────────────────────────────────────────
 

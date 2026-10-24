@@ -247,6 +247,14 @@ namespace {
 				  m.colorGradient.gradient.stops = { { 0.0f, pp.startColor }, { 1.0f, pp.endColor } };
 				  m.colorGradient.gradient.MarkDirty();
 			  } },
+			{ "寿命でサイズ変化（カーブ）", "一瞬で膨らんでから縮む等。開始スケール × カーブの倍率", &m.sizeCurve.isEnable,
+			  [&] { return YSizeCurveModule::DrawImGui(m.sizeCurve); }, [&] { m.sizeCurve = SizeCurveParams{}; },
+			  // 追加しただけで見た目が変わらないよう、今の 開始 → 終了 の比率から直線で作る
+			  [&] {
+				  const float start = (pp.startScale.x != 0.0f) ? pp.startScale.x : 1.0f;
+				  m.sizeCurve.curve.keys_ = { { 0.0f, 1.0f }, { 1.0f, pp.endScale.x / start } };
+				  m.sizeCurve.curve.interp_ = ParticleCurve::Interp::Linear;
+			  } },
 			{ "発光", "HDR 輝度倍率。Bloom を乗せる", &m.emissive.isEnable,
 			  [&] { return YEmissiveModule::DrawImGui(m.emissive); }, [&] { m.emissive = EmissiveParams{}; } },
 			{ "フリップブック", "爆発 / 炎のスプライトシート", &m.flipbook.isEnable,
@@ -897,7 +905,13 @@ namespace {
 		if (beginSection("コア")) {
 			setupColumns();
 			row(GpuItem::Lifetime, -1, "生存時間", text(std::format("{:.2f} ±{:.2f} 秒", pp.lifeTime, pp.lifeTimeVariance)));
-			row(GpuItem::Scale, -1, "スケール", text(std::format("{:.2f} → {:.2f}", pp.startScale.x, pp.endScale.x)));
+			if (e.extModules.sizeCurve.isEnable) {
+				const auto& c = e.extModules.sizeCurve.curve;
+				row(GpuItem::Scale, -1, "スケール（カーブ）",
+					text(std::format("{:.2f} × {:.2f}→{:.2f}", pp.startScale.x, c.Evaluate(0.0f), c.Evaluate(1.0f))));
+			} else {
+				row(GpuItem::Scale, -1, "スケール", text(std::format("{:.2f} → {:.2f}", pp.startScale.x, pp.endScale.x)));
+			}
 			row(GpuItem::Rotation, -1, "回転", text(std::format("{:.1f} /秒", pp.rotationSpeed)));
 			row(GpuItem::Velocity, -1, "速度・重力", text(std::format("Y {:.2f} / 重力 {:.2f}", pp.velocity.y, pp.gravity)));
 			row(GpuItem::Color, -1, e.extModules.colorGradient.isEnable ? "色（グラデーション）" : "色", [&] {
@@ -1051,7 +1065,20 @@ namespace {
 			break;
 
 		case GpuItem::Lifetime: ImGui::SeparatorText("生存時間");   particleChanged |= YLifetimeModule::DrawImGui(pp);      break;
-		case GpuItem::Scale:    ImGui::SeparatorText("スケール");   particleChanged |= YScaleOverLifeModule::DrawImGui(pp); break;
+		case GpuItem::Scale:
+			ImGui::SeparatorText("スケール");
+			if (e.extModules.sizeCurve.isEnable) {
+				ImGui::TextColored(ImVec4(1.0f, 0.75f, 0.3f, 1.0f), ICON_FA_INFO_CIRCLE " 寿命でサイズ変化（カーブ）が有効なので、終了スケールは使われていません");
+				if (ImGui::Button("カーブを編集")) {
+					auto entries = GetExtEntries(e.extModules, pp);
+					for (int k = 0; k < static_cast<int>(entries.size()); ++k) {
+						if (entries[k].isEnable == &e.extModules.sizeCurve.isEnable) { st.item = GpuItem::Ext; st.itemIndex = k; }
+					}
+				}
+				ImGui::Separator();
+			}
+			particleChanged |= YScaleOverLifeModule::DrawImGui(pp);
+			break;
 		case GpuItem::Rotation: ImGui::SeparatorText("回転");       particleChanged |= YRotationModule::DrawImGui(pp);      break;
 		case GpuItem::Velocity: ImGui::SeparatorText("速度・重力"); particleChanged |= YVelocityModule::DrawImGui(pp);      break;
 		case GpuItem::Color:

@@ -13,6 +13,7 @@ public:
     void DrawEditor() override;
     std::string GetName()     const override { return "カラー範囲"; }
     std::string GetTypeName() const override { return "SpawnColorRange"; }
+    ColorWrite GetColorWrite() const override { return ColorWrite::Overwrite; }
     void SaveToJson(nlohmann::json& json) const override;
     void LoadFromJson(const nlohmann::json& json) override;
 private:

@@ -143,7 +143,9 @@ bool Gradient(const char* label, ColorGradient& gradient)
     // RGB補間は ImGui 標準の多色矩形（=値の直線補間）、Oklab は細かく刻んで実行時の見た目に合わせる
     settings.gradient_subdivisions = (gradient.space == ColorGradient::Space::Oklab) ? 16 : 0;
     settings.flags            = ImGG::Flag::NoLabel | ImGG::Flag::NoResetButton;
-    settings.color_edit_flags = ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf;
+    // HDR（1 を超える値。Bloom を乗せる発光色）も編集できるようにする
+    settings.color_edit_flags = ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf |
+                                ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float;
 
     if (entry.widget.widget("##body", settings)) {
         ColorGradient edited = gradient;
@@ -155,6 +157,15 @@ bool Gradient(const char* label, ColorGradient& gradient)
         }
     }
     ImGui::TextDisabled("クリック: 追加 / ドラッグ: 移動 / 下へドラッグ・Del: 削除");
+
+    // HDR の点があると、上の帯は 1 で頭打ちに見えるので一言添える
+    bool hasHdr = false;
+    for (const auto& s : gradient.stops) {
+        hasHdr |= (s.color.x > 1.0f || s.color.y > 1.0f || s.color.z > 1.0f);
+    }
+    if (hasHdr) {
+        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.4f, 1.0f), ICON_FA_SUN " HDR の色を含みます（帯の表示は 1 で頭打ちですが、実行時はそのまま光ります）");
+    }
 
     entry.synced = gradient;
     ImGui::PopID();

@@ -200,6 +200,10 @@ private:
 	static constexpr int kLayoutVersion = 3;
 
 	std::string currentScene_ = "Title";
+	// エディタ全体の文字サイズ倍率（style.FontScaleMain。editor_settings.ini の FontScale に保存）
+	float fontScale_ = 1.0f;
+	float pendingFontScale_ = 1.0f;   // スライダーをドラッグ中の値（離すまで反映しない）
+	bool  fontScaleDragging_ = false;
 	std::vector<std::string> sceneNames_ = { "Title", "Game", "Clear", "Develop" };
 
 	// 「Editor は生きている」ことを示す印。ハンドルが weak_ptr で持つ。

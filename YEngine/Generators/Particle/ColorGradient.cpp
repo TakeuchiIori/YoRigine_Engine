@@ -15,15 +15,17 @@ struct Vec3 {
   float x, y, z;
 };
 
-float Saturate(float v) { return std::clamp(v, 0.0f, 1.0f); }
+// 負だけを 0 に丸める。1 を超える値（HDR。Bloom を乗せる発光色）はそのまま通す
+// （imgui_gradient は 0〜1 に丸めて表示するが、実行時は HDR を保ちたいため上側は丸めない）
+float NonNegative(float v) { return (std::max)(v, 0.0f); }
 
 float LinearFromSrgb(float c) {
-  c = Saturate(c);
+  c = NonNegative(c);
   return c < 0.04045f ? c / 12.92f : std::pow((c + 0.055f) / 1.055f, 2.4f);
 }
 
 float SrgbFromLinear(float c) {
-  c = Saturate(c);
+  c = NonNegative(c);
   return c < 0.0031308f ? c * 12.92f
                         : 1.055f * std::pow(c, 1.0f / 2.4f) - 0.055f;
 }

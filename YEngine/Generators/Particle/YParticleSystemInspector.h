@@ -6,6 +6,7 @@
 #include <functional>
 #include <json.hpp>
 #include <string>
+#include <vector>
 
 class YParticleSystem;
 
@@ -64,6 +65,7 @@ private:
   void DrawInspector(YParticleSystem &system);
   void DrawStats(const YParticleSystem &system);
   void HandleShortcuts(YParticleSystem &system);
+  void ComputeWarnings(const YParticleSystem &system);
   void TrackChanges(YParticleSystem &system);
 
   // 選択中モジュールへの操作（描画後に実行される）
@@ -83,6 +85,11 @@ private:
   PendingOp pendingOp_;
   float stackWidth_ = 320.0f;
   Layout layout_ = Layout::SideBySide;
+
+  // 組み合わせの警告（モジュールごと。毎フレーム計算し直す）
+  std::vector<std::vector<std::string>> spawnWarnings_;
+  std::vector<std::vector<std::string>> updateWarnings_;
+  bool missingVelocityIntegrator_ = false;
 
   // 粒子数の推移（ImPlot 表示用のリングバッファ）
   static constexpr int kStatsSamples = 240;

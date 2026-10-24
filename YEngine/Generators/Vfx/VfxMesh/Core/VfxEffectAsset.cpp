@@ -555,7 +555,7 @@ namespace YoRigine {
     } // namespace
 
     // -------------------------------------------------------
-    void VfxEffectAsset::SaveToJson(const std::string& filePath) const {
+    bool VfxEffectAsset::SaveToJson(const std::string& filePath) const {
         json j;
         j["name"]        = name;
         j["useTrail"]    = useTrail;
@@ -646,7 +646,9 @@ namespace YoRigine {
         j["modules"] = ModulesToJson(modules);
 
         std::ofstream ofs(filePath);
+        if (!ofs.is_open()) return false;
         ofs << j.dump(4);
+        return ofs.good();
     }
 
     // -------------------------------------------------------

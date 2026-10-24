@@ -83,6 +83,9 @@ namespace YoRigine {
         static void ApplyDefaultElementModules(VfxElement& sub);
         void DrawPreviewSection();
         void DrawNewEffectDialog();
+        // 削除・再読み込みの確認ダイアログ（どちらも元に戻せない / 未保存が消えるため）
+        void DrawConfirmDialogs();
+        void Rescan();
         void DrawTextureSelectPopup();
 
         void ScanDirectory(const std::string& dir);
@@ -191,6 +194,10 @@ namespace YoRigine {
         float   previewScale_ = 1.0f;  // プレビュー表示倍率（アセットの実寸には影響しない。小さいアセットを見る為のズーム）
 
         bool showNewDialog_ = false;
+        int  deleteRequestIndex_ = -1;   // 削除確認中のエフェクト（-1 = なし）
+        bool showRescanConfirm_ = false;
+        float listWidth_ = 200.0f;
+        char  listFilter_[64] = "";
         char newNameBuffer_[128] = "NewEffect";
         char newPathBuffer_[512] = "";
         int  newPresetIdx_ = static_cast<int>(VfxPreset::Sword);

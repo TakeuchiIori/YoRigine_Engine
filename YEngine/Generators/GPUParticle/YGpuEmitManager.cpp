@@ -1167,7 +1167,8 @@ namespace YoRigine {
 			.Add("bounceParams", &e.extModules.bounce)
 			.Add("emissiveParams", &e.extModules.emissive)
 			.Add("flipbookParams", &e.extModules.flipbook)
-			.Add("colorGradientParams", &e.extModules.colorGradient);
+			.Add("colorGradientParams", &e.extModules.colorGradient)
+			.Add("sizeCurveParams", &e.extModules.sizeCurve);
 		root.AddGroup("sphereParams", sphere)
 			.AddGroup("boxParams", box)
 			.AddGroup("triangleParams", tri)

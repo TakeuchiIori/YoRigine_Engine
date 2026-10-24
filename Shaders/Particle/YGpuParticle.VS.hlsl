@@ -29,6 +29,17 @@ VertexShaderOutput main(VertexShaderInput input, uint instanceID : SV_InstanceID
     ParticleWarm warm = g_Warm[slot];
     float lifeRatio = (hot.lifeTime > 0.0f) ? saturate(hot.currentTime / hot.lifeTime) : 0.0f;
     float3 scale = lerp(warm.startScale, warm.endScale, lifeRatio);
+
+    // ②-a 拡張Paramモジュール: 寿命でサイズ変化（カーブ）。開始スケール × カーブの倍率
+    if (g_ExtParams.sizeCurveEnable != 0)
+    {
+        float f  = lifeRatio * (float) (GPU_SIZE_CURVE_LUT_SIZE - 1);
+        uint  i0 = min((uint) f, (uint) (GPU_SIZE_CURVE_LUT_SIZE - 2));
+        uint  i1 = i0 + 1;
+        float v0 = g_ExtParams.sizeCurveLut[i0 >> 2][i0 & 3];
+        float v1 = g_ExtParams.sizeCurveLut[i1 >> 2][i1 & 3];
+        scale = warm.startScale * lerp(v0, v1, f - (float) i0);
+    }
     float4 color = lerp(warm.startColor, warm.endColor, lifeRatio);
 
     // ②'' 拡張Paramモジュール: 寿命カラー（グラデーション）。2 色補間を表引きで置き換える

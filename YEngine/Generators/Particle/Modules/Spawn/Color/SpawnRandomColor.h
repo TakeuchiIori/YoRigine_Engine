@@ -12,6 +12,7 @@ public:
     void DrawEditor() override;
     std::string GetName() const override { return "ランダム色"; }
     std::string GetTypeName() const override { return "SpawnRandomColor"; }
+    ColorWrite GetColorWrite() const override { return ColorWrite::Overwrite; }
 
     void SaveToJson(nlohmann::json& json) const override;
     void LoadFromJson(const nlohmann::json& json) override;

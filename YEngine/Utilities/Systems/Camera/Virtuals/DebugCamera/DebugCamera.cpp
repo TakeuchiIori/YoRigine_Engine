@@ -2,9 +2,11 @@
 #include "MathFunc.h"
 #include <Systems/Input/Input.h>
 #include <algorithm>
+#include <cmath>
 
 #ifdef USE_IMGUI
 #include <imgui.h>
+#include "Core/Editor/Editor.h"
 #endif
 
 // ============================================================
@@ -26,16 +28,47 @@ void DebugCamera::Initialize() {
 // 更新処理
 // ============================================================
 void DebugCamera::Update() {
+	YoRigine::Input* input = YoRigine::Input::GetInstance();
+
 	// ------------------------------------------------------------
-	// 有効無効の切り替え
+	// 有効無効の切り替え（Ctrl + Shift）
+	// 押した瞬間だけ切り替える（以前は押している間ずっと切り替わり、止まる側が運任せだった）
 	// ------------------------------------------------------------
-	if (YoRigine::Input::GetInstance()->PushKey(DIK_LCONTROL) &&
-		YoRigine::Input::GetInstance()->PushKey(DIK_LSHIFT)) {
+	const bool ctrl = input->PushKey(DIK_LCONTROL);
+	const bool shift = input->PushKey(DIK_LSHIFT);
+	if ((ctrl && input->TriggerKey(DIK_LSHIFT)) || (shift && input->TriggerKey(DIK_LCONTROL))) {
 		isMoving_ = !isMoving_;
 	}
 
-	if (!isMoving_) return;
+	if (!isMoving_) {
+		isFlying_ = false;
+		isPanning_ = false;
+		return;
+	}
 	UpdateInput();
+}
+
+// ============================================================
+// 操作してよいかの判定
+// ============================================================
+bool DebugCamera::CanStartMouseControl() {
+#ifdef USE_IMGUI
+	Editor* editor = Editor::GetInstance();
+	// エディタ表示中: ゲーム画面の上で、かつギズモを掴んでいないときだけ
+	if (editor->GetShowEditor()) return editor->CanPickInGameView();
+	// エディタ非表示中: ImGui のウィンドウ（デバッグ表示など）の上でなければ
+	return !ImGui::GetIO().WantCaptureMouse;
+#else
+	return true;
+#endif
+}
+
+bool DebugCamera::IsTypingText() {
+#ifdef USE_IMGUI
+	return ImGui::GetIO().WantTextInput;
+#else
+	return false;
+#endif
 }
 
 // ============================================================
@@ -43,42 +76,68 @@ void DebugCamera::Update() {
 // ============================================================
 void DebugCamera::UpdateInput() {
 	YoRigine::Input* input = YoRigine::Input::GetInstance();
-	Vector2 currentMousePos = input->GetMousePosition();
+	const Vector2 mouse = input->GetMousePosition();
+	const Vector2 delta = { mouse.x - prevMousePos_.x, mouse.y - prevMousePos_.y };
+	prevMousePos_ = mouse;
+	const bool canStart = CanStartMouseControl();
 
 	// ------------------------------------------------------------
-	// マウスによる回転 (右ドラッグ)
+	// 操作の開始と終了
+	// 押し始めがゲーム画面の上のときだけ開始し、押している間は画面外に出ても続ける
 	// ------------------------------------------------------------
-	if (input->IsPressMouse(1)) {
-		if (!isDragging_) {
-			isDragging_ = true;
-			prevMousePos_ = currentMousePos;
+	if (input->IsTriggerMouse(1) && canStart) isFlying_ = true;
+	if (!input->IsPressMouse(1)) isFlying_ = false;
+	if (input->IsTriggerMouse(2) && canStart) isPanning_ = true;
+	if (!input->IsPressMouse(2)) isPanning_ = false;
+
+	// ------------------------------------------------------------
+	// 見回す（右ボタン中のマウス移動）
+	// ------------------------------------------------------------
+	if (isFlying_) {
+		transform_.rotate.x += delta.y * rotateSpeed_ * 0.1f;
+		transform_.rotate.y += delta.x * rotateSpeed_ * 0.1f;
+	}
+
+	const Matrix4x4 rotMat = MakeRotateMatrixXYZ(transform_.rotate);
+	const Vector3 forward = TransformNormal({ 0.0f, 0.0f, 1.0f }, rotMat);
+	const Vector3 right = TransformNormal({ 1.0f, 0.0f, 0.0f }, rotMat);
+	const Vector3 up = TransformNormal({ 0.0f, 1.0f, 0.0f }, rotMat);
+
+	// ------------------------------------------------------------
+	// 右ボタン中: WASD / QE で飛び回る、ホイールで移動速度を変える
+	// ------------------------------------------------------------
+	const int32_t wheel = input->GetWheel();
+	if (isFlying_) {
+		if (!IsTypingText()) {
+			const float speed = moveSpeed_ * (input->PushKey(DIK_LSHIFT) ? 3.0f : 1.0f);
+			Vector3 move{ 0.0f, 0.0f, 0.0f };
+			if (input->PushKey(DIK_W)) move.z += 1.0f;
+			if (input->PushKey(DIK_S)) move.z -= 1.0f;
+			if (input->PushKey(DIK_A)) move.x -= 1.0f;
+			if (input->PushKey(DIK_D)) move.x += 1.0f;
+			Vector3 worldMove = TransformNormal(move, rotMat) * speed;
+			// Q / E はワールドの上下（傾いていてもまっすぐ昇降する）
+			if (input->PushKey(DIK_Q)) worldMove.y -= speed;
+			if (input->PushKey(DIK_E)) worldMove.y += speed;
+			transform_.translate += worldMove;
 		}
-		float deltaX = currentMousePos.x - prevMousePos_.x;
-		float deltaY = currentMousePos.y - prevMousePos_.y;
-
-		transform_.rotate.x += deltaY * rotateSpeed_ * 0.1f;
-		transform_.rotate.y += deltaX * rotateSpeed_ * 0.1f;
-		prevMousePos_ = currentMousePos;
+		if (wheel != 0) {
+			moveSpeed_ = std::clamp(moveSpeed_ * (wheel > 0 ? 1.2f : 1.0f / 1.2f), 0.01f, 50.0f);
+		}
+	} else if (wheel != 0 && canStart) {
+		// ------------------------------------------------------------
+		// 右ボタンを押していないとき: ホイールで視線方向へ前後（1 ノッチ = 120）
+		// ------------------------------------------------------------
+		transform_.translate += forward * (static_cast<float>(wheel) / 120.0f) * moveSpeed_ * 4.0f;
 	}
-	else {
-		isDragging_ = false;
-	}
-
-	Matrix4x4 rotMat = MakeRotateMatrixXYZ(transform_.rotate);
 
 	// ------------------------------------------------------------
-	// キーボードによる移動 (WASD / QE)
+	// 中ボタン中: 平行移動（つかんだ場所が付いてくる向き）
 	// ------------------------------------------------------------
-	Vector3 move{ 0, 0, 0 };
-	if (input->PushKey(DIK_W)) move.z += moveSpeed_;
-	if (input->PushKey(DIK_S)) move.z -= moveSpeed_;
-	if (input->PushKey(DIK_A)) move.x -= moveSpeed_;
-	if (input->PushKey(DIK_D)) move.x += moveSpeed_;
-
-	if (input->PushKey(DIK_Q)) move.y -= moveSpeed_;
-	if (input->PushKey(DIK_E)) move.y += moveSpeed_;
-
-	transform_.translate += TransformNormal(move, rotMat);
+	if (isPanning_) {
+		const float panSpeed = moveSpeed_ * 0.05f;
+		transform_.translate += right * (-delta.x * panSpeed) + up * (delta.y * panSpeed);
+	}
 
 	// ------------------------------------------------------------
 	// コントローラーによる操作
@@ -115,9 +174,11 @@ void DebugCamera::UpdateInput() {
 void DebugCamera::DrawDebugGui() {
 #ifdef USE_IMGUI
 	ImGui::Text("デバッグカメラ設定");
-	ImGui::Checkbox("有効", &isMoving_);
-	ImGui::DragFloat("移動独度（キーボード）", &moveSpeed_, 0.1f);
-	ImGui::DragFloat("回転速度（キーボード）", &rotateSpeed_, 0.01f);
+	ImGui::Checkbox("有効 (Ctrl+Shift)", &isMoving_);
+	ImGui::TextDisabled("ゲーム画面の上で 右ボタンを押しながら: マウス = 見回す / WASD = 移動 / Q・E = 下降・上昇");
+	ImGui::TextDisabled("  Shift = 速く / ホイール = 移動速度   中ボタンドラッグ = 平行移動   ホイール = 前後");
+	ImGui::DragFloat("移動速度", &moveSpeed_, 0.01f, 0.01f, 50.0f);
+	ImGui::DragFloat("回転速度", &rotateSpeed_, 0.01f);
 
 	ImGui::Separator();
 	ImGui::Text("パッド設定");

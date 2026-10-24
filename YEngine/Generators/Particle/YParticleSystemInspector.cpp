@@ -98,8 +98,14 @@ namespace {
 	struct CatalogEntry {
 		std::string typeName;    // JSON の "type"
 		std::string displayName; // GetName()
+		std::string description; // 一行説明
 		Category    category;
 	};
+
+	// 今の色を置き換えるか（前の色を消すか）。掛け合わせも「生成時の色 × 表」で今の色を置き換える
+	bool IsColorOverwriter(IParticleModule::ColorWrite w) {
+		return w == IParticleModule::ColorWrite::Overwrite || w == IParticleModule::ColorWrite::Multiply;
+	}
 
 	/// Factory に登録された全モジュール（カテゴリ順 → 表示名順）。初回だけ生成してキャッシュする
 	const std::vector<CatalogEntry>& GetCatalog(bool spawn) {
@@ -114,7 +120,9 @@ namespace {
 			std::shared_ptr<IParticleModule> m = spawn
 				? std::static_pointer_cast<IParticleModule>(factory.CreateSpawnModule(type))
 				: std::static_pointer_cast<IParticleModule>(factory.CreateUpdateModule(type));
-			if (m) catalog.push_back({ type, m->GetName(), YParticleModuleFactory::GetCategory(type) });
+			// 旧モジュール（置き換え先があるもの）は新しく追加させない。読み込みは引き続きできる
+			if (YParticleModuleFactory::GetReplacement(type)) continue;
+			if (m) catalog.push_back({ type, m->GetName(), YParticleModuleFactory::GetDescription(type), YParticleModuleFactory::GetCategory(type) });
 		}
 		std::sort(catalog.begin(), catalog.end(), [](const CatalogEntry& a, const CatalogEntry& b) {
 			if (a.category != b.category) return a.category < b.category;
@@ -157,7 +165,8 @@ namespace {
 			const CatalogEntry* firstHit = nullptr;
 			Category lastCategory = Category::Count;
 			for (const auto& entry : GetCatalog(spawn)) {
-				if (!ContainsIgnoreCase(entry.displayName, filter) && !ContainsIgnoreCase(entry.typeName, filter)) continue;
+				if (!ContainsIgnoreCase(entry.displayName, filter) && !ContainsIgnoreCase(entry.typeName, filter) &&
+					!ContainsIgnoreCase(entry.description, filter)) continue;
 				if (!firstHit) firstHit = &entry;
 
 				// 検索していないときはカテゴリ見出しで区切る
@@ -171,7 +180,8 @@ namespace {
 				ImGui::PushID(entry.typeName.c_str());
 				if (ImGui::Selectable(entry.displayName.c_str())) picked = entry.typeName;
 				ImGui::SameLine();
-				ImGui::TextDisabled("%s", entry.typeName.c_str());
+				ImGui::TextDisabled("%s", entry.description.c_str());
+				YEditorWidget::ItemTooltip(entry.typeName.c_str());
 				ImGui::PopID();
 			}
 			if (!firstHit) ImGui::TextDisabled("一致するモジュールがありません");
@@ -199,19 +209,21 @@ namespace {
 
 	/// 型名から新しいモジュールを作り、index の位置へ差し込む（data があればその値で初期化）
 	bool InsertNewModule(YParticleSystem& s, bool spawn, size_t at, const std::string& type,
-		const nlohmann::json* data, bool enabled) {
+		const nlohmann::json* data, bool enabled, const std::string& label = {}) {
 		auto& factory = YParticleModuleFactory::GetInstance();
 		if (spawn) {
 			auto m = factory.CreateSpawnModule(type);
 			if (!m) return false;
 			if (data) m->LoadFromJson(*data);
 			m->SetEnabled(enabled);
+			m->SetLabel(label);
 			s.InsertSpawnModule(at, m);
 		} else {
 			auto m = factory.CreateUpdateModule(type);
 			if (!m) return false;
 			if (data) m->LoadFromJson(*data);
 			m->SetEnabled(enabled);
+			m->SetLabel(label);
 			s.InsertUpdateModule(at, m);
 		}
 		return true;
@@ -304,8 +316,79 @@ void YParticleSystemInspector::TrackChanges(YParticleSystem& system) {
 // スタック（左）
 //=================================================================
 
+//=================================================================
+// 組み合わせの警告（「入れたのに効いていない」を作る人に知らせる）
+//=================================================================
+
+void YParticleSystemInspector::ComputeWarnings(const YParticleSystem& system) {
+	using Factory = YParticleModuleFactory;
+	const auto& spawns = system.GetSpawnModules();
+	const auto& updates = system.GetUpdateModules();
+	spawnWarnings_.assign(spawns.size(), {});
+	updateWarnings_.assign(updates.size(), {});
+	missingVelocityIntegrator_ = false;
+
+	// ── 速度: 位置へ反映するのは「速度で移動」だけ ──
+	int  integrator = -1;
+	bool fixedVelocity = false;
+	for (size_t i = 0; i < updates.size(); ++i) {
+		const auto& m = updates[i];
+		if (m->IsEnabled() && m->GetTypeName() == "UpdateVelocity") {
+			integrator = static_cast<int>(i);
+			fixedVelocity |= m->OverwritesVelocity();
+		}
+	}
+	bool anyVelocityUser = false;
+	auto checkVelocity = [&](const auto& list, std::vector<std::vector<std::string>>& out) {
+		for (size_t i = 0; i < list.size(); ++i) {
+			const auto& m = list[i];
+			if (!m->IsEnabled() || !Factory::UsesVelocity(m->GetTypeName())) continue;
+			anyVelocityUser = true;
+			if (integrator < 0) {
+				out[i].push_back("毎フレームの「速度で移動」が無いため、この速度は位置に反映されません（粒が動きません）");
+			} else if (fixedVelocity) {
+				out[i].push_back("「速度で移動」が固定速度モードのため、この速度は毎フレーム上書きされて効きません");
+			}
+		}
+	};
+	checkVelocity(spawns, spawnWarnings_);
+	checkVelocity(updates, updateWarnings_);
+	missingVelocityIntegrator_ = (integrator < 0 && anyVelocityUser);
+	if (integrator >= 0 && fixedVelocity && anyVelocityUser) {
+		updateWarnings_[integrator].push_back("固定速度モードです。生成時の速度・重力・乱流などの速度系モジュールが効きません（「生成時の速度を使う」を ON に）");
+	}
+
+	// ── 色: 後ろのモジュールに上書きされて消えていないか ──
+	// 生成時の色 → 毎フレームの「上書き」系（掛け合わせは生成時の色を使うので消えない）
+	for (size_t i = 0; i < spawns.size(); ++i) {
+		const auto& m = spawns[i];
+		if (!m->IsEnabled() || m->GetColorWrite() == IParticleModule::ColorWrite::None) continue;
+		for (const auto& u : updates) {
+			if (!u->IsEnabled() || u->GetColorWrite() != IParticleModule::ColorWrite::Overwrite) continue;
+			std::string text = "毎フレームの「" + u->GetDisplayName() + "」が色を上書きするため、この色は消えます";
+			if (u->GetTypeName() == "UpdateColorOverLifetime" || u->GetTypeName() == "UpdateColorGradient") {
+				text += "（そちらの「生成時の色を掛ける」を ON にすると活かせます）";
+			}
+			spawnWarnings_[i].push_back(text);
+			break;
+		}
+	}
+	// 毎フレームの色 → それより後ろの「上書き / 掛け合わせ」系（どちらも今の色を置き換える）
+	for (size_t i = 0; i < updates.size(); ++i) {
+		const auto& m = updates[i];
+		if (!m->IsEnabled() || m->GetColorWrite() == IParticleModule::ColorWrite::None) continue;
+		for (size_t j = i + 1; j < updates.size(); ++j) {
+			const auto& later = updates[j];
+			if (!later->IsEnabled() || !IsColorOverwriter(later->GetColorWrite())) continue;
+			updateWarnings_[i].push_back("後ろの「" + later->GetDisplayName() + "」が色を上書きするため、この効果は消えています（順番を入れ替えてください）");
+			break;
+		}
+	}
+}
+
 void YParticleSystemInspector::DrawStack(YParticleSystem& system) {
 	HandleShortcuts(system);
+	ComputeWarnings(system);
 
 	// システム設定（テクスチャ・ブレンドなど）も 1 行として扱う
 	{
@@ -368,21 +451,34 @@ void YParticleSystemInspector::DrawModuleSection(YParticleSystem& system, Select
 			// カテゴリ色の印 + 名前（行全体が選択範囲）
 			ImGui::TableSetColumnIndex(1);
 			ImGui::AlignTextToFramePadding();
-			ImGui::TextColored(CategoryColor(category), "■");
+			// 警告があればカテゴリ印の代わりに注意アイコンを出す
+			const auto& warnings = spawn ? spawnWarnings_ : updateWarnings_;
+			const bool hasWarning = (i < static_cast<int>(warnings.size())) && !warnings[i].empty();
+			if (hasWarning) {
+				ImGui::TextColored(ImVec4(1.0f, 0.65f, 0.2f, 1.0f), ICON_FA_EXCLAMATION_TRIANGLE);
+				if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort)) {
+					ImGui::BeginTooltip();
+					for (const auto& w : warnings[i]) ImGui::BulletText("%s", w.c_str());
+					ImGui::EndTooltip();
+				}
+			} else {
+				ImGui::TextColored(CategoryColor(category), "■");
+			}
 			ImGui::SameLine(0, 4);
 			const bool selected = (selection_.kind == kind && selection_.index == i);
 			if (!enabled) ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-			if (ImGui::Selectable(module->GetName().c_str(), selected,
+			if (ImGui::Selectable(module->GetDisplayName().c_str(), selected,
 				ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap)) {
 				selection_ = { kind, i };
 			}
 			if (!enabled) ImGui::PopStyleColor();
-			YEditorWidget::ItemTooltip((std::string(YParticleModuleFactory::GetCategoryName(category)) + " / " + type).c_str());
+			YEditorWidget::ItemTooltip((module->GetName() + "（" + YParticleModuleFactory::GetCategoryName(category) + " / " + type + "）\n" +
+				YParticleModuleFactory::GetDescription(type)).c_str());
 
 			// ドラッグで並べ替え（同じ区分の中だけ）
 			if (ImGui::BeginDragDropSource()) {
 				ImGui::SetDragDropPayload(payloadType, &i, sizeof(int));
-				ImGui::Text(ICON_FA_ARROWS_ALT_V " %s", module->GetName().c_str());
+				ImGui::Text(ICON_FA_ARROWS_ALT_V " %s", module->GetDisplayName().c_str());
 				ImGui::EndDragDropSource();
 			}
 			if (ImGui::BeginDragDropTarget()) {
@@ -477,10 +573,11 @@ void YParticleSystemInspector::RequestDuplicate(YParticleSystem& system, Selecti
 	module->SaveToJson(data);
 	const std::string type = module->GetTypeName();
 	const bool enabled = module->IsEnabled();
-	pendingOp_.apply = [this, spawn, kind, index, type, data, enabled](YParticleSystem& s) {
-		if (InsertNewModule(s, spawn, index + 1, type, &data, enabled)) selection_ = { kind, index + 1 };
+	const std::string label = module->GetDisplayName();
+	pendingOp_.apply = [this, spawn, kind, index, type, data, enabled, label](YParticleSystem& s) {
+		if (InsertNewModule(s, spawn, index + 1, type, &data, enabled, label)) selection_ = { kind, index + 1 };
 		};
-	pendingOp_.label = "複製: " + module->GetName();
+	pendingOp_.label = "複製: " + label;
 }
 
 void YParticleSystemInspector::RequestReset(YParticleSystem& system, SelectionKind kind, int index) {
@@ -490,11 +587,12 @@ void YParticleSystemInspector::RequestReset(YParticleSystem& system, SelectionKi
 
 	const std::string type = module->GetTypeName();
 	const bool enabled = module->IsEnabled();
-	pendingOp_.apply = [spawn, index, type, enabled](YParticleSystem& s) {
+	const std::string label = module->GetDisplayName(); // 付けた名前は値と違って残す
+	pendingOp_.apply = [spawn, index, type, enabled, label](YParticleSystem& s) {
 		DeleteModuleAt(s, spawn, index);
-		InsertNewModule(s, spawn, index, type, nullptr, enabled);
+		InsertNewModule(s, spawn, index, type, nullptr, enabled, label);
 		};
-	pendingOp_.label = "既定値に戻す: " + module->GetName();
+	pendingOp_.label = "既定値に戻す: " + label;
 }
 
 void YParticleSystemInspector::RequestDelete(YParticleSystem& system, SelectionKind kind, int index) {
@@ -508,7 +606,7 @@ void YParticleSystemInspector::RequestDelete(YParticleSystem& system, SelectionK
 		const int remain = static_cast<int>(ModuleCount(s, spawn));
 		selection_ = (remain > 0) ? Selection{ kind, (std::min)(index, remain - 1) } : Selection{};
 		};
-	pendingOp_.label = "削除: " + module->GetName();
+	pendingOp_.label = "削除: " + module->GetDisplayName();
 }
 
 //=================================================================
@@ -537,9 +635,57 @@ void YParticleSystemInspector::DrawInspector(YParticleSystem& system) {
 	// 見出し: カテゴリ / 名前 / 型名 / タイミング
 	ImGui::TextColored(CategoryColor(category), "■ %s", YParticleModuleFactory::GetCategoryName(category));
 	ImGui::SameLine();
-	ImGui::TextUnformatted(module->GetName().c_str());
+	// 表示名（作者が付ける名前。例: 「爆発初速」）。空にすると既定の名前に戻る
+	{
+		char nameBuf[128];
+		strncpy_s(nameBuf, module->GetDisplayName().c_str(), _TRUNCATE);
+		ImGui::SetNextItemWidth(ImGui::GetFontSize() * 10.0f);
+		if (ImGui::InputText("##label", nameBuf, sizeof(nameBuf))) module->SetLabel(nameBuf);
+		YEditorWidget::ItemTooltip("表示名（一覧に出る名前）。空にすると既定の名前に戻ります");
+	}
 	ImGui::SameLine();
-	ImGui::TextDisabled("%s  /  %s", type.c_str(), spawn ? "発生時" : "毎フレーム");
+	ImGui::TextDisabled("%s / %s", module->GetName().c_str(), spawn ? "発生時" : "毎フレーム");
+	YEditorWidget::ItemTooltip(type.c_str());
+	if (const char* desc = YParticleModuleFactory::GetDescription(type); desc && desc[0]) {
+		ImGui::TextDisabled("%s", desc);
+	}
+
+	// 旧モジュール: 推奨モジュールへその場で変換できる（値・表示名・有効状態は引き継ぐ）
+	if (const char* replacement = YParticleModuleFactory::GetReplacement(type)) {
+		const std::string replacementType = replacement;
+		std::string replacementName = replacementType;
+		for (const auto& entry : GetCatalog(spawn)) {
+			if (entry.typeName == replacementType) replacementName = entry.displayName;
+		}
+		ImGui::TextColored(ImVec4(0.6f, 0.8f, 1.0f, 1.0f), ICON_FA_INFO_CIRCLE " 旧モジュールです。「%s」に変換できます", replacementName.c_str());
+		ImGui::SameLine();
+		if (ImGui::SmallButton("変換する")) {
+			nlohmann::json data;
+			module->SaveToJson(data);
+			const int index = selection_.index;
+			const bool en = module->IsEnabled();
+			const std::string label = (module->GetDisplayName() == module->GetName()) ? std::string{} : module->GetDisplayName();
+			pendingOp_.apply = [spawn, index, replacementType, data, en, label](YParticleSystem& s) {
+				DeleteModuleAt(s, spawn, index);
+				InsertNewModule(s, spawn, index, replacementType, &data, en, label);
+				};
+			pendingOp_.label = "変換: " + replacementName;
+		}
+	}
+
+	// 組み合わせの警告とクイック修正
+	const auto& warnings = spawn ? spawnWarnings_ : updateWarnings_;
+	if (selection_.index < static_cast<int>(warnings.size()) && !warnings[selection_.index].empty()) {
+		for (const auto& w : warnings[selection_.index]) {
+			ImGui::TextColored(ImVec4(1.0f, 0.65f, 0.2f, 1.0f), ICON_FA_EXCLAMATION_TRIANGLE " %s", w.c_str());
+		}
+		if (missingVelocityIntegrator_ && ImGui::SmallButton(ICON_FA_PLUS " 「速度で移動」を追加して直す")) {
+			pendingOp_.apply = [](YParticleSystem& s) {
+				InsertNewModule(s, /*spawn=*/false, 0, "UpdateVelocity", nullptr, true);
+				};
+			pendingOp_.label = "追加: 速度で移動";
+		}
+	}
 
 	bool enabled = module->IsEnabled();
 	if (ImGui::Checkbox("有効", &enabled)) module->SetEnabled(enabled);

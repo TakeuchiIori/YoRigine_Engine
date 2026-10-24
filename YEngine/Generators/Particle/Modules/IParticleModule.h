@@ -31,14 +31,41 @@ public:
     virtual const ColorGradient* GetPreviewGradient() const { return nullptr; }
 
     /// <summary>
+    /// 粒子の色への書き込み方。エディタが「後ろのモジュールに上書きされて効いていない」
+    /// 組み合わせ（例: 生成時の色 → 寿命カラーで上書き）を警告するために使う。
+    /// </summary>
+    enum class ColorWrite {
+        None,      // 色に触らない
+        Overwrite, // RGBA を丸ごと上書きする（前の色は消える）
+        AlphaOnly, // アルファだけを上書きする
+        Multiply,  // 今の色（生成時の色）に掛け合わせる（前の色を活かす）
+    };
+    virtual ColorWrite GetColorWrite() const { return ColorWrite::None; }
+
+    /// <summary>
+    /// 毎フレーム速度を固定値で上書きするか（UpdateVelocity の固定速度モード）。
+    /// true のとき、他の速度系モジュール（生成時の速度・重力・乱流…）は効かなくなる。
+    /// </summary>
+    virtual bool OverwritesVelocity() const { return false; }
+
+    /// <summary>
     /// 無効なモジュールはシステムが丸ごと飛ばす（削除せずに効果を比較するため）。
     /// JSON にはモジュール共通の "enabled" として保存される。
     /// </summary>
     bool IsEnabled() const { return enabled_; }
     void SetEnabled(bool enabled) { enabled_ = enabled; }
 
+    /// <summary>
+    /// 表示名。作者が付けた名前（JSON の "name"。例: 「爆発初速」）があればそれ、無ければ GetName()。
+    /// 以前は保存のたびに GetName() で上書きされ、付けた名前が消えていた。
+    /// </summary>
+    std::string GetDisplayName() const { return label_.empty() ? GetName() : label_; }
+    // 既定の名前と同じなら空にしておく（既定名が変わったときに追従させるため）
+    void SetLabel(const std::string& label) { label_ = (label == GetName()) ? std::string{} : label; }
+
 private:
     bool enabled_ = true;
+    std::string label_;
 };
 
 // --- 生成タイミング専用 ---

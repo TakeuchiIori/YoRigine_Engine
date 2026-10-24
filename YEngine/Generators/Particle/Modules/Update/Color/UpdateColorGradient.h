@@ -1,28 +1,18 @@
 #pragma once
-#include "../../../ColorGradient.h"
-#include "../../../YParticleModuleFactory.h"
-#include "../../IParticleModule.h"
+#include "UpdateColorOverLifetime.h"
 
 /// <summary>
-/// 複数色を使ったグラデーション
-/// 用途: レインボーエフェクト、複雑な色変化など
-/// ※ 中身は UpdateColorOverLifetime と同じ ColorGradient。旧データ（等間隔
-/// 最大5色）互換のため型名を残している
+/// 旧「グラデーション」モジュール（等間隔・最大 5 色）。
+/// 中身は UpdateColorOverLifetime と同じになったため派生クラスとして残し、
+/// 旧 JSON（"colorCount" / "colors"）の読み込みだけを担う。
+/// エディタの追加メニューには出さない（「寿命でカラー変化」を使う）。
 /// </summary>
-class UpdateColorGradient : public IUpdateModule {
+class UpdateColorGradient : public UpdateColorOverLifetime {
 public:
-  UpdateColorGradient();
-  void OnUpdate(ParticleAttribute *attrs, uint32_t index, float dt) override;
-  void DrawEditor() override;
-  std::string GetName() const override { return "グラデーション"; }
+  UpdateColorGradient() = default;
+  std::string GetName() const override { return "グラデーション（旧）"; }
   std::string GetTypeName() const override { return "UpdateColorGradient"; }
-  const ColorGradient* GetPreviewGradient() const override { return &gradient_; }
-
-  void SaveToJson(nlohmann::json &json) const override;
   void LoadFromJson(const nlohmann::json &json) override;
-
-private:
-  ColorGradient gradient_;
 };
 
 REGISTER_UPDATE_MODULE(UpdateColorGradient)

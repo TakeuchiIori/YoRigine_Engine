@@ -34,6 +34,7 @@ public:
     void        DrawEditor()                                                  override;
     std::string GetName()     const override { return "色"; }
     std::string GetTypeName() const override { return "UpdateColor"; }
+    ColorWrite GetColorWrite() const override { return ColorWrite::Overwrite; }
 
     //===== シリアライズ =====
     void SaveToJson(nlohmann::json& json)        const override;

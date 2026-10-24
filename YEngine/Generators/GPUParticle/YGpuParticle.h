@@ -91,12 +91,14 @@ public:
 
 	// 寿命カラー表の段数（HLSL 側 GPU_COLOR_GRADIENT_LUT_SIZE と一致させること）
 	static constexpr int kGpuColorGradientLutSize = 32;
+	// 寿命サイズ表の段数（HLSL 側 GPU_SIZE_CURVE_LUT_SIZE と一致させること。4 の倍数）
+	static constexpr int kGpuSizeCurveLutSize = 32;
 
 	// 拡張Paramモジュール（任意ON/OFFの演出）用の共有CBV。
 	// VS(g_ExtParams, b1) と Update CS(g_ExtParams, b2) の両方が読む。
 	//   VS  が使う: UVScroll / ScalePulse / ColorFlicker / StretchByVelocity（見た目）
 	//   CS  が使う: Drag / Bounce（速度・位置の物理更新）
-	// HLSL側 ParticleExtParams(GPUParticle.hlsli)と厳密に同一レイアウト (656 bytes)。
+	// HLSL側 ParticleExtParams(GPUParticle.hlsli)と厳密に同一レイアウト (800 bytes)。
 	__declspec(align(16))
 	struct ParticleExtParameters {
 		Vector2  uvScrollSpeed;
@@ -140,8 +142,14 @@ public:
 		uint32_t colorGradientEnable;
 		float    pad6[3];          // 144
 		Vector4  colorGradientLut[kGpuColorGradientLutSize]; // 144 + 16*32 = 656
+
+		// 寿命でサイズ変化（カーブ）。1 段 = float 1 個を Vector4 に 4 段ずつ詰める
+		uint32_t sizeCurveEnable;
+		float    pad7[3];          // 672
+		Vector4  sizeCurveLut[kGpuSizeCurveLutSize / 4]; // 672 + 16*8 = 800
 	};
-	static_assert(sizeof(ParticleExtParameters) == 656, "ParticleExtParameters must match HLSL ParticleExtParams (656B)");
+	static_assert(kGpuSizeCurveLutSize % 4 == 0, "kGpuSizeCurveLutSize must be a multiple of 4");
+	static_assert(sizeof(ParticleExtParameters) == 800, "ParticleExtParameters must match HLSL ParticleExtParams (800B)");
 
 
 public:

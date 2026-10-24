@@ -23,6 +23,7 @@
 #include "Emissive/YEmissiveModule.h"
 #include "Flipbook/YFlipbookModule.h"
 #include "ColorGradient/YColorGradientModule.h"
+#include "SizeCurve/YSizeCurveModule.h"
 
 struct GpuExtModules {
 	UVScrollParams          uvScroll;
@@ -34,4 +35,5 @@ struct GpuExtModules {
 	EmissiveParams          emissive;
 	FlipbookParams          flipbook;
 	ColorGradientParams     colorGradient; // 寿命カラー（グラデーション）
+	SizeCurveParams         sizeCurve;     // 寿命でサイズ変化（カーブ）
 };

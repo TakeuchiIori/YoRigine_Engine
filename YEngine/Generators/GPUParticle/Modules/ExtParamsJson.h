@@ -146,3 +146,16 @@ inline void from_json(const nlohmann::json& j, ColorGradientParams& p)
 	p.isEnable = j.value("isEnable", false);
 	if (j.contains("gradient")) p.gradient.LoadFromJson(j["gradient"]);
 }
+
+// 寿命でサイズ変化（カーブ）: カーブ本体は ParticleCurve 自身の形式で保存する
+// （CPU パーティクルの「寿命でサイズ変化」と同じ {"interp", "keys": [{"t", "v"}]}）
+inline void to_json(nlohmann::json& j, const SizeCurveParams& p)
+{
+	j = nlohmann::json{ {"isEnable", p.isEnable} };
+	p.curve.SaveToJson(j["curve"]);
+}
+inline void from_json(const nlohmann::json& j, SizeCurveParams& p)
+{
+	p.isEnable = j.value("isEnable", false);
+	if (j.contains("curve")) p.curve.LoadFromJson(j["curve"]);
+}
