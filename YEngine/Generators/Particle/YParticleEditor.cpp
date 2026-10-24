@@ -100,8 +100,6 @@ void YParticleEditor::ShowEditorWindow() {
 	HandleShortcuts(system);
 	UpdateTestEmit(system);
 
-	DrawMenuBar();
-
 	if (ImGui::BeginTabBar("##particleEditorTabs")) {
 		if (ImGui::BeginTabItem(ICON_FA_FIRE " パーティクルシステム")) {
 			DrawToolbar(system);
@@ -138,41 +136,31 @@ void YParticleEditor::ShowEditorWindow() {
 	DrawPopups();
 }
 
-void YParticleEditor::DrawMenuBar() {
-	if (!ImGui::BeginMenuBar()) return;
+void YParticleEditor::DrawFileMenu() {
+	// エディタのパネルはメニューバーを持たないため、ツールバーのボタンからポップアップで開く
+	if (ImGui::Button(ICON_FA_FOLDER " ファイル")) ImGui::OpenPopup("##particleFileMenu");
+	if (!ImGui::BeginPopup("##particleFileMenu")) return;
 
-	if (ImGui::BeginMenu("ファイル")) {
-		const bool hasSel = GetSelectedSystemPtr() != nullptr;
-		if (ImGui::MenuItem(ICON_FA_SAVE " 保存", "Ctrl+S", false, hasSel)) SaveSelected();
-		if (ImGui::MenuItem("名前を付けて保存...", nullptr, false, hasSel)) OpenSaveAs(selectedSystemName_ + ".json");
-		if (ImGui::MenuItem(ICON_FA_FOLDER_OPEN " 開く...")) {
-			loadBrowser_.Scan();
-			showLoadPopup_ = true;
-		}
-		ImGui::Separator();
-		if (ImGui::MenuItem("全システムを 1 ファイルに保存...")) {
-			saveAllBrowser_.Scan();
-			saveAsNameBuf_[0] = '\0';
-			showSaveAllPopup_ = true;
-		}
-		ImGui::EndMenu();
+	const bool hasSel = GetSelectedSystemPtr() != nullptr;
+	if (ImGui::MenuItem(ICON_FA_SAVE " 保存", "Ctrl+S", false, hasSel)) SaveSelected();
+	if (ImGui::MenuItem("名前を付けて保存...", nullptr, false, hasSel)) OpenSaveAs(selectedSystemName_ + ".json");
+	if (ImGui::MenuItem(ICON_FA_FOLDER_OPEN " 開く...")) {
+		loadBrowser_.Scan();
+		showLoadPopup_ = true;
 	}
-
-	if (ImGui::BeginMenu("編集")) {
-		if (YParticleSystem* system = GetSelectedSystemPtr()) {
-			auto& history = GetInspector(system->GetName()).GetHistory();
-			if (ImGui::MenuItem(ICON_FA_UNDO " 元に戻す", "Ctrl+Z", false, history.CanUndo())) history.Undo();
-			if (ImGui::MenuItem(ICON_FA_REDO " やり直し", "Ctrl+Y", false, history.CanRedo())) history.Redo();
-		} else {
-			ImGui::MenuItem("（システム未選択）", nullptr, false, false);
-		}
-		ImGui::EndMenu();
+	ImGui::Separator();
+	if (ImGui::MenuItem("全システムを 1 ファイルに保存...")) {
+		saveAllBrowser_.Scan();
+		saveAsNameBuf_[0] = '\0';
+		showSaveAllPopup_ = true;
 	}
-
-	ImGui::EndMenuBar();
+	ImGui::EndPopup();
 }
 
 void YParticleEditor::DrawToolbar(YParticleSystem* system) {
+	DrawFileMenu();
+	ImGui::SameLine();
+
 	ImGui::BeginDisabled(system == nullptr);
 
 	// 保存 / Undo / Redo

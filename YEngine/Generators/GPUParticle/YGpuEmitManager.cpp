@@ -533,6 +533,27 @@ namespace YoRigine {
 	/// <summary>
 	/// グループのワールド原点を移動
 	/// </summary>
+	void YGpuEmitManager::SetEmitterLocalOffset(EmitterData* emitterData, const Vector3& offset)
+	{
+		if (!emitterData) return;
+		switch (emitterData->shape) {
+		case EmitterShape::Sphere:   emitterData->sphereParams.translate = offset;   break;
+		case EmitterShape::Box:      emitterData->boxParams.translate = offset;      break;
+		case EmitterShape::Triangle: emitterData->triangleParams.translate = offset; break;
+		case EmitterShape::Cone:     emitterData->coneParams.translate = offset;     break;
+		case EmitterShape::Mesh:     emitterData->meshParams.translate = offset;     break;
+		case EmitterShape::Ring:     emitterData->ringParams.translate = offset;     break;
+		case EmitterShape::Line: {
+			// 線分は中点が代表点なので、中点の移動量だけ始点・終点をずらす（向きと長さは保つ）
+			const Vector3 delta = offset - GetEmitterLocalOffset(emitterData);
+			emitterData->lineParams.start = emitterData->lineParams.start + delta;
+			emitterData->lineParams.end = emitterData->lineParams.end + delta;
+			break;
+		}
+		}
+		UpdateEmitterParams(emitterData);
+	}
+
 	void YGpuEmitManager::SetGroupPosition(const std::string& groupName, const Vector3& pos)
 	{
 		EmitterGroup* group = GetGroup(groupName);
@@ -565,6 +586,13 @@ namespace YoRigine {
 #endif
 	}
 
+	void YGpuEmitManager::DrawEditorGizmo()
+	{
+#ifdef USE_IMGUI
+		YGpuEmitManagerEditorUI::DrawGizmo(*this);
+#endif
+	}
+
 
 
 
@@ -579,6 +607,9 @@ namespace YoRigine {
 
 		// 同名のエミッターが存在する
 		if (group->emitters.count(emitterName)) return nullptr;
+
+		// テクスチャ未指定なら既定テクスチャにする（空パスは TextureManager の読み込みで止まる）
+		texturePath = ResolveTexturePath(texturePath);
 
 		//-------------------- 値保存をしてから生成 --------------------//
 		auto newEmitterData = std::make_unique<EmitterData>();
@@ -638,8 +669,8 @@ namespace YoRigine {
 		if (it == group->emitters.end()) return;
 
 		EmitterData* data = it->second.get();
-		data->texturePath = texturePath;
-		data->emitter->SetTexture(texturePath);
+		data->texturePath = ResolveTexturePath(texturePath);
+		data->emitter->SetTexture(data->texturePath);
 	}
 
 	YGpuEmitManager::EmitterGroup* YGpuEmitManager::GetGroup(const std::string& groupName)
@@ -1283,6 +1314,8 @@ namespace YoRigine {
 
 		// 全パラメータを一括復元（欠損キーは既定値のまま＝後方互換）
 		DeserializeEmitter(*e, j);
+		// JSON のテクスチャが空だと既定テクスチャが "" で上書きされるので戻す（GPU 側は作成時に既定で読み込み済み）
+		e->texturePath = ResolveTexturePath(e->texturePath);
 
 		// 適用
 		UpdateEmitterParams(e);

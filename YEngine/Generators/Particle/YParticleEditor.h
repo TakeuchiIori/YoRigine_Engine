@@ -48,7 +48,7 @@ private:
   // 画面の部品
   //=================================================================
 
-  void DrawMenuBar();
+  void DrawFileMenu();
   void DrawToolbar(YParticleSystem *system);
   void DrawSystemList();
   void DrawPopups();
