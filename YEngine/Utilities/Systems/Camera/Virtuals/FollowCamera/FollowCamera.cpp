@@ -169,6 +169,11 @@ void FollowCamera::FollowProcess() {
     currentScale_ += (targetScale - currentScale_)
         * std::clamp(interpSpeed_ * dt, 0.0f, 1.0f);
 
+    // ── 距離倍率の補間（ボス戦などで外から指定される引き） ──
+    const float targetDistanceMul = isCloseUp_ ? 1.0f : targetDistanceMultiplier_;
+    distanceMultiplier_ += (targetDistanceMul - distanceMultiplier_)
+        * std::clamp(distanceMultiplierSpeed_ * dt, 0.0f, 1.0f);
+
     // ── ターゲット速度から先読みオフセットを算出 ──
     const Vector3 targetPos = target_->translate_;
     bool teleported = false;
@@ -222,7 +227,7 @@ void FollowCamera::FollowProcess() {
             positionSmoothTime_, dt, maxFollowSpeed_);
     }
 
-    Vector3 offset = offset_ * currentScale_;
+    Vector3 offset = offset_ * currentScale_ * distanceMultiplier_;
     Matrix4x4 rotateMat = MakeRotateMatrixXYZ(transform_.rotate);
     Vector3 rotatedOffset = TransformNormal(offset, rotateMat);
     Vector3 idealPos = smoothedPivot_ + rotatedOffset;  // 追従は平滑化済み、回転は生の値
@@ -432,7 +437,7 @@ void FollowCamera::GetDefaultCameraParams(Vector3& outPos, Vector3& outRot, floa
         outFov = fovY_;
         return;
     }
-    Vector3 offset = offset_ * currentScale_;
+    Vector3 offset = offset_ * currentScale_ * distanceMultiplier_;
     Matrix4x4 rotateMat = MakeRotateMatrixXYZ(transform_.rotate);
     offset = TransformNormal(offset, rotateMat);
     Vector3 pivot = target_->translate_ + Vector3(0.0f, targetPivot_Height_, 0.0f);

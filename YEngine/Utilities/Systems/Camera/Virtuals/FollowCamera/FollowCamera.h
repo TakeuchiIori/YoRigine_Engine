@@ -125,6 +125,15 @@ public:
   bool IsFramingEnabled() const { return framingEnabled_; }
 
   // ============================================================
+  // 距離倍率（ゲーム側からの一時的な引き）
+  //   巨大な敵との戦闘など、場面に応じてカメラ距離を伸ばしたい時に使う。
+  //   保存される基本設定(offset_)は書き換えず、目標倍率へ滑らかに寄せる。
+  //   クローズアップ中は無視する（死亡演出の寄りを邪魔しないため）。
+  // ============================================================
+  void SetDistanceMultiplier(float m) { targetDistanceMultiplier_ = m; }
+  float GetDistanceMultiplier() const { return distanceMultiplier_; }
+
+  // ============================================================
   // パラメータ読み取り (PlayerCamera が再利用するために公開)
   // ============================================================
   float GetBaseFovY() const { return baseFovY_; }
@@ -189,6 +198,9 @@ private:
   float closeUpScale_ = 0.3f;
   float interpSpeed_ = 5.0f;
   float currentScale_ = 1.0f;
+  float distanceMultiplier_ = 1.0f;       // 実際に掛かっている距離倍率（補間後）
+  float targetDistanceMultiplier_ = 1.0f; // ゲーム側が指定した目標倍率
+  float distanceMultiplierSpeed_ = 2.0f;  // 目標倍率へ寄せる速さ（大きいほど速い）
 
   // ============================================================
   // シェイク

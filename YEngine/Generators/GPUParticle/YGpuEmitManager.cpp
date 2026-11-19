@@ -794,6 +794,12 @@ namespace YoRigine {
 
 	void YGpuEmitManager::SetCamera(YoRigine::Camera* camera)
 	{
+		// SceneManager から毎フレーム呼ばれるため、変化が無ければ全エミッタ走査を省く
+		// （新規エミッタは CreateEmitter 時に camera_ を受け取るので取りこぼさない）
+		if (camera_ == camera) {
+			return;
+		}
+
 		// YGpuEmitManager 自身のカメラポインタを更新
 		camera_ = camera;
 #ifdef USE_IMGUI
